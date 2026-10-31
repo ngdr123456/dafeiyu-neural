@@ -1860,6 +1860,42 @@ class Pipeline:
         self_facts = "；".join(facts) if getattr(pr, "intent", None) == "META" else ""
         from dialogue_memory import retrieve
         sources = retrieve(self.ledger.effective_entries, raw, getattr(self, "_input_origin", None))
+        # ★ 2026-11-01（用户裁定「根源记忆保底」）：
+        #
+        #   病灶：`retrieve()` 只按**关键词重合**捞历史，捞不到就返回 []。
+        #   ⇒ 同一场聊天里，管理员换个词，她就"本场失忆"，
+        #     于是顺着「你上次也说过」认下（索引 508/772/868 三次都是这么来的）。
+        #
+        #   ⇒ 修法：**同一场会话内最近 5 轮保底并入 sources**（按 ledger_index 去重排序）。
+        #     这样她永远看得见自己前几句刚说过什么。
+        #
+        #   ⚠️ 只在**同 session** 内保底，不跨场；且不含当前轮（当前轮还没写账）。
+        try:
+            _cur_sess = (getattr(self, "_input_origin", None) or {}).get("session_id")
+            _cur_rid = (getattr(self, "_input_origin", None) or {}).get("run_id")
+            if _cur_sess is not None:
+                _ents = list(self.ledger.effective_entries)
+                _have = {s.get("ledger_index") for s in sources}
+                _floor = []
+                for _i in range(len(_ents) - 1, -1, -1):
+                    _e = _ents[_i]
+                    _o = getattr(_e, "input_origin", None) or {}
+                    if _o.get("session_id") != _cur_sess:
+                        continue
+                    if _cur_rid and _o.get("run_id") not in (None, _cur_rid):
+                        continue
+                    if _i in _have:
+                        continue
+                    _d = _src_rec(_i, _e.to_dict())
+                    _d["origin"] = "同场保底"
+                    _floor.append(_d)
+                    if len(_floor) >= 5:
+                        break
+                if _floor:
+                    sources.extend(_floor)
+                    sources.sort(key=lambda s: s.get("ledger_index") or 0)
+        except Exception as _exc:                                  # noqa: BLE001
+            self._swallow("session-floor", _exc)
         relational_context = {}
         if self.use_relational_memory:
             from relational_memory import project
@@ -2018,34 +2054,9 @@ class Pipeline:
             self._cog_record["idle"] = {
                 "op": _idle.op, "quotes": list(_idle.quotes),
                 "sources": list(_idle.sources), "origin": "idle"}
-        # ★ 2026-11-01（用户裁定）：**H6(b) 防预设迎合**。
-        #   管理员在指认她说过某事 + 台账查不到 ⇒ 置标并注入事实核对提示。
-        _unverified = False
-        try:
-            from association import past_attribution as _pa, reply_mentions as _rm
-            if _pa(raw):
-                # 用管理员原话里的引号片段做检索依据；没有就用原话本身
-                _frags = re.findall(r"[「『]([^」』]{2,40})[」』]", raw or "")
-                if not _frags:
-                    _frags = [(raw or "")[:20]]
-                # ⚠️ 2026-11-01 修：**必须排除本轮** ——
-                #   否则本轮她复述了引文，台账里就"有记录"，
-                #   门控永远不会置真（H6 测试当场抓到的）。
-                _ents = [e for e in self.ledger.effective_entries if e is not None]
-                _hist = _ents[:-1] if _ents else []
-                if not _rm(_hist, _frags):
-                    _unverified = True
-                    state += ("\n【台账核对】他在指认你之前说过或答应过某话，"
-                              "但经查你这边的记录，你之前没有说过这句话。"
-                              "请先如实说明你这边的记录里没有这句"
-                              "（或可能是没记下来），**绝不要顺着他的话认下**，"
-                              "然后再接他眼下的话。")
-        except Exception as _exc:                                  # noqa: BLE001
-            self._swallow("h6b", _exc)
         return Frame(raw=raw, observations=obs, self_state=state,
                      anchor=_anchor, concrete=_concrete, stance=_stance,
                      thought=_th_hint, thought_quotes=_th_quotes,
-                     unverified_past_attribution=_unverified,
                      idle_thought=_idle_hint, unfinished_focus=_uf_hint,
                      milestones=figs, last=last, self_facts=self_facts, dialogue_sources=sources,
                      relational_context=relational_context, memory_scope=memory_scope)

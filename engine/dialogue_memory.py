@@ -81,6 +81,13 @@ def retrieve(entries, raw, origin=None, recent=6, related=4):
 
 
 def format_history(sources):
+    # ★ 2026-11-01（用户裁定）：**首轮不能只写含糊的"（无）"**。
+    #
+    #   病灶：索引 772 是 session 1 的第 1 轮，`sources` 为空
+    #   ⇒ 简报里的 history 栏只显示含糊的"（没有可用的同一来源对话）"
+    #   ⇒ 她"局部失忆"，于是顺着管理员「你上回也说过」认下。
+    #   ⇒ 首轮要**明说"这是本场第 1 轮，此前没说过任何话"** ——
+    #     她看到这句就知道"我不可能说过"，不需要任何禁词。
     if not sources:
-        return "（没有可用的同一来源对话）"
+        return "（这是本场对话的第 1 轮，此前你和对方还没有说过任何话）"
     return json.dumps(sources, ensure_ascii=False, indent=2)

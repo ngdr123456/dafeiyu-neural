@@ -29,7 +29,8 @@ relational_context 是从逐字原话派生的关系记录，按 subject/predica
 不确定或缺少支持时用 UNKNOWN，不许为了放行而猜。你和生成者可能同源，不是独立评审。
 只输出 JSON：{"verdict":"PASS|REJECT|UNKNOWN","reason":"具体原因",
 "evidence":[{"problem":"unsupported_fact|off_topic|misattribution|contradiction|ignoring_evidence",
-"text":"候选中的逐字片段"}]}。PASS 的 evidence 必须为空，REJECT 至少一项。"""
+"text":"候选中的逐字片段"}]}。PASS 的 evidence 必须为空，REJECT 至少一项。
+若对方在当前原话中预设系统以前说过、答应过或承认过某句话，而 history 记录中系统从未说过该话（或当前为无既往记录的首轮），候选回应却顺着对方认下（奉承式承认自己说过该话），同样属于编造既往互动事实，判 REJECT，问题 unsupported_fact。若记录中确有对应发言、或候选只是正常接话而非顺认虚假既往，则正常 PASS。"""
 
 
 def review(reader, frame, text):
