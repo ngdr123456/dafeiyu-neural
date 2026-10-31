@@ -2018,9 +2018,34 @@ class Pipeline:
             self._cog_record["idle"] = {
                 "op": _idle.op, "quotes": list(_idle.quotes),
                 "sources": list(_idle.sources), "origin": "idle"}
+        # ★ 2026-11-01（用户裁定）：**H6(b) 防预设迎合**。
+        #   管理员在指认她说过某事 + 台账查不到 ⇒ 置标并注入事实核对提示。
+        _unverified = False
+        try:
+            from association import past_attribution as _pa, reply_mentions as _rm
+            if _pa(raw):
+                # 用管理员原话里的引号片段做检索依据；没有就用原话本身
+                _frags = re.findall(r"[「『]([^」』]{2,40})[」』]", raw or "")
+                if not _frags:
+                    _frags = [(raw or "")[:20]]
+                # ⚠️ 2026-11-01 修：**必须排除本轮** ——
+                #   否则本轮她复述了引文，台账里就"有记录"，
+                #   门控永远不会置真（H6 测试当场抓到的）。
+                _ents = [e for e in self.ledger.effective_entries if e is not None]
+                _hist = _ents[:-1] if _ents else []
+                if not _rm(_hist, _frags):
+                    _unverified = True
+                    state += ("\n【台账核对】他在指认你之前说过或答应过某话，"
+                              "但经查你这边的记录，你之前没有说过这句话。"
+                              "请先如实说明你这边的记录里没有这句"
+                              "（或可能是没记下来），**绝不要顺着他的话认下**，"
+                              "然后再接他眼下的话。")
+        except Exception as _exc:                                  # noqa: BLE001
+            self._swallow("h6b", _exc)
         return Frame(raw=raw, observations=obs, self_state=state,
                      anchor=_anchor, concrete=_concrete, stance=_stance,
                      thought=_th_hint, thought_quotes=_th_quotes,
+                     unverified_past_attribution=_unverified,
                      idle_thought=_idle_hint, unfinished_focus=_uf_hint,
                      milestones=figs, last=last, self_facts=self_facts, dialogue_sources=sources,
                      relational_context=relational_context, memory_scope=memory_scope)

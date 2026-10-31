@@ -240,6 +240,9 @@ class Frame:
     #      说成"这是你自己做的"（选择）—— **固定连接语会把好素材说歪**。
     thought: str = ""
     thought_quotes: tuple = ()
+    # ★ 2026-11-01（用户裁定）：管理员在指认她说过某事，而台账里查不到。
+    #   置真时 ⇒ 简报里注入事实核对提示，机械闸门拦截顺认。
+    unverified_past_attribution: bool = False
     # ★ Q4（Gemini 拍板）：**空档里她自己想起来的一件事**。
     #
     #   为什么需要它：现在是 0/40 的自我连续性 —— 她每一轮都是"新醒来的"。
@@ -467,6 +470,15 @@ class Thinker:
             from relational_memory import literal_evidence
             quote_corpus += "\n" + "\n".join(literal_evidence(frame.relational_context))
             bad = self.check(text, quote_corpus, max_chars)
+            # ★ 2026-11-01（用户裁定）：**防预设迎合**。
+            #   当管理员在指认她说过某事、而台账查不到时，
+            #   不允许她顺口认下。否定句（「翻不出记录」）不算违规。
+            if getattr(frame, "unverified_past_attribution", False):
+                try:
+                    from association import comply_violations as _cv
+                    bad.extend(_cv(text))
+                except Exception:                              # noqa: BLE001
+                    pass
             from memory_scope import check as check_memory_scope
             bad.extend(check_memory_scope(frame, text))
             from self_goal import literal_check
