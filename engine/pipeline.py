@@ -145,11 +145,17 @@ class Pipeline:
         #: ★ 2026-10-30：settle 的留痕（排查"结算没发生"用）
         self._settle_traces = []
         #: 上一轮是否抛过 idle（冷却用：至少隔 1 轮）
+        #: ★ 2026-10-31：最后一次"选了 idle"的轮序号（冷却用，替代死代码 _idle_prev_turn）
+        self._idle_last_turn = None
+        #: ⚠️ 已废弃：从未被设成 True（死代码），保留仅为兼容旧测试
         self._idle_prev_turn = False
         #: ★ 2026-10-30（Stage 3）：本轮唯一生效的焦点来源
         #:   "input" | "unfinished" | "idle" | "lexical"
         self._focus_origin = "lexical"
         #: * 2026-10-30（Stage 4）：裁决后的动作与性格层理由（供 stance 同构）
+        #: ★ 2026-10-31（主线）：他最后一句是不是问句 / 是不是明确在问她
+        self._he_is_asking = False
+        self._he_is_asking_explicit = False
         self._final_bid = None
         self._char_note = None
         # 2026-10-30：悬念的「用完即焚」标记 + 单调递增的轮序号
@@ -472,14 +478,26 @@ class Pipeline:
             self._unfinished_consumed = True    # 用完即焚
             return
         # ---- P3：空档回想（到这里才真的调用 ruminate）
+        #
+        # ★ 2026-10-31（用户裁定的主线之一）：
+        #   **他在问她的时候，idle 不作为本轮焦点。**
+        #   理由：那一轮她该做的是**先接住他的问题**，
+        #   而 idle 是"翻旧账"——它会把她的注意力从他的问题拽走。
+        #   实测支撑：上一批 9 次打回里有 5 次他在问她。
+        if getattr(self, "_he_is_asking", False):
+            self._idle_gated = "他在问她 ⇒ idle 让位（先接住问题）"
+            return
         if _enc == "REBUFFED":
             self._idle_gated = "上一轮碰壁（REBUFFED）⇒ 不翻旧账"
             return
         if _bd < 0.42:
             self._idle_gated = "探照笃定 %.2f < 0.42 ⇒ 先收一收" % _bd
             return
-        if getattr(self, "_idle_prev_turn", False):
-            self._idle_gated = "上一轮刚抛过（冷却一轮）"
+        _last_idle = getattr(self, "_idle_last_turn", None)
+        _cooldown = 3
+        if isinstance(_last_idle, int) and (getattr(self, "_turn_seq", 0) - _last_idle) < _cooldown:
+            self._idle_gated = ("冷却中（上次 idle 在第 %d 轮，还需隔 %d 轮）"
+                                % (_last_idle, _cooldown))
             return
         if not getattr(self, "use_cognition", False):
             self._idle_gated = "cognition 关闭"
@@ -487,6 +505,14 @@ class Pipeline:
         _rec = self.ruminate()
         if _rec is not None:
             self._focus_origin = "idle"
+            # ★ 2026-10-31（用户裁定）：**选了 idle 之后至少隔 3 轮才允许再选。**
+            #
+            #   ⚠️ 原来的 `_idle_prev_turn` 是**死代码** ——
+            #      148 行声明、481 行读，**没有任何地方把它设成 True**
+            #      ⇒ 我文档里写的"冷却一轮"从来没生效过。
+            #   ⇒ 改成"记下最后一次选 idle 的轮序号"，用距离判定，写在 `_arbitrate_focus` 里。
+            #   ⚠️ 3 这个数是**待标定值（ENG）**：先按用户给的 3，实测后再调。
+            self._idle_last_turn = getattr(self, "_turn_seq", 0)
             mech_note.append("空档回想（P3）：%r" % ((_rec.get("quotes") or [])[:2],))
             # ★ 2026-10-30（用户要求：idle 的 sources 与重合度也落盘）
             #   重合度 = 输出里逐字出现了几段 idle 引文 / 一共几段（0 / 0.5 / 1.0）
@@ -515,7 +541,23 @@ class Pipeline:
         try:
             os.makedirs(os.path.dirname(self._cog_debug_path), exist_ok=True)
             with io.open(self._cog_debug_path, "a", encoding="utf-8") as _f:
-                _f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+                # ★ 2026-10-31（用户裁定）：每条都带 run_id / session_id。
+                #   理由：append-only 文件跨运行累积，没有 run_id 就没法切出本批 ——
+                #   我已经因此误报过一次（把两批累积的 31 当成一批的 idle，实际是 17）。
+                _rec = dict(rec)
+                try:
+                    # ⚠️ 优先用**本轮**的 input_origin（turn 开头就设好了）；
+                    #   台账最后一条是上一轮，用它会把 run_id 记错一轮。
+                    _o = dict(getattr(self, "_input_origin", None) or {})
+                    if not _o.get("run_id"):
+                        _e = (self.ledger.effective_entries[-1]
+                              if self.ledger.effective_entries else None)
+                        _o = dict((getattr(_e, "input_origin", None) or {}) if _e is not None else {})
+                    _rec.setdefault("run_id", _o.get("run_id"))
+                    _rec.setdefault("session_id", _o.get("session_id"))
+                except Exception:                                      # noqa: BLE001
+                    pass
+                _f.write(json.dumps(_rec, ensure_ascii=False) + "\n")
         except Exception as _exc:                                  # noqa: BLE001
             self._idle_error = "cog-debug:%s: %s" % (type(_exc).__name__, _exc)
 
@@ -699,6 +741,22 @@ class Pipeline:
              engaged: bool | None = None, *, input_origin: dict | None = None) -> TurnResult:
         from input_provenance import normalize
         self._input_origin = normalize(input_origin, raw, topic_id)
+        # ★ 2026-10-31：这些必须在 **turn() 的最开头**算 ——
+        #   `_arbitrate_focus` 与 `_build_frame` 都要读它们。
+        #   ⚠️ 上一版把它们错放进了 `_prev_thoughts()`（一个被调用的辅助函数），
+        #      于是 `_he_is_asking` 在 `_arbitrate_focus` 之前可能是旧值。
+        self._idle_thought = None
+        self._idle_consumed = None
+        self._turn_seq = getattr(self, "_turn_seq", 0) + 1
+        # ★ 2026-10-31：他最后一句是不是问句（宽口径，见 association.asks_her）
+        #   ⚠️ 在 turn 最开头算，因为 `_arbitrate_focus` 要用它决定 idle 能不能上位。
+        try:
+            from association import asks_her as _asks_her, asks_her_explicitly as _asks_exp
+            self._he_is_asking = bool(_asks_her(raw))
+            self._he_is_asking_explicit = bool(_asks_exp(raw))
+        except Exception:                                          # noqa: BLE001
+            self._he_is_asking = False
+            self._he_is_asking_explicit = False
         self._proposition_reading = None
         self._self_action_pending = None
         self._self_action_attempts = []
@@ -1521,9 +1579,6 @@ class Pipeline:
         #     可线上一条也到不了 Frame。**算法没错，是它被放在了一个每轮都会清空它的地方。**
         #
         #   ⇒ 正确位置：`turn()` 的最开头，且**先清上一轮的，再让这一轮产生新的**。
-        self._idle_thought = None
-        self._idle_consumed = None
-        self._turn_seq = getattr(self, "_turn_seq", 0) + 1
         # ★ 2026-10-30（主线任务 1）：**刚碰了钉子就先收一收** ——
         #   如果上一轮她亮出拉扯后对方收住了（REBUFFED），或探照笃定偏低（< 0.42），
         #   这一轮**不抛空档回想**。有眼色的人不会碰壁之后紧接着翻旧账。
@@ -1755,6 +1810,18 @@ class Pipeline:
                                  if ch is not None else None)
         except Exception:                                          # noqa: BLE001
             _stance = ""
+        # ★ 2026-10-31（主线）：**他问她 ⇒ 第一句必须先接住**。
+        #   ⚠️ 第一版写在 `fr` 上 —— 而 `fr` 在函数末尾才创建，
+        #      那段代码永远抛 NameError 且被外层吞掉（M4 抓到）。
+        #   ⇒ 正确位置：`_stance` 组装完之后。
+        if getattr(self, "_he_is_asking", False):
+            _stance = ((_stance + "\n") if _stance else "") + (
+                "【硬约束·先接住】他最后一句是在问你。"
+                "你这一轮的**第一句必须是直接回答**；"
+                "如果你确实答不了（比如那件事只有他自己知道），"
+                "就如实说「这个我没法确认」。"
+                "**回答完之后**才可以引他以前的原话；"
+                "不许用引旧话代替回答，也不许第一句就是引文。")
         # ★ 2026-10-29（C4）：把跨轮思考算子层产出的观察送进简报。
         #
         #   来源是 `self._pending_thought`（由 `turn()` 在认知层跑完后挂上，
@@ -1853,11 +1920,25 @@ class Pipeline:
             journal_note = "｜反馈记录降级：" + type(exc).__name__
         if sp.rendered and sp.text:
             self._last_response_mode = "brain"
-            return sp.text, "L0':大脑作答%s（%s）" % (("·" + tag) if tag else "",
-                                                     (sp.reason or "")[:40]) + journal_note + "｜尝试=" + json.dumps(getattr(self.thinker, "last_attempts", []), ensure_ascii=False)
+            return sp.text, "L0':大脑作答%s（%s）" % (
+                ("·" + tag) if tag else "", (sp.reason or "")[:40]) + journal_note
         detail = ("；".join(sp.violations or []) or (sp.reason or "")) + journal_note
+        # ★ 2026-10-31（用户要求「失败分类落盘」）
+        try:
+            from association import classify_failure, failure_detail
+            _att = getattr(self.thinker, "last_attempts", []) or []
+            _etypes = [a.get("error_type") for a in _att if a.get("error_type")]
+            _viols = [str(x) for a in _att for x in (a.get("violations") or [])]
+            _kind = classify_failure(_etypes[0] if _etypes else "", _viols, sp.reason or "")
+            _desc = failure_detail(_etypes[0] if _etypes else "", _viols, sp.reason or "")
+            self._cog_debug({"kind": "brain", "turn": getattr(self, "_turn_seq", 0),
+                             "mode": "template", "fail_class": _kind,
+                             "fail_detail": _desc, "error_types": _etypes,
+                             "violations": _viols[:3], "attempts": len(_att),
+                             "retry_log": []})
+        except Exception as _exc:                          # noqa: BLE001
+            self._idle_error = "fail-classify:%s: %s" % (type(_exc).__name__, _exc)
         return fallback, "L0':大脑作答退回（%s）" % detail[:160] + "｜尝试=" + json.dumps(getattr(self.thinker, "last_attempts", []), ensure_ascii=False)
-
     # ------------------------------------------------------------ 内部
 
 

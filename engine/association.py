@@ -523,3 +523,211 @@ if __name__ == "__main__":
     for l in a.noticed_about_user():
         print("     · %s" % l)
     print("═" * 78)
+
+
+# ══════════════ 大脑作答失败的分类（2026-10-30，用户要求「失败分类落盘」）
+#
+# 用户裁定（甲方决定）：
+#   C 类（自身代码异常）**必须 0 次才算通过**；同一批出现 2 次以上，实测自动中止并报警。
+#   A 类重试后仍失败的轮，列出次数和原因，不设硬指标。
+#   B 类按原因列出，不设上限。
+#
+# ⚠️ 为什么要分类而不是只数次数：
+#   36 轮实测里 3 次失败**原因各不相同**，而它们指向**完全不同的修法**：
+#     A 网络/超时  ⇒ 重试就行，系统其实是健康的
+#     B 校验打回    ⇒ 模型说了不该说的，校验意见本身是可用信息
+#     C 系统异常    ⇒ **不是模型的问题，是我们的 bug**，重试毫无意义
+
+#: A 类：可重试的过程错误（与内容无关）
+FAIL_TRANSIENT = (
+    "HTTPError", "URLError", "TimeoutError", "Timeout", "ConnectionError",
+    "ConnectionResetError", "ConnectionAbortedError", "RemoteDisconnected",
+    "socket", "SSLError", "APIError", "RateLimitError", "ServiceUnavailable",
+)
+
+#: C 类：**我们自己代码的异常**（重试只是把同一个 bug 再跑一遍）
+FAIL_INTERNAL = (
+    "ValueError", "KeyError", "AttributeError", "TypeError", "IndexError",
+    "NameError", "UnboundLocalError", "ZeroDivisionError", "AssertionError",
+)
+
+
+def classify_failure(error_type: str = "", violations=None, reason: str = "") -> str:
+    """把一次大脑作答失败分成 `"A"` / `"B"` / `"C"` / `""`（没失败）。
+
+    ★ 判据优先级：**C 先于 A 先于 B**。
+      因为一个异常（`ValueError` 等）一定是内部 bug，
+      哪怕它的名字里也带 "Error" —— 不能因为 `ValueError` 含 "Error" 就误判成网络错误。
+    """
+    et = (error_type or "").strip()
+    if et:
+        for k in FAIL_INTERNAL:
+            if et == k or et.endswith(k) and k in FAIL_INTERNAL:
+                return "C"
+        for k in FAIL_TRANSIENT:
+            if k.lower() in et.lower():
+                return "A"
+        # 其余异常：保守归 C（"我们的代码出了问题"），因为不可归因的异常不该当网络抖动
+        return "C"
+    if violations or (reason or "").strip():
+        return "B"
+    return ""
+
+
+def failure_detail(error_type: str = "", violations=None, reason: str = "") -> str:
+    """给日志用的一句话归因（不含内部词 —— 内部词只进日志，不进她的嘴）。"""
+    kind = classify_failure(error_type, violations, reason)
+    if kind == "A":
+        return "网络/超时：%s" % (error_type or "?")
+    if kind == "C":
+        return "系统异常：%s" % (error_type or "?")
+    if kind == "B":
+        v = list(violations or [])
+        return "校验打回：%s" % ("；".join(str(x) for x in v[:2])[:120] or (reason or "")[:120])
+    return ""
+
+
+#: 校验意见里的**内部词** —— 这些只能进日志，**绝不能原样给她**
+#  （用户明确要求；轮 33 她把提示词结构说出口就是前车之鉴）
+_INTERNAL_TERMS = (
+    "memory_scope", "record_absence_verified", "source_hashes", "evidence_basis",
+    "goal_selection", "self_state", "frame", "Frame", "cognition", "claim", "Claim",
+    "violations", "REJECT", "UNKNOWN", "origin", "schema", "trace", "traceable",
+    "own_task", "memory_scope", "independent_semantics_verified",
+)
+
+#: 把内部词改写成的**普通要求**（她读到的是这些，不是那些）
+_PLAIN_RULES = (
+    ("memory_scope", "你手上的记录不完整"),
+    ("record_absence_verified", "没有核对过「这件事不存在」"),
+    ("claim", "他话里的具体内容"),
+    ("REJECT", "这一句不合格"),
+    ("UNKNOWN", "这一句不合格"),
+)
+
+
+def plain_violation_text(reason: str = "", violations=None, limit: int = 120) -> str:
+    """把校验意见改写成**一句她读得懂的普通要求**。
+
+    ★ 2026-10-30（用户要求）：
+      「校验意见里的内部词（memory_scope、record_absence_verified 等）
+        不要原样给她，改写成一句普通要求。」
+
+    ⚠️ 为什么这一步不能省：**她读到内部词就会把它们说出口。**
+      轮 33 她说过「我说的不是你原话里的『往死里逼自己』和『熬了仨月』」——
+      那是把我的简报结构复述了一遍。同一个病，在失败重试这条路上会更容易犯，
+      因为**重试时她唯一的输入就是那句意见**。
+    """
+    raw = "；".join(str(x) for x in (violations or [])) or (reason or "")
+    if not raw:
+        return ""
+    out = raw
+    for k, v in _PLAIN_RULES:
+        out = out.replace(k, v)
+    # 剩下的内部词一律抹掉（不替换成任何东西 —— 宁可少说，不能漏出去）
+    for t in _INTERNAL_TERMS:
+        out = out.replace(t, "")
+    # 收掉由此产生的空括号/多余标点
+    for junk in ("（）", "()", "［］", "[]", "；；", "  "):
+        while junk in out:
+            out = out.replace(junk, "；" if "；" in junk else " ")
+    return out.strip()[:limit]
+
+
+# ══════════════ 「先接住他的问题」与逐字引文的**本地**判定（2026-10-31）
+#
+# 用户裁定（主线）：
+#   「他最后一句向她提问时，回应的第一句必须直接回答，或如实说没法确认；
+#     引旧话只能放在回答之后；这类轮次 idle 不作为本轮焦点。
+#     引号内必须是他原话的逐字片段，本地检查。」
+#
+# ★ 为什么必须是本地判定：
+#   这两件事（"是不是在问她"、"引号里是不是他的原话"）**都能用字面算出来**，
+#   送模型去判既慢又会误判（上一批 9 条打回里至少 1 条半是误判）。
+
+#: 她可能用来"如实说没法确认"的句式（不算回答，但也不算逃避）
+_UNCERTAIN = (
+    "没法确认", "不确定", "说不准", "不知道", "记不清", "没法说",
+    "答不上", "说不上来", "想不起来",
+)
+
+#: 他的问句里出现这些，说明他问的是**她**（而不是在自问）
+_ASKING_ME = (
+    "你", "你说", "你觉得", "你上次", "你刚才", "你那时候", "你也",
+)
+
+
+def _last_sentence(raw: str) -> str:
+    """取他**最后一句**（按句末标点切）。"""
+    t = (raw or "").strip()
+    if not t:
+        return ""
+    parts = [x for x in t.replace("！", "。").replace("!", "。").split("。") if x.strip()]
+    return parts[-1] if parts else t
+
+
+def asks_her(raw: str) -> bool:
+    """他**最后一句**是不是一个问句 —— 是的话，她必须**先接住**。
+
+    ★ 判据（宽口径，全部本地）：最后一句含问号。
+
+    ⚠️ 2026-10-31 第一版我加了"必须含『你』"，当场被两个例子打穿：
+         「越惦记着得早早点睡越睡不着这毛病，是不是就我这样啊？」—— 没有"你"，
+         但显然是问她；而「我是不是又要犯了？」是自语，却也不该被无视。
+       ⇒ 于是改成**宽口径**：只要是问句，就要求"先接住"。
+         因为对她的行为来说，这两种情况**该做的事是同一件**：
+         别绕开它去引旧话。**自语问句她照样可以答"这个我没法替你确认"。**
+
+    ⚠️ 为什么必须看**最后一句**：他可能前面问了一堆、最后一句是陈述，
+      那一轮她该接的是陈述。
+    """
+    seg = _last_sentence(raw)
+    return ("？" in seg) or ("?" in seg)
+
+
+def asks_her_explicitly(raw: str) -> bool:
+    """窄口径：最后一句是问句**且**含第二人称 —— 用于统计，不用于规则。
+
+    ★ 区分这两个口径是为了**如实报数**：
+      "他明确在问她"（含你）与"他在问一个问句"（可能自语）是两件事，
+      混成一个数会让人以为所有问句都是冲她来的。
+    """
+    seg = _last_sentence(raw)
+    if ("？" not in seg) and ("?" not in seg):
+        return False
+    return any(k in seg for k in _ASKING_ME)
+
+
+def quotes_verbatim(text: str, source: str, min_len: int = 2) -> tuple[bool, list[str]]:
+    """她输出里所有「」／『』引号内的片段，是否都是 `source` 的**逐字子串**。
+
+    返回 `(是否全部逐字, 不逐字的片段列表)`。
+
+    ★ 用户裁定：「引号内必须是他原话的逐字片段，本地检查。」
+    ⚠️ 为什么必须查：`unfinished` / `idle` 的 hint 都要求"带引号点出原话"，
+      她就会把原话**缩写**后放进引号（上一批样本 2 把
+      「自己哪儿哪儿都不对」写成「自己不对」放进引号）。
+      那是**改写了别人的话还加引号**，比不引更糟。
+    """
+    import re as _re
+    if not text:
+        return True, []
+    src = source or ""
+
+    def _norm(x: str) -> str:
+        # ⚠️ 去掉**句末标点**再比 —— 否则「甲项目押金由周老师收着。」
+        #   与原文「甲项目押金由周老师收着」对不上，会把合法引用判成改写。
+        #   （test_sequence_pool Q4 就是被这个句号打掉的。）
+        return _re.sub(r"[。，、；！？…—\-"  + "]" + r"\s*$", "", x.strip())
+
+    bad = []
+    for m in _re.finditer(r"[「『]([^」』]{1,80})[」』]", text):
+        frag = m.group(1).strip()
+        if len(frag) < min_len:
+            continue
+        if frag in src:
+            continue
+        if _norm(frag) and _norm(frag) in src:
+            continue
+        bad.append(frag)
+    return (not bad), bad
