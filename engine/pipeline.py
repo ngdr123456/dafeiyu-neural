@@ -1459,8 +1459,17 @@ class Pipeline:
         if self.thinker is not None:
             _last = self._describe_last()
             _txt, _tn = self._think_or_fallback(raw, pr, ren.output, mst=mst, last=_last)
-            if _tn and "退回" not in _tn:
+            # ★ 2026-10-31（兜底修复的真正根因，两处）：
+            #   ① `if _tn and "退回" not in _tn:` —— 只有大脑**没退回**才用 `_txt`，
+            #      于是大脑失败时 `ren.output` 保持模板，`_fallback_line()` 被丢弃。
+            #      ⇒ 现在改成"只要有文本就用"（兜底句要真的说出口）。
+            #   ② 但 `response_mode` **不能**跟着变 —— 它表示"这句话是谁想出来的"。
+            #      兜底句不是大脑想的，标 brain 会让 `self_action` 走到
+            #      `RETURNED_WITHOUT_CHECK_TRACE`，目标核对因此从 MISMATCH 变 UNKNOWN。
+            #      ⇒ mode 只在"大脑真的作答"时标 brain。
+            if _txt:
                 ren.output = _txt
+            if _tn and "退回" not in _tn:
                 response_mode = "brain"
             if _tn:
                 mech_note.append(_tn)
