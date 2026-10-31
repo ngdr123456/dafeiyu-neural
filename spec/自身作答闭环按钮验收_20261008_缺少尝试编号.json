@@ -1,0 +1,104 @@
+{
+  "simulated_api": true,
+  "network_forbidden": true,
+  "actual_exe_button_invoked": true,
+  "bulk_proposal_decision_removed": true,
+  "review_button_retained": true,
+  "default_rounds": "1",
+  "default_session_length": "2",
+  "gate_default_on": true,
+  "turns_added": 0,
+  "ui_turn_count": 0,
+  "status": "已中断",
+  "start_button_state": "normal",
+  "progress": 0,
+  "run_progress": {
+    "turns": 389,
+    "sessions": 75,
+    "rounds": 26,
+    "last_run": "2026-10-08 17:05:02",
+    "seconds": 0.1,
+    "pool": 56,
+    "source": "corpus",
+    "tutor": true,
+    "evals": 0,
+    "growth": {
+      "polarity": {
+        "wanting": 0.208,
+        "liking": 0.929,
+        "patience": 1.0,
+        "structure": 0.035,
+        "tension": 0.038
+      },
+      "milestones": [
+        "我只是把他的话还回去的时候，话多半接得下去。",
+        "我不出声的时候，话多半接得下去。",
+        "我把两边并排放给他看的时候，有时接得下去，有时就停在那儿。",
+        "我问他细节的时候，话多半接得下去。",
+        "我指出哪一部分改不了的时候，话多半接得下去。",
+        "我要求具体的体验的时候，有时接得下去，有时就停在那儿。",
+        "我承认他说的事有分量的时候，话多半接得下去。",
+        "我接住他的收尾的时候，有时接得下去，有时就停在那儿。"
+      ],
+      "pairs": 247,
+      "summary": "极性 {'wanting': 0.208, 'liking': 0.929, 'patience': 1.0, 'structure': 0.035, 'tension': 0.038}｜里程碑 8 条",
+      "updated": false,
+      "skip_reason": "no_new_experience"
+    },
+    "turns_added": 0,
+    "requested_turns": 6,
+    "failure": "turn_failed:KeyError",
+    "failure_diagnostic": {
+      "error_type": "KeyError",
+      "frames": [
+        {
+          "file": "train.py",
+          "line": 449,
+          "function": "run"
+        },
+        {
+          "file": "pipeline.py",
+          "line": 696,
+          "function": "turn"
+        },
+        {
+          "file": "pipeline.py",
+          "line": 854,
+          "function": "_log"
+        },
+        {
+          "file": "self_action.py",
+          "line": 138,
+          "function": "finish"
+        }
+      ]
+    },
+    "gate_perception": true,
+    "gate_observed_in_turn": null,
+    "run_id": "1791450302055179200_46632",
+    "eval_schema": 10,
+    "recovery_policy": "bounded_retry_v1",
+    "strict": true,
+    "tutor_errors": [],
+    "sessions_added": 0,
+    "rounds_added": 0,
+    "sessions_started": 1,
+    "sessions_with_turns": 0,
+    "counter_policy": "completed_dialogue_units_v1",
+    "legacy_zero_turn_corrections": [
+      {
+        "run_id": "1791438341747635500_45572",
+        "sessions_removed": 1,
+        "rounds_removed": 1,
+        "basis": "zero_recorded_turns"
+      }
+    ],
+    "source_fingerprint": "7e7498f0436f2999fb41c8d5c5810784fa09312618537b6ed5d964cb4048bb93",
+    "source_unchanged_during_run": true,
+    "training_complete": false,
+    "outcome": "failed"
+  },
+  "last_notes": [],
+  "error": "{'simulated_api': True, 'network_forbidden': True, 'actual_exe_button_invoked': True, 'bulk_proposal_decision_removed': True, 'review_button_retained': True, 'default_rounds': '1', 'default_session_length': '2', 'gate_default_on': True, 'turns_added': 0, 'ui_turn_count': 0, 'status': '已中断', 'start_button_state': 'normal', 'progress': 0, 'run_progress': {'turns': 389, 'sessions': 75, 'rounds': 26, 'last_run': '2026-10-08 17:05:02', 'seconds': 0.1, 'pool': 56, 'source': 'corpus', 'tutor': True, 'evals': 0, 'growth': {'polarity': {'wanting': 0.208, 'liking': 0.929, 'patience': 1.0, 'structure': 0.035, 'tension': 0.038}, 'milestones': ['我只是把他的话还回去的时候，话多半接得下去。', '我不出声的时候，话多半接得下去。', '我把两边并排放给他看的时候，有时接得下去，有时就停在那儿。', '我问他细节的时候，话多半接得下去。', '我指出哪一部分改不了的时候，话多半接得下去。', '我要求具体的体验的时候，有时接得下去，有时就停在那儿。', '我承认他说的事有分量的时候，话多半接得下去。', '我接住他的收尾的时候，有时接得下去，有时就停在那儿。'], 'pairs': 247, 'summary': \"极性 {'wanting': 0.208, 'liking': 0.929, 'patience': 1.0, 'structure': 0.035, 'tension': 0.038}｜里程碑 8 条\", 'updated': False, 'skip_reason': 'no_new_experience'}, 'turns_added': 0, 'requested_turns': 6, 'failure': 'turn_failed:KeyError', 'failure_diagnostic': {'error_type': 'KeyError', 'frames': [{'file': 'train.py', 'line': 449, 'function': 'run'}, {'file': 'pipeline.py', 'line': 696, 'function': 'turn'}, {'file': 'pipeline.py', 'line': 854, 'function': '_log'}, {'file': 'self_action.py', 'line': 138, 'function': 'finish'}]}, 'gate_perception': True, 'gate_observed_in_turn': None, 'run_id': '1791450302055179200_46632', 'eval_schema': 10, 'recovery_policy': 'bounded_retry_v1', 'strict': True, 'tutor_errors': [], 'sessions_added': 0, 'rounds_added': 0, 'sessions_started': 1, 'sessions_with_turns': 0, 'counter_policy': 'completed_dialogue_units_v1', 'legacy_zero_turn_corrections': [{'run_id': '1791438341747635500_45572', 'sessions_removed': 1, 'rounds_removed': 1, 'basis': 'zero_recorded_turns'}], 'source_fingerprint': '7e7498f0436f2999fb41c8d5c5810784fa09312618537b6ed5d964cb4048bb93', 'source_unchanged_during_run': True, 'training_complete': False, 'outcome': 'failed'}, 'last_notes': []}",
+  "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\22082\\AppData\\Local\\Temp\\ego-click-gfaevzw2\\点击验收副本\\engine\\training_studio.py\", line 2192, in main\n    assert result[\"turns_added\"] == result[\"ui_turn_count\"] == 6, result\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: {'simulated_api': True, 'network_forbidden': True, 'actual_exe_button_invoked': True, 'bulk_proposal_decision_removed': True, 'review_button_retained': True, 'default_rounds': '1', 'default_session_length': '2', 'gate_default_on': True, 'turns_added': 0, 'ui_turn_count': 0, 'status': '已中断', 'start_button_state': 'normal', 'progress': 0, 'run_progress': {'turns': 389, 'sessions': 75, 'rounds': 26, 'last_run': '2026-10-08 17:05:02', 'seconds': 0.1, 'pool': 56, 'source': 'corpus', 'tutor': True, 'evals': 0, 'growth': {'polarity': {'wanting': 0.208, 'liking': 0.929, 'patience': 1.0, 'structure': 0.035, 'tension': 0.038}, 'milestones': ['我只是把他的话还回去的时候，话多半接得下去。', '我不出声的时候，话多半接得下去。', '我把两边并排放给他看的时候，有时接得下去，有时就停在那儿。', '我问他细节的时候，话多半接得下去。', '我指出哪一部分改不了的时候，话多半接得下去。', '我要求具体的体验的时候，有时接得下去，有时就停在那儿。', '我承认他说的事有分量的时候，话多半接得下去。', '我接住他的收尾的时候，有时接得下去，有时就停在那儿。'], 'pairs': 247, 'summary': \"极性 {'wanting': 0.208, 'liking': 0.929, 'patience': 1.0, 'structure': 0.035, 'tension': 0.038}｜里程碑 8 条\", 'updated': False, 'skip_reason': 'no_new_experience'}, 'turns_added': 0, 'requested_turns': 6, 'failure': 'turn_failed:KeyError', 'failure_diagnostic': {'error_type': 'KeyError', 'frames': [{'file': 'train.py', 'line': 449, 'function': 'run'}, {'file': 'pipeline.py', 'line': 696, 'function': 'turn'}, {'file': 'pipeline.py', 'line': 854, 'function': '_log'}, {'file': 'self_action.py', 'line': 138, 'function': 'finish'}]}, 'gate_perception': True, 'gate_observed_in_turn': None, 'run_id': '1791450302055179200_46632', 'eval_schema': 10, 'recovery_policy': 'bounded_retry_v1', 'strict': True, 'tutor_errors': [], 'sessions_added': 0, 'rounds_added': 0, 'sessions_started': 1, 'sessions_with_turns': 0, 'counter_policy': 'completed_dialogue_units_v1', 'legacy_zero_turn_corrections': [{'run_id': '1791438341747635500_45572', 'sessions_removed': 1, 'rounds_removed': 1, 'basis': 'zero_recorded_turns'}], 'source_fingerprint': '7e7498f0436f2999fb41c8d5c5810784fa09312618537b6ed5d964cb4048bb93', 'source_unchanged_during_run': True, 'training_complete': False, 'outcome': 'failed'}, 'last_notes': []}\n"
+}

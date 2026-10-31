@@ -1,0 +1,90 @@
+{
+  "simulated_api": true,
+  "network_forbidden": true,
+  "actual_exe_button_invoked": true,
+  "bulk_proposal_decision_removed": true,
+  "review_button_retained": true,
+  "default_rounds": "1",
+  "default_session_length": "2",
+  "gate_default_on": true,
+  "turns_added": 6,
+  "ui_turn_count": 6,
+  "status": "完成",
+  "start_button_state": "normal",
+  "progress": 100,
+  "run_progress": {
+    "turns": 395,
+    "sessions": 78,
+    "rounds": 27,
+    "last_run": "2026-10-08 17:06:56",
+    "seconds": 0.3,
+    "pool": 56,
+    "source": "corpus",
+    "tutor": true,
+    "evals": 6,
+    "growth": {
+      "polarity": {
+        "wanting": 0.187,
+        "liking": 0.862,
+        "patience": 1.0,
+        "structure": 0.095,
+        "tension": 0.158
+      },
+      "milestones": [
+        "我只是把他的话还回去的时候，话多半接得下去。",
+        "我不出声的时候，话多半接得下去。",
+        "我把两边并排放给他看的时候，有时接得下去，有时就停在那儿。",
+        "我问他细节的时候，话多半接得下去。",
+        "我指出哪一部分改不了的时候，话多半接得下去。",
+        "我要求具体的体验的时候，有时接得下去，有时就停在那儿。",
+        "我承认他说的事有分量的时候，话多半接得下去。",
+        "我接住他的收尾的时候，有时接得下去，有时就停在那儿。"
+      ],
+      "pairs": 253,
+      "summary": "极性 {'wanting': 0.187, 'liking': 0.862, 'patience': 1.0, 'structure': 0.095, 'tension': 0.158}｜里程碑 8 条"
+    },
+    "turns_added": 6,
+    "requested_turns": 6,
+    "failure": null,
+    "failure_diagnostic": null,
+    "gate_perception": true,
+    "gate_observed_in_turn": true,
+    "run_id": "1791450416275782300_51188",
+    "eval_schema": 10,
+    "recovery_policy": "bounded_retry_v1",
+    "strict": true,
+    "tutor_errors": [],
+    "sessions_added": 3,
+    "rounds_added": 1,
+    "sessions_started": 3,
+    "sessions_with_turns": 3,
+    "counter_policy": "completed_dialogue_units_v1",
+    "legacy_zero_turn_corrections": [
+      {
+        "run_id": "1791438341747635500_45572",
+        "sessions_removed": 1,
+        "rounds_removed": 1,
+        "basis": "zero_recorded_turns"
+      }
+    ],
+    "source_fingerprint": "f458808d59ced918f8bccefba120692fb9e8d3e534ebfc15403d8958e9a3af5e",
+    "source_unchanged_during_run": true,
+    "training_complete": true,
+    "outcome": "completed"
+  },
+  "last_notes": [
+    "无标记命中：按【废纸篓类别】记于遵奉水平 [E]",
+    "dopamine_line=None",
+    "frankl_line=None",
+    "underdetermined：本轮不含任何水平证据，**不注入任何水平权重**；对外若被迫归类，才按【废纸篓类别】记于遵奉水平 [E]（修正：原先此处按 I-3 证据累积，会让零证据轮次压过真实证据）",
+    "本轮无水平证据 → **不计入固化阈值 A**（固化需要观察到行为，而非观察的缺席）",
+    "underdetermined → 遵奉水平兜底 [E]，本通道仅供记录",
+    "阶梯无显式规则（只能复述）→ 采纳机制状态的动作：ASKABLE（张力已起、人还在讲、有话可问（问细节））",
+    "机制依据：[M] 『生命对每个人都提出了问题，他必须通过对自己生命的理解来回答生命的提问。』——想听懂那个问题，就该问它具体是什么样。",
+    "A2 自我未介入（当前可行使：R1）",
+    "L0':大脑作答（offline_fixture）｜尝试=[{\"accepted\": true, \"source\": \"offline_fixture\"}]",
+    "实际动作={\"schema\": 1, \"planned\": \"ASK_DETAIL\", \"actual\": \"QUESTION\", \"mode\": \"brain\", \"basis\": \"one_literal_question_not_detail_classification\", \"confirmed\": true}",
+    "本轮无任何标记命中 → 按【废纸篓类别】记于遵奉水平 [E]"
+  ],
+  "real_state_files_unchanged": 37
+}

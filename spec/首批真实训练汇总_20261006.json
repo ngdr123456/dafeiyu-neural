@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "run_reports": [
+    "C:\\Users\\22082\\Desktop\\DEPSK\\books\\ego-dialogue\\spec\\首批真实训练验收_20261006_170247.json",
+    "C:\\Users\\22082\\Desktop\\DEPSK\\books\\ego-dialogue\\spec\\首批真实训练验收_20261006_170956.json"
+  ],
+  "requested_total_turns": 6,
+  "recorded_turns": 5,
+  "completed_clean_turns": 3,
+  "all_observed_api_readings_ok": true,
+  "successful_tutor_evaluations": 4,
+  "failed_tutor_evaluations": 1,
+  "brain_fallback_turns": 1,
+  "provenance_all_tutor_generated": true,
+  "topic_ids": [
+    "T22",
+    "T23",
+    "T32"
+  ],
+  "semantic_topic_independence_verified": false,
+  "independent_human_input_verified": false,
+  "independent_semantic_review_verified": false,
+  "acceptance_passed": false,
+  "stop_reasons": [
+    "unparseable_tutor_evaluation",
+    "nonliteral_quotation_rejected"
+  ],
+  "next_training_turns_run": false,
+  "historical_training_ledger_prefix_unchanged": true,
+  "historical_evaluation_prefix_unchanged": true,
+  "interactive_ledger_unchanged": true,
+  "legacy_archive_unchanged": true,
+  "training_ledger_rows_before": 376,
+  "training_ledger_rows_after": 381,
+  "evaluation_rows_before": 186,
+  "evaluation_rows_after": 191,
+  "progress_before": 360,
+  "progress_after": 365,
+  "development": {
+    "before_level": "I-3",
+    "after_level": "I-3",
+    "before_equilibration": 0,
+    "after_equilibration": 0
+  },
+  "new_relation_memory_exists": false,
+  "new_behavior_memory_exists": false,
+  "verification_note": "Concurrent verification encountered the authorized live writer; final offline verification is run after training stops. The guard remains unchanged.",
+  "final_offline_verification": {
+    "regression_script_runs": 62,
+    "failures": 0,
+    "mutations_caught": 6,
+    "state_files_unchanged": 36,
+    "report": "C:\\Users\\22082\\Desktop\\DEPSK\\books\\ego-dialogue\\spec\\训练准备验证_20261006.json"
+  }
+}

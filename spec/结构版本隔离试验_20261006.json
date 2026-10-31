@@ -1,0 +1,541 @@
+{
+  "simulated": true,
+  "independent_observer": false,
+  "state_files_unchanged": 36,
+  "development_credit": 0,
+  "formed": {
+    "schema": 1,
+    "kind": "local_relation_structure_evidence",
+    "contexts": {
+      "70d8e32099fcad03d4cc506a": {
+        "marker": "blame_external",
+        "markers": [
+          "cue=不要说",
+          "cue_distance=near",
+          "punctuation_after_cue=True",
+          "quoted=False",
+          "sentence_end_after_cue=False",
+          "turn_after_cue=False"
+        ],
+        "offered": "UNKNOWN",
+        "representation": "literal_scope_relations_v2",
+        "offline": true
+      }
+    },
+    "versions": [
+      {
+        "version": 0,
+        "fingerprint": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "mapping": {},
+        "created_at_case": 0,
+        "formation_inputs": [],
+        "origin": "oldest_observed_snapshot"
+      },
+      {
+        "version": 1,
+        "fingerprint": "0e404ebbbb58935d395b7b50f69c1dfd89d7034cf1471e98904eec6ab6bed3e0",
+        "mapping": {
+          "70d8e32099fcad03d4cc506a": "PROHIBITED"
+        },
+        "created_at_case": 5,
+        "formation_inputs": [
+          "127d4c97fb7074d86e232121d6ba0cd1e97736b943919aae888d4bec1dfdda01",
+          "529362b0defcf2d82c143ddeb71977ed9c778e954acfc912483a810c6649ba44",
+          "68384c5802660eea5fa89ad7cbe239e59e044d494c5a6d464ca930a46019c68e",
+          "a6d3014b941da364f6e1d5234ce623ac5a94202b6cff0312835d7b7236704098",
+          "d9cfae61fe189764b5078d2b14a3bf462e7ccf2d2df7ca6663c6013994e2c4cf"
+        ],
+        "origin": "relation_activation_or_withdrawal",
+        "cause": {
+          "seq": 5,
+          "sid": "70d8e32099fcad03d4cc506a",
+          "raw_sha256": "127d4c97fb7074d86e232121d6ba0cd1e97736b943919aae888d4bec1dfdda01",
+          "span": [
+            4,
+            8
+          ],
+          "literal_evidence": "都是他们",
+          "role": "PROHIBITED",
+          "source": "offline_fixture",
+          "observer": "current_AI_fixture_author",
+          "topic_id": "formation",
+          "turn": 1
+        }
+      }
+    ],
+    "case_count": 5,
+    "comparisons": [
+      {
+        "old_version": 0,
+        "new_version": 1,
+        "old_fingerprint": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "new_fingerprint": "0e404ebbbb58935d395b7b50f69c1dfd89d7034cf1471e98904eec6ab6bed3e0",
+        "future": [],
+        "retention": [],
+        "improvements": 0,
+        "future_input_count": 0,
+        "losses": 0,
+        "topic_ids": [],
+        "cross_topic_labels_observed": false,
+        "observers": [],
+        "source_declarations": [],
+        "independent_semantic_review_verified": false,
+        "verdict": "no_future_evidence",
+        "development_credit": 0
+      }
+    ],
+    "development_credit": 0
+  },
+  "later_examples": {
+    "schema": 1,
+    "kind": "local_relation_structure_evidence",
+    "contexts": {
+      "70d8e32099fcad03d4cc506a": {
+        "marker": "blame_external",
+        "markers": [
+          "cue=不要说",
+          "cue_distance=near",
+          "punctuation_after_cue=True",
+          "quoted=False",
+          "sentence_end_after_cue=False",
+          "turn_after_cue=False"
+        ],
+        "offered": "UNKNOWN",
+        "representation": "literal_scope_relations_v2",
+        "offline": true
+      }
+    },
+    "versions": [
+      {
+        "version": 0,
+        "fingerprint": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "mapping": {},
+        "created_at_case": 0,
+        "formation_inputs": [],
+        "origin": "oldest_observed_snapshot"
+      },
+      {
+        "version": 1,
+        "fingerprint": "0e404ebbbb58935d395b7b50f69c1dfd89d7034cf1471e98904eec6ab6bed3e0",
+        "mapping": {
+          "70d8e32099fcad03d4cc506a": "PROHIBITED"
+        },
+        "created_at_case": 5,
+        "formation_inputs": [
+          "127d4c97fb7074d86e232121d6ba0cd1e97736b943919aae888d4bec1dfdda01",
+          "529362b0defcf2d82c143ddeb71977ed9c778e954acfc912483a810c6649ba44",
+          "68384c5802660eea5fa89ad7cbe239e59e044d494c5a6d464ca930a46019c68e",
+          "a6d3014b941da364f6e1d5234ce623ac5a94202b6cff0312835d7b7236704098",
+          "d9cfae61fe189764b5078d2b14a3bf462e7ccf2d2df7ca6663c6013994e2c4cf"
+        ],
+        "origin": "relation_activation_or_withdrawal",
+        "cause": {
+          "seq": 5,
+          "sid": "70d8e32099fcad03d4cc506a",
+          "raw_sha256": "127d4c97fb7074d86e232121d6ba0cd1e97736b943919aae888d4bec1dfdda01",
+          "span": [
+            4,
+            8
+          ],
+          "literal_evidence": "都是他们",
+          "role": "PROHIBITED",
+          "source": "offline_fixture",
+          "observer": "current_AI_fixture_author",
+          "topic_id": "formation",
+          "turn": 1
+        }
+      }
+    ],
+    "case_count": 7,
+    "comparisons": [
+      {
+        "old_version": 0,
+        "new_version": 1,
+        "old_fingerprint": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "new_fingerprint": "0e404ebbbb58935d395b7b50f69c1dfd89d7034cf1471e98904eec6ab6bed3e0",
+        "future": [
+          {
+            "seq": 6,
+            "sid": "70d8e32099fcad03d4cc506a",
+            "raw_sha256": "a150e7f8d279ba47febc939722590c8e4400a55434bb0941602b21c6b4982324",
+            "span": [
+              4,
+              8
+            ],
+            "literal_evidence": "都是他们",
+            "role": "PROHIBITED",
+            "source": "offline_fixture",
+            "observer": "current_AI_fixture_author",
+            "topic_id": "T01",
+            "turn": 1,
+            "old_prediction": "UNKNOWN",
+            "new_prediction": "PROHIBITED",
+            "improved": true,
+            "regression": false,
+            "contradicted": false
+          },
+          {
+            "seq": 7,
+            "sid": "70d8e32099fcad03d4cc506a",
+            "raw_sha256": "cbca3708804673fe021f1a3e556f1496f944273dda64c83770b7c250eeb3d433",
+            "span": [
+              4,
+              8
+            ],
+            "literal_evidence": "都是他们",
+            "role": "PROHIBITED",
+            "source": "offline_fixture",
+            "observer": "current_AI_fixture_author",
+            "topic_id": "T02",
+            "turn": 1,
+            "old_prediction": "UNKNOWN",
+            "new_prediction": "PROHIBITED",
+            "improved": true,
+            "regression": false,
+            "contradicted": false
+          }
+        ],
+        "retention": [],
+        "improvements": 2,
+        "future_input_count": 2,
+        "losses": 0,
+        "topic_ids": [
+          "T01",
+          "T02"
+        ],
+        "cross_topic_labels_observed": true,
+        "observers": [
+          "current_AI_fixture_author"
+        ],
+        "source_declarations": [
+          "offline_fixture"
+        ],
+        "independent_semantic_review_verified": false,
+        "verdict": "local_transfer_observed",
+        "development_credit": 0
+      }
+    ],
+    "development_credit": 0
+  },
+  "contradicted": {
+    "schema": 1,
+    "kind": "local_relation_structure_evidence",
+    "contexts": {
+      "70d8e32099fcad03d4cc506a": {
+        "marker": "blame_external",
+        "markers": [
+          "cue=不要说",
+          "cue_distance=near",
+          "punctuation_after_cue=True",
+          "quoted=False",
+          "sentence_end_after_cue=False",
+          "turn_after_cue=False"
+        ],
+        "offered": "UNKNOWN",
+        "representation": "literal_scope_relations_v2",
+        "offline": true
+      }
+    },
+    "versions": [
+      {
+        "version": 0,
+        "fingerprint": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "mapping": {},
+        "created_at_case": 0,
+        "formation_inputs": [],
+        "origin": "oldest_observed_snapshot"
+      },
+      {
+        "version": 1,
+        "fingerprint": "0e404ebbbb58935d395b7b50f69c1dfd89d7034cf1471e98904eec6ab6bed3e0",
+        "mapping": {
+          "70d8e32099fcad03d4cc506a": "PROHIBITED"
+        },
+        "created_at_case": 5,
+        "formation_inputs": [
+          "127d4c97fb7074d86e232121d6ba0cd1e97736b943919aae888d4bec1dfdda01",
+          "529362b0defcf2d82c143ddeb71977ed9c778e954acfc912483a810c6649ba44",
+          "68384c5802660eea5fa89ad7cbe239e59e044d494c5a6d464ca930a46019c68e",
+          "a6d3014b941da364f6e1d5234ce623ac5a94202b6cff0312835d7b7236704098",
+          "d9cfae61fe189764b5078d2b14a3bf462e7ccf2d2df7ca6663c6013994e2c4cf"
+        ],
+        "origin": "relation_activation_or_withdrawal",
+        "cause": {
+          "seq": 5,
+          "sid": "70d8e32099fcad03d4cc506a",
+          "raw_sha256": "127d4c97fb7074d86e232121d6ba0cd1e97736b943919aae888d4bec1dfdda01",
+          "span": [
+            4,
+            8
+          ],
+          "literal_evidence": "都是他们",
+          "role": "PROHIBITED",
+          "source": "offline_fixture",
+          "observer": "current_AI_fixture_author",
+          "topic_id": "formation",
+          "turn": 1
+        }
+      },
+      {
+        "version": 2,
+        "fingerprint": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "mapping": {},
+        "created_at_case": 8,
+        "formation_inputs": [
+          "127d4c97fb7074d86e232121d6ba0cd1e97736b943919aae888d4bec1dfdda01",
+          "455403cee5e75557fff71378a5e049c6b625bfe8a8e599b95c25283a513e5fa1",
+          "529362b0defcf2d82c143ddeb71977ed9c778e954acfc912483a810c6649ba44",
+          "68384c5802660eea5fa89ad7cbe239e59e044d494c5a6d464ca930a46019c68e",
+          "a150e7f8d279ba47febc939722590c8e4400a55434bb0941602b21c6b4982324",
+          "a6d3014b941da364f6e1d5234ce623ac5a94202b6cff0312835d7b7236704098",
+          "cbca3708804673fe021f1a3e556f1496f944273dda64c83770b7c250eeb3d433",
+          "d9cfae61fe189764b5078d2b14a3bf462e7ccf2d2df7ca6663c6013994e2c4cf"
+        ],
+        "origin": "relation_activation_or_withdrawal",
+        "cause": {
+          "seq": 8,
+          "sid": "70d8e32099fcad03d4cc506a",
+          "raw_sha256": "455403cee5e75557fff71378a5e049c6b625bfe8a8e599b95c25283a513e5fa1",
+          "span": [
+            4,
+            8
+          ],
+          "literal_evidence": "都是他们",
+          "role": "ASSERTED",
+          "source": "offline_fixture",
+          "observer": "current_AI_fixture_author",
+          "topic_id": "T03",
+          "turn": 1
+        }
+      }
+    ],
+    "case_count": 8,
+    "comparisons": [
+      {
+        "old_version": 0,
+        "new_version": 1,
+        "old_fingerprint": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "new_fingerprint": "0e404ebbbb58935d395b7b50f69c1dfd89d7034cf1471e98904eec6ab6bed3e0",
+        "future": [
+          {
+            "seq": 6,
+            "sid": "70d8e32099fcad03d4cc506a",
+            "raw_sha256": "a150e7f8d279ba47febc939722590c8e4400a55434bb0941602b21c6b4982324",
+            "span": [
+              4,
+              8
+            ],
+            "literal_evidence": "都是他们",
+            "role": "PROHIBITED",
+            "source": "offline_fixture",
+            "observer": "current_AI_fixture_author",
+            "topic_id": "T01",
+            "turn": 1,
+            "old_prediction": "UNKNOWN",
+            "new_prediction": "PROHIBITED",
+            "improved": true,
+            "regression": false,
+            "contradicted": false
+          },
+          {
+            "seq": 7,
+            "sid": "70d8e32099fcad03d4cc506a",
+            "raw_sha256": "cbca3708804673fe021f1a3e556f1496f944273dda64c83770b7c250eeb3d433",
+            "span": [
+              4,
+              8
+            ],
+            "literal_evidence": "都是他们",
+            "role": "PROHIBITED",
+            "source": "offline_fixture",
+            "observer": "current_AI_fixture_author",
+            "topic_id": "T02",
+            "turn": 1,
+            "old_prediction": "UNKNOWN",
+            "new_prediction": "PROHIBITED",
+            "improved": true,
+            "regression": false,
+            "contradicted": false
+          },
+          {
+            "seq": 8,
+            "sid": "70d8e32099fcad03d4cc506a",
+            "raw_sha256": "455403cee5e75557fff71378a5e049c6b625bfe8a8e599b95c25283a513e5fa1",
+            "span": [
+              4,
+              8
+            ],
+            "literal_evidence": "都是他们",
+            "role": "ASSERTED",
+            "source": "offline_fixture",
+            "observer": "current_AI_fixture_author",
+            "topic_id": "T03",
+            "turn": 1,
+            "old_prediction": "UNKNOWN",
+            "new_prediction": "PROHIBITED",
+            "improved": false,
+            "regression": false,
+            "contradicted": true
+          }
+        ],
+        "retention": [],
+        "improvements": 2,
+        "future_input_count": 3,
+        "losses": 1,
+        "topic_ids": [
+          "T01",
+          "T02"
+        ],
+        "cross_topic_labels_observed": true,
+        "observers": [
+          "current_AI_fixture_author"
+        ],
+        "source_declarations": [
+          "offline_fixture"
+        ],
+        "independent_semantic_review_verified": false,
+        "verdict": "counterevidence",
+        "development_credit": 0
+      },
+      {
+        "old_version": 1,
+        "new_version": 2,
+        "old_fingerprint": "0e404ebbbb58935d395b7b50f69c1dfd89d7034cf1471e98904eec6ab6bed3e0",
+        "new_fingerprint": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "future": [],
+        "retention": [
+          {
+            "seq": 1,
+            "sid": "70d8e32099fcad03d4cc506a",
+            "raw_sha256": "68384c5802660eea5fa89ad7cbe239e59e044d494c5a6d464ca930a46019c68e",
+            "span": [
+              4,
+              8
+            ],
+            "literal_evidence": "都是他们",
+            "role": "PROHIBITED",
+            "source": "offline_fixture",
+            "observer": "current_AI_fixture_author",
+            "topic_id": "formation",
+            "turn": 1,
+            "new_prediction": "UNKNOWN",
+            "retained": false
+          },
+          {
+            "seq": 2,
+            "sid": "70d8e32099fcad03d4cc506a",
+            "raw_sha256": "529362b0defcf2d82c143ddeb71977ed9c778e954acfc912483a810c6649ba44",
+            "span": [
+              4,
+              8
+            ],
+            "literal_evidence": "都是他们",
+            "role": "PROHIBITED",
+            "source": "offline_fixture",
+            "observer": "current_AI_fixture_author",
+            "topic_id": "formation",
+            "turn": 1,
+            "new_prediction": "UNKNOWN",
+            "retained": false
+          },
+          {
+            "seq": 3,
+            "sid": "70d8e32099fcad03d4cc506a",
+            "raw_sha256": "d9cfae61fe189764b5078d2b14a3bf462e7ccf2d2df7ca6663c6013994e2c4cf",
+            "span": [
+              4,
+              8
+            ],
+            "literal_evidence": "都是他们",
+            "role": "PROHIBITED",
+            "source": "offline_fixture",
+            "observer": "current_AI_fixture_author",
+            "topic_id": "formation",
+            "turn": 1,
+            "new_prediction": "UNKNOWN",
+            "retained": false
+          },
+          {
+            "seq": 4,
+            "sid": "70d8e32099fcad03d4cc506a",
+            "raw_sha256": "a6d3014b941da364f6e1d5234ce623ac5a94202b6cff0312835d7b7236704098",
+            "span": [
+              4,
+              8
+            ],
+            "literal_evidence": "都是他们",
+            "role": "PROHIBITED",
+            "source": "offline_fixture",
+            "observer": "current_AI_fixture_author",
+            "topic_id": "formation",
+            "turn": 1,
+            "new_prediction": "UNKNOWN",
+            "retained": false
+          },
+          {
+            "seq": 5,
+            "sid": "70d8e32099fcad03d4cc506a",
+            "raw_sha256": "127d4c97fb7074d86e232121d6ba0cd1e97736b943919aae888d4bec1dfdda01",
+            "span": [
+              4,
+              8
+            ],
+            "literal_evidence": "都是他们",
+            "role": "PROHIBITED",
+            "source": "offline_fixture",
+            "observer": "current_AI_fixture_author",
+            "topic_id": "formation",
+            "turn": 1,
+            "new_prediction": "UNKNOWN",
+            "retained": false
+          },
+          {
+            "seq": 6,
+            "sid": "70d8e32099fcad03d4cc506a",
+            "raw_sha256": "a150e7f8d279ba47febc939722590c8e4400a55434bb0941602b21c6b4982324",
+            "span": [
+              4,
+              8
+            ],
+            "literal_evidence": "都是他们",
+            "role": "PROHIBITED",
+            "source": "offline_fixture",
+            "observer": "current_AI_fixture_author",
+            "topic_id": "T01",
+            "turn": 1,
+            "new_prediction": "UNKNOWN",
+            "retained": false
+          },
+          {
+            "seq": 7,
+            "sid": "70d8e32099fcad03d4cc506a",
+            "raw_sha256": "cbca3708804673fe021f1a3e556f1496f944273dda64c83770b7c250eeb3d433",
+            "span": [
+              4,
+              8
+            ],
+            "literal_evidence": "都是他们",
+            "role": "PROHIBITED",
+            "source": "offline_fixture",
+            "observer": "current_AI_fixture_author",
+            "topic_id": "T02",
+            "turn": 1,
+            "new_prediction": "UNKNOWN",
+            "retained": false
+          }
+        ],
+        "improvements": 0,
+        "future_input_count": 0,
+        "losses": 7,
+        "topic_ids": [],
+        "cross_topic_labels_observed": false,
+        "observers": [],
+        "source_declarations": [],
+        "independent_semantic_review_verified": false,
+        "verdict": "counterevidence",
+        "development_credit": 0
+      }
+    ],
+    "development_credit": 0
+  }
+}

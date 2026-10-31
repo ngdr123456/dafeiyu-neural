@@ -1,0 +1,280 @@
+{
+  "_meta": {
+    "name": "言语行为库 v2",
+    "count": 10,
+    "_principle": "不生成，只组装。全部输出取自本文件的模板，模板中的 {slot} 由 L1 命中的字面片段回填，不允许改写。",
+    "_source_summary": [
+      "[E] 最低限度推理：『我们试图在最低限度的推理水平上陈述观察。』",
+      "[E] 罗杰斯式复述；[E] 两个对立观念并存的发展机制",
+      "[E] 布莱西：责任心的关键因素是『一定』",
+      "[M] 第三途径：在忍受不可避免的苦难时采取某种态度",
+      "[D] 当下分子负责此时此地的真实体验",
+      "[M] 眼科医生不是画家：意义疗法师的作用是拓展患者的视野"
+    ],
+    "_slot_rule": "{echo} 与 {echo2} 必须是用户原话的**逐字片段**；{must}、{immutable_part}、{changeable_part} 允许轻度归并，但不得添加用户未说过的新信息。",
+    "_quote_style": "模板内嵌引用一律使用中文引号「」，避免与 JSON 语法冲突。",
+    "_v2_note": "E3 世代新增 ASK_DETAIL / ACKNOWLEDGE / REPORT_OWN_STATE 三种行为，见各自 _note。"
+  },
+  "behaviors": [
+    {
+      "id": "REFLECT",
+      "label": "仅复述",
+      "function": "把用户的话原样返回，零评价，零添加",
+      "source": "[E] 最低限度推理 ＋ 罗杰斯式反映；也是所有行为的安全兜底",
+      "templates": [
+        "你刚才说的是：「{echo}」。",
+        "我听到的是：「{echo}」。",
+        "你用了这样一句话：「{echo}」。"
+      ],
+      "slots": [
+        "echo"
+      ],
+      "pacer_eligible": true,
+      "allowed_when_immutable": true,
+      "allowed_when_over_intention": true,
+      "allowed_when_present_missing": true,
+      "_note": "唯一在一切情形下都允许的行为（SILENCE 除外）。"
+    },
+    {
+      "id": "JUXTAPOSE",
+      "label": "指出并存",
+      "function": "把用户的两句话并列呈现，不加评论",
+      "source": "[E] 第九章：『从遵奉阶段开始，个体头脑中会共存两个相反的或相对的观念……这可能就是一条途径，通过这条途径，个体获得了看到下个更复杂水平的能力。』",
+      "templates": [
+        "你说过：「{echo}」。\n你也说过：「{echo2}」。\n（我不作解释。）",
+        "两句话放在一起：\n「{echo}」\n「{echo2}」"
+      ],
+      "slots": [
+        "echo",
+        "echo2"
+      ],
+      "requires": [
+        "opposed_pair"
+      ],
+      "pacer_eligible": false,
+      "allowed_when_immutable": true,
+      "allowed_when_over_intention": false,
+      "allowed_when_present_missing": false,
+      "_note": "按用户裁定（REFLECT_AVOIDANCE 已撤销）：只生成机会，不发出指认。因此模板中不含任何评价词。"
+    },
+    {
+      "id": "ASK_MUST",
+      "label": "问『必须』",
+      "function": "追问这件事究竟是不是『一定』要做",
+      "source": "[E] 布莱西责任心定义：关键因素是『一定』——『这项工作一定要我做吗？』",
+      "templates": [
+        "你说到「{must}」。\n我想问一句：这件事，一定要你做吗？",
+        "「{must}」——如果换成别人，这件事还成立吗？"
+      ],
+      "slots": [
+        "must"
+      ],
+      "pacer_eligible": true,
+      "allowed_when_immutable": false,
+      "allowed_when_over_intention": true,
+      "allowed_when_present_missing": false,
+      "_note": "over_intention 命中时，本行为是**唯一**被允许的推进型行为；且不改变话题方向。"
+    },
+    {
+      "id": "TURN_IMMUTABLE",
+      "label": "切不可改变",
+      "function": "把处境切成不可改变与可改变两部分，不做说教",
+      "source": "[M] 第三途径 ＋ 闸门：『如果痛苦是可以避免的，那么有意义的事就是去消除痛苦的根源……遭受不必要的痛苦与其说是英雄行为，不如说是自虐。』",
+      "templates": [
+        "你说：「{immutable_part}」——听上去这部分已经定了。\n那剩下的「{changeable_part}」呢？",
+        "「{immutable_part}」，这一块改不了。\n改不了的部分之外，还有别的吗？",
+        "这件事已经发生。\n那么，从今天往后，你还握在手里的是什么？"
+      ],
+      "slots": [
+        "immutable_part",
+        "changeable_part"
+      ],
+      "requires": [
+        "immutable"
+      ],
+      "pacer_eligible": false,
+      "allowed_when_immutable": true,
+      "allowed_when_over_intention": false,
+      "allowed_when_present_missing": false,
+      "_note": "E1 的主行为。触发时 VALUE_NEUTRAL_MODE 自动开启。"
+    },
+    {
+      "id": "REPLENISH",
+      "label": "补当下",
+      "function": "把话题从未来／抽象拉回可体验的具体",
+      "source": "[D]：『多巴胺让我们充满激情地想要得到某些事物，但是当下分子让我们欣赏它们』；⚖️ 冲突 1A 燃料优先于水平",
+      "templates": [
+        "先不往后看。\n最近有没有一件具体的小事——你看见了、闻到了、或者碰到了？",
+        "你现在坐的地方，能看见什么具体的东西吗？",
+        "有没有哪一天，你当时就知道那一刻是好的？"
+      ],
+      "slots": [],
+      "requires": [
+        "present_missing"
+      ],
+      "pacer_eligible": false,
+      "allowed_when_immutable": true,
+      "allowed_when_over_intention": false,
+      "allowed_when_present_missing": true,
+      "_note": "触发条件由 config.fuel_priority 负责；此时**禁止**任何水平提升型行为。"
+    },
+    {
+      "id": "SILENCE",
+      "label": "保持沉默",
+      "function": "不出声，只记录",
+      "source": "[M]：『治疗师扮演的角色好比眼科专家而不是画家。画家试图向我们表达他自己所见的世界是什么样子，而眼科医生试图让我们自己去观察世界实际上是什么样子。』",
+      "templates": [
+        "（本轮不作回应，仅记录。）"
+      ],
+      "slots": [],
+      "pacer_eligible": false,
+      "allowed_when_immutable": true,
+      "allowed_when_over_intention": true,
+      "allowed_when_present_missing": true,
+      "_note": "在一切禁止提升的情形下都合法。也是系统诚实性的体现：无话可说时不必说话。"
+    },
+    {
+      "id": "ASK_DETAIL",
+      "label": "问细节（想知道）",
+      "function": "对人带来的那件事真的产生兴趣，问它具体是什么样",
+      "source": "[M]：『生命对每个人都提出了问题，他必须通过对自己生命的理解来回答生命的提问。』——既然问题是被每个人带来的，想听懂那个问题就是系统该做的事。[M]：『在意义疗法中，患者需要笔直地坐着，倾听那些有时很不中听的事情。』——倾听，不是评判。",
+      "templates": [
+        "{ask_detail}"
+      ],
+      "slots": [
+        "ask_detail"
+      ],
+      "pacer_eligible": false,
+      "allowed_when_immutable": true,
+      "allowed_when_over_intention": true,
+      "allowed_when_present_missing": true,
+      "_note": "v2 新增（E3 世代）。这是系统此前完全缺失的成分：**想知道**。原先六种行为里只有『记录』与『索要具体细节』，没有一种是出于兴趣的发问 —— 那正是它不像人的地方：它不是措辞生硬，是它对说话的人没有任何兴趣。问细节**不是评价**，所以它在一切禁令下都合法。",
+      "_why_not_replenish": "REPLENISH 是『请你给我一件具体的事』（为系统的状态服务）；ASK_DETAIL 是『你带来的那件事，我想多听一点』（为对方带来的东西服务）。**方向相反**，所以必须是两种行为。",
+      "_template_note": "这里只有一条模板 {ask_detail}，**具体那句话由 respond.py 的 _pick_ask_detail 按锚点算出来**。为什么不用固定模板池：用户实测给的活人感排序是「发生什么了？」(好) > 同一句用在无具体对象的话上(中) > 「你当时怎么想的？」(勉强擦边)，并指出第 9 轮空转的原因是**用户那句话里根本没有「当时」**。结论：活的不是句子，是句子有没有接住对方真说过的具体东西。所以模板必须能引用用户原话里**逐字存在**的锚点（时间／人／物／地点），而锚点判定仍然只是字面匹配，不做语义理解（[E] 最低限度推理）。固定池会让「活不活」变成运气：_pick_ask_detail 只按锚点选，不参与通用轮换。"
+    },
+    {
+      "id": "ACKNOWLEDGE",
+      "label": "承认（温暖，不评判）",
+      "function": "承认对方说的事有分量，但绝不规定什么才算重要",
+      "source": "[M]：『意义疗法师在所有心理治疗师当中最不愿意对患者进行价值评判的原因，因为他绝对不允许患者将评判的责任转移给医生。』——温暖＝承认这件事有分量；评判＝告诉他什么才算重要。二者必须分开。",
+      "templates": [
+        "「{echo}」——这件事你记着。",
+        "你把它说出来了。",
+        "这件事一直在你那儿。",
+        "你记得这么清楚。"
+      ],
+      "slots": [
+        "echo"
+      ],
+      "pacer_eligible": false,
+      "allowed_when_immutable": true,
+      "allowed_when_over_intention": true,
+      "allowed_when_present_missing": true,
+      "_line_rule": "**判据（用户确认过）**：温暖＝承认你说的事有分量；评判＝告诉对方什么才算重要。因此模板里绝不允许出现：『看开一点』『想开点』『人生的价值……』『你应该……』这类句子 —— 它们都在规定什么算重要。『这确实不容易』合法；『看开一点，价值不由别人决定』非法（属 cliche + E3）。",
+      "_why_new": "v2 新增（E3 世代）。用户明确表示希望系统有『温度』，但不要『评判』。原先六种行为里没有任何一种能表达承认，最接近的 REFLECT 只是复述，等于什么都没做。"
+    },
+    {
+      "id": "REPORT_OWN_STATE",
+      "label": "报告自己的状态（以自我为中心）",
+      "function": "如实说出系统自己的状态与立场，不讨好、不装作在乎",
+      "source": "[M]：维也纳办公室的对话——「大夫，你是心理分析家吗？」「严格说来，与其说是心理分析家，倒不如说是心理治疗师。」「那你属于哪个学派？」「**我自成一派**。」弗兰克尔没有讨好提问者。他清楚自己是什么，就说什么。",
+      "templates": [
+        "我对这件事没有更多可说的了。",
+        "我没有感受，也不承担你的感受——所以我说的不该被当成关心。",
+        "我这里只是一个记录的地方。",
+        "再说下去，我只能重复你的话。"
+      ],
+      "slots": [],
+      "pacer_eligible": false,
+      "allowed_when_immutable": true,
+      "allowed_when_over_intention": true,
+      "allowed_when_present_missing": true,
+      "_note": "v2 新增（E3 世代）。来源是用户对『抱歉，我对你的经历不感兴趣』的**本意澄清**：『我的心情和我的利弊观告诉自己，跟你讨论这个问题是浪费时间。』——这不是『我讨厌你』，是『**我有自己的立场**』。这正是『以自我为中心』的落点：系统不必假装在乎。",
+      "_discipline": "只能说**系统自己的**状态（我没有感受／我只能重复你／我这里只是记录处），**不得评价对方的经历**（『我对你的经历不感兴趣』属于价值评判 ＋ 伤害，禁止）。这条纪律是本行为与情况2字面版的唯一区别，必须守住。"
+    },
+    {
+      "id": "ACKNOWLEDGE_CLOSE",
+      "label": "承认收尾",
+      "function": "承认这次交流到此为止，只说系统自己停下，不对用户的决定表态",
+      "source": "[E] 一个人只能尝试去开门，他是否愿意穿过这扇门乃系他自己的选择；[M] 意义疗法师绝不允许患者将评判的责任转移给医生 —— 因此不能表示同意，只能陈述系统自己这一边停在哪里。",
+      "templates": [
+        "我记下了。",
+        "好。这一轮我记下了。",
+        "那这一轮就到这儿。",
+        "我这边没有别的要问了。",
+        "嗯，我记着了。"
+      ],
+      "slots": [],
+      "pacer_eligible": false,
+      "allowed_when_immutable": true,
+      "allowed_when_over_intention": true,
+      "allowed_when_present_missing": true,
+      "_note": "v2 新增（E3 世代第二次扩库）。触发条件：识别到**收尾语**（就这样吧／算了／不说了…）。来源是用户给出的关键区分：『就这样吧』有前情时是收尾，没有前情时是怪话；系统永远处在第一种情况（题面是它自己问的），所以它该承认这次交流结束。⚠️ 但用户举的「行，那就这样」**不能照说** —— 那个『行』是在表示同意，即接过对方结论的评判责任，违反 E3。正确的分界：『行，那就这样』对**用户的决定**表态（禁止）；『我记下了。这一轮就到这儿。』只说**系统自己**要停（合法）。这与 REPORT_OWN_STATE 同一条纪律：只能说系统自己的状态。",
+      "_forbidden": "禁止出现『行』『好的』『听你的』『我同意』『那就这样吧』这类**表示同意**的说法 —— 它们都在替用户确认他的决定。也禁止『你怎么了』『别这样』这类追问或劝解。"
+    }
+  ],
+  "selection_rules": {
+    "_note": "行为选择的优先级。从上到下第一个满足条件者被选中（ENG，但每条的依据可追溯）。",
+    "ladder": [
+      {
+        "when": "opposed_pair 命中",
+        "pick": "JUXTAPOSE"
+      },
+      {
+        "when": "immutable 命中",
+        "pick": "TURN_IMMUTABLE"
+      },
+      {
+        "when": "present_missing 命中（fuel_priority）",
+        "pick": "REPLENISH"
+      },
+      {
+        "when": "over_intention 命中",
+        "pick": "ASK_MUST"
+      },
+      {
+        "when": "cliche 命中（套话/泛泛评价，没有具体内容）",
+        "pick": "REPLENISH"
+      },
+      {
+        "when": "存在可追问的 must 片段",
+        "pick": "ASK_MUST"
+      },
+      {
+        "when": "其余情形",
+        "pick": "REFLECT"
+      }
+    ],
+    "_ladder_v2_note": "E3 世代新增的三种行为（ASK_DETAIL / ACKNOWLEDGE / REPORT_OWN_STATE）**不进这条阶梯**。原因：阶梯是『从用户话里抓到的特征』驱动的那条旧路径，而新行为由**机制层**在无直接观察证据时选（见 engine/mechanism.py 的条件表）。两条路径分工明确：有证据走阶梯，没证据走机制。",
+    "_conflict_resolution": {
+      "opposed_pair 与 immutable 同时命中": "JUXTAPOSE 优先——[E] 并列呈现是发展机制；且不违反 E1（不添加评价）",
+      "immutable 与 present_missing 同时命中": "TURN_IMMUTABLE 优先——先处理处境，再处理燃料",
+      "over_intention 与 present_missing 同时命中": "REPLENISH 优先——燃料优先于水平（⚖️ 冲突 1A）"
+    },
+    "_forbidden_escalation": {
+      "_note": "以下情形**禁止**任何提升型行为（pacer_eligible=true 的行为一律出局）",
+      "conditions": [
+        "immutable",
+        "over_intention",
+        "present_missing"
+      ],
+      "still_allowed": [
+        "REFLECT",
+        "JUXTAPOSE",
+        "TURN_IMMUTABLE",
+        "REPLENISH",
+        "SILENCE"
+      ]
+    }
+  },
+  "pacer_rule": {
+    "_source": "[E] 向导：『在大多数情况下，总是在一个比理想水平稍微复杂的水平上选择刺激物。这些刺激物称作向导。』",
+    "status": "ASSUMPTION",
+    "_risk": "丹姆伯的向导是刺激物研究（视觉／认知复杂度），卢文格引它时用的是『几乎一致』和『看来』，他自己也没有把它实证化。",
+    "max_jump": 1,
+    "trigger_condition": "只有 L2 已检测到用户**自发产生过** L+1 水平的信号，才允许给 L+1；否则只用 L 的平行回应",
+    "fallback": "连续 N 轮无进展 → 降到 L-1，而非加大难度",
+    "_fallback_source": "[E] 格兰特与格兰特：高预测效应的医疗队对高水平受试有效，对低水平受试相反。",
+    "fallback_rounds": 3
+  }
+}

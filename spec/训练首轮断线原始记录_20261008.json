@@ -1,0 +1,46 @@
+{
+  "turns": 377,
+  "sessions": 70,
+  "rounds": 25,
+  "last_run": "2026-10-08 13:45:58",
+  "seconds": 16.5,
+  "pool": 56,
+  "source": "corpus",
+  "tutor": true,
+  "evals": 0,
+  "growth": {
+    "polarity": {
+      "wanting": 0.208,
+      "liking": 1.0,
+      "patience": 1.0,
+      "structure": 0.035,
+      "tension": 0.043
+    },
+    "milestones": [
+      "我只是把他的话还回去的时候，话多半接得下去。",
+      "我不出声的时候，话多半接得下去。",
+      "我把两边并排放给他看的时候，有时接得下去，有时就停在那儿。",
+      "我问他细节的时候，话多半接得下去。",
+      "我指出哪一部分改不了的时候，话多半接得下去。",
+      "我要求具体的体验的时候，有时接得下去，有时就停在那儿。",
+      "我承认他说的事有分量的时候，话多半接得下去。",
+      "我接住他的收尾的时候，有时接得下去，有时就停在那儿。"
+    ],
+    "pairs": 247,
+    "summary": "极性 {'wanting': 0.208, 'liking': 1.0, 'patience': 1.0, 'structure': 0.035, 'tension': 0.043}｜里程碑 8 条"
+  },
+  "turns_added": 0,
+  "requested_turns": 6,
+  "failure": "tutor_generation_failed",
+  "failure_diagnostic": null,
+  "gate_perception": false,
+  "run_id": "1791438341747635500_45572",
+  "eval_schema": 7,
+  "recovery_policy": "bounded_retry_v1",
+  "strict": true,
+  "tutor_errors": [
+    "RemoteDisconnected('Remote end closed connection without response')"
+  ],
+  "sessions_added": 1,
+  "rounds_added": 1
+}

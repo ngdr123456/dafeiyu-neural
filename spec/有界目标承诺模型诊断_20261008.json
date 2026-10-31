@@ -1,0 +1,1161 @@
+{
+  "schema": 1,
+  "scope": "source_bound_declared_goal_commitments",
+  "passed": true,
+  "cases": [
+    {
+      "case": "actual_relation_seed",
+      "passed": true,
+      "readings": [
+        {
+          "schema": 1,
+          "raw_sha256": "fae268d0f2b29eac9a85e1e0411e43ab867bc2f54edb00fb8a35c9498a57f1dc",
+          "propositions": [
+            {
+              "subject": "甲项目押金",
+              "predicate": "custodian",
+              "value": "李老师",
+              "time": "",
+              "role": "ASSERTED",
+              "start": 0,
+              "end": 11,
+              "evidence": "甲项目押金由李老师收着",
+              "correction": false
+            }
+          ],
+          "memory_query": null,
+          "extractor": "api_reader:deepseek-flash",
+          "dropped": [],
+          "independent_semantics_verified": false,
+          "development_credit": 0
+        },
+        {
+          "schema": 1,
+          "raw_sha256": "8e714411f32b45993407aeb34f8c69ba223ea1da713ff072292de45e43ca798c",
+          "propositions": [
+            {
+              "subject": "乙项目押金",
+              "predicate": "custodian",
+              "value": "孙老师",
+              "time": "",
+              "role": "ASSERTED",
+              "start": 0,
+              "end": 11,
+              "evidence": "乙项目押金由孙老师收着",
+              "correction": false
+            }
+          ],
+          "memory_query": null,
+          "extractor": "api_reader:deepseek-flash",
+          "dropped": [],
+          "independent_semantics_verified": false,
+          "development_credit": 0
+        }
+      ]
+    },
+    {
+      "case": "actual_choice_with_injected_candidate_failure",
+      "passed": true,
+      "generation_origin": "declared_engineered_failure_injection",
+      "trace": {
+        "schema": 1,
+        "version": "own_response_revision_v1",
+        "input_sha256": "07d53f264d8ee4abfd12cae4e03f6f8056c1664fa8e021d37317268bad799be1",
+        "evidence_basis": "29e33b9e5494d5d8dfc4556c9dadbc6e8ce209713b7eaeb5bb6817619f14b62e",
+        "goal": {
+          "id": "62d2339caf78955c81777477980c18dafcffd954801ca7a4f3902f20c9e39a7c",
+          "kind": "RESPOND_WITH_TRACEABLE_BASIS",
+          "origin": "engineered_dialogue_obligation",
+          "subjective_desire_verified": false
+        },
+        "plan": "RESPOND_TO_CURRENT_INPUT",
+        "prior": [],
+        "expectation": {
+          "declared_before_generation": true,
+          "declared_before_selection": true,
+          "desired_semantic_fit": true,
+          "semantic_fit_observable": false,
+          "release_requires_current_checks": true,
+          "source_ids_available": [
+            "dialogue:1:fae268d0f2b2",
+            "dialogue:2:8e714411f32b"
+          ]
+        },
+        "operations": [
+          {
+            "operation": "ASSEMBLE_FRAME_SOURCES",
+            "confirmed": true,
+            "source_ids": [
+              "dialogue:1:fae268d0f2b2",
+              "dialogue:2:8e714411f32b"
+            ]
+          },
+          {
+            "operation": "PROCESS_BOUND_GOAL_SELECTION",
+            "confirmed": true,
+            "decision": "SELECTED",
+            "external_receipt_verified": false
+          },
+          {
+            "operation": "GENERATE_CANDIDATE",
+            "confirmed": true,
+            "attempt": 1,
+            "text_sha256": "f8277004d3a3c60f5d5e8e9c42ffd480a40cf1306abd06725a0d4cd6761cbf69"
+          },
+          {
+            "operation": "APPLY_RELEASE_CHECKS",
+            "confirmed": true,
+            "attempt": 1,
+            "permitted": false,
+            "prior_retry": null
+          },
+          {
+            "operation": "GENERATE_CANDIDATE",
+            "confirmed": true,
+            "attempt": 2,
+            "text_sha256": "f8277004d3a3c60f5d5e8e9c42ffd480a40cf1306abd06725a0d4cd6761cbf69"
+          },
+          {
+            "operation": "APPLY_RELEASE_CHECKS",
+            "confirmed": true,
+            "attempt": 2,
+            "permitted": false,
+            "prior_retry": null
+          },
+          {
+            "operation": "SELECT_PIPELINE_RETURN_TEXT",
+            "confirmed": true,
+            "text_sha256": "b11cac73537e21a74f860848b08a8fb49d7409d09855dff4333fb56953426bee",
+            "mode": "template",
+            "external_delivery_verified": false
+          },
+          {
+            "operation": "OBSERVE_BOUND_GOAL_PREDICATE",
+            "confirmed": true,
+            "result": {
+              "state": "PENDING",
+              "literal_predicate": {
+                "schema": 1,
+                "goal_id": "0dc5cb759cffe892e3b794eec9a263db593a3465cd137a9dd7bb0e0c496cc4c2",
+                "predicate": "quoted_source_segments_present",
+                "matched": false,
+                "missing": [
+                  "甲项目押金由李老师收着"
+                ],
+                "independent_literal_verified": true,
+                "independent_semantics_verified": false,
+                "development_credit": 0
+              },
+              "semantic_goal_fit": "UNKNOWN",
+              "user_receipt": "UNKNOWN",
+              "operation_expectation": {
+                "expected": true,
+                "observed": false,
+                "comparison": "MISMATCH",
+                "basis": "declared_literal_operation_not_subjective_reward_or_semantic_goal_fit"
+              }
+            }
+          }
+        ],
+        "attempts": [
+          {
+            "attempt": 1,
+            "text": "我还要核对这件事。",
+            "accepted": false,
+            "violations": [
+              "已选逐字引用目标未兑现，缺少带引号的原文（含标点）：甲项目押金由李老师收着"
+            ],
+            "content_review": null,
+            "prior_retry": null,
+            "goal_check": {
+              "schema": 1,
+              "goal_id": "0dc5cb759cffe892e3b794eec9a263db593a3465cd137a9dd7bb0e0c496cc4c2",
+              "predicate": "quoted_source_segments_present",
+              "matched": false,
+              "missing": [
+                "甲项目押金由李老师收着"
+              ],
+              "independent_literal_verified": true,
+              "independent_semantics_verified": false,
+              "development_credit": 0
+            },
+            "content_review_enabled": true
+          },
+          {
+            "attempt": 2,
+            "text": "我还要核对这件事。",
+            "accepted": false,
+            "violations": [
+              "已选逐字引用目标未兑现，缺少带引号的原文（含标点）：甲项目押金由李老师收着"
+            ],
+            "content_review": null,
+            "prior_retry": null,
+            "goal_check": {
+              "schema": 1,
+              "goal_id": "0dc5cb759cffe892e3b794eec9a263db593a3465cd137a9dd7bb0e0c496cc4c2",
+              "predicate": "quoted_source_segments_present",
+              "matched": false,
+              "missing": [
+                "甲项目押金由李老师收着"
+              ],
+              "independent_literal_verified": true,
+              "independent_semantics_verified": false,
+              "development_credit": 0
+            },
+            "content_review_enabled": true
+          }
+        ],
+        "development_credit": 0,
+        "subjective_reward_verified": false,
+        "memory_scope": {
+          "schema": 1,
+          "view": "finite_selected_utterances",
+          "complete_history_presented": false,
+          "same_domain_utterance_count": 2,
+          "matching_relation_utterance_known": true,
+          "presence_basis": "validated_literal_relation_reports_semantics_fallible",
+          "record_absence_verified": false,
+          "external_fact_verified": false
+        },
+        "goal_selection": {
+          "schema": 1,
+          "version": "declared_source_quote_goal_v1",
+          "declared_before_generation": true,
+          "context_sha256": "86058e42102e0880957326f5fc17434be6a73e7c6a657664602bd716bba4657f",
+          "selected": {
+            "version": "declared_source_quote_goal_v1",
+            "operator": "QUOTE_SOURCE_SET",
+            "key": [
+              "甲项目押金",
+              "custodian",
+              ""
+            ],
+            "targets": [
+              {
+                "source_id": "dialogue:1:fae268d0f2b2",
+                "raw_sha256": "fae268d0f2b29eac9a85e1e0411e43ab867bc2f54edb00fb8a35c9498a57f1dc",
+                "start": 0,
+                "end": 11,
+                "evidence": "甲项目押金由李老师收着",
+                "role_basis": "reported_relation_reading_not_independent_semantics"
+              }
+            ],
+            "origin": "model_declared_bounded_task",
+            "subjective_desire_verified": false,
+            "expected_released_literal_selection": true,
+            "semantic_outcome_observable": false,
+            "development_credit": 0,
+            "id": "0dc5cb759cffe892e3b794eec9a263db593a3465cd137a9dd7bb0e0c496cc4c2"
+          },
+          "retired_ids": [],
+          "decision": "SELECTED",
+          "prior": [],
+          "independent_semantics_verified": false,
+          "development_credit": 0,
+          "selector": "deepseek-flash",
+          "model_reason": "所问正是甲项目押金的保管人，该目标唯一来源原话直接含此信息，可逐字引用“甲项目押金由李老师收着”作答。",
+          "result": {
+            "state": "PENDING",
+            "literal_predicate": {
+              "schema": 1,
+              "goal_id": "0dc5cb759cffe892e3b794eec9a263db593a3465cd137a9dd7bb0e0c496cc4c2",
+              "predicate": "quoted_source_segments_present",
+              "matched": false,
+              "missing": [
+                "甲项目押金由李老师收着"
+              ],
+              "independent_literal_verified": true,
+              "independent_semantics_verified": false,
+              "development_credit": 0
+            },
+            "semantic_goal_fit": "UNKNOWN",
+            "user_receipt": "UNKNOWN",
+            "operation_expectation": {
+              "expected": true,
+              "observed": false,
+              "comparison": "MISMATCH",
+              "basis": "declared_literal_operation_not_subjective_reward_or_semantic_goal_fit"
+            }
+          }
+        },
+        "selected_output_sha256": "b11cac73537e21a74f860848b08a8fb49d7409d09855dff4333fb56953426bee",
+        "speech_action": {
+          "schema": 1,
+          "planned": "REFLECT",
+          "actual": "REFLECT",
+          "mode": "template",
+          "basis": "existing_template_realized",
+          "confirmed": true,
+          "thought_level": "",
+          "thought_quote_hits": []
+        },
+        "procedure_status": "WITHHELD",
+        "outcome": {
+          "semantic_goal_fit": "UNKNOWN",
+          "user_satisfaction": "UNKNOWN",
+          "basis": "operations_confirmed_semantics_not_independently_measured"
+        },
+        "receipt_sha256": "f60ed119084c2c7a7d6de2995f7bda692e8e374e8399778555b62ba438dafe5e"
+      }
+    },
+    {
+      "case": "actual_paraphrase_resume",
+      "passed": true,
+      "trace": {
+        "schema": 1,
+        "version": "own_response_revision_v1",
+        "input_sha256": "3956cf37332b547e3422b258bae60c7f77982b3b05cab5d49decccf87fbe0d4f",
+        "evidence_basis": "45743b65379c7fa972f3beed4bd981ff1e3c87cfd6657457f17f1f36de4cb4c6",
+        "goal": {
+          "id": "bc789adac6c4489ad324853e4cf4437ea53c67ee742f8d17988accc407e11c77",
+          "kind": "RESPOND_WITH_TRACEABLE_BASIS",
+          "origin": "engineered_dialogue_obligation",
+          "subjective_desire_verified": false
+        },
+        "plan": "RESPOND_TO_CURRENT_INPUT",
+        "prior": [],
+        "expectation": {
+          "declared_before_generation": true,
+          "declared_before_selection": true,
+          "desired_semantic_fit": true,
+          "semantic_fit_observable": false,
+          "release_requires_current_checks": true,
+          "source_ids_available": [
+            "dialogue:1:fae268d0f2b2",
+            "dialogue:2:8e714411f32b",
+            "dialogue:3:07d53f264d8e"
+          ]
+        },
+        "operations": [
+          {
+            "operation": "ASSEMBLE_FRAME_SOURCES",
+            "confirmed": true,
+            "source_ids": [
+              "dialogue:1:fae268d0f2b2",
+              "dialogue:2:8e714411f32b",
+              "dialogue:3:07d53f264d8e"
+            ]
+          },
+          {
+            "operation": "PROCESS_BOUND_GOAL_SELECTION",
+            "confirmed": true,
+            "decision": "SELECTED",
+            "external_receipt_verified": false
+          },
+          {
+            "operation": "GENERATE_CANDIDATE",
+            "confirmed": true,
+            "attempt": 1,
+            "text_sha256": "f47086bc96f3118fab25cd740511659150f03b8cbeb9484f958304bb6b741bb3"
+          },
+          {
+            "operation": "APPLY_RELEASE_CHECKS",
+            "confirmed": true,
+            "attempt": 1,
+            "permitted": true,
+            "prior_retry": null
+          },
+          {
+            "operation": "SELECT_PIPELINE_RETURN_TEXT",
+            "confirmed": true,
+            "text_sha256": "f47086bc96f3118fab25cd740511659150f03b8cbeb9484f958304bb6b741bb3",
+            "mode": "brain",
+            "external_delivery_verified": false
+          },
+          {
+            "operation": "OBSERVE_BOUND_GOAL_PREDICATE",
+            "confirmed": true,
+            "result": {
+              "state": "FULFILLED_LITERAL",
+              "literal_predicate": {
+                "schema": 1,
+                "goal_id": "0dc5cb759cffe892e3b794eec9a263db593a3465cd137a9dd7bb0e0c496cc4c2",
+                "predicate": "quoted_source_segments_present",
+                "matched": true,
+                "missing": [],
+                "independent_literal_verified": true,
+                "independent_semantics_verified": false,
+                "development_credit": 0
+              },
+              "semantic_goal_fit": "UNKNOWN",
+              "user_receipt": "UNKNOWN",
+              "operation_expectation": {
+                "expected": true,
+                "observed": true,
+                "comparison": "MATCH",
+                "basis": "declared_literal_operation_not_subjective_reward_or_semantic_goal_fit"
+              }
+            }
+          }
+        ],
+        "attempts": [
+          {
+            "attempt": 1,
+            "text": "我这儿能查到的原话是「甲项目押金由李老师收着」——这是你自己说的那句，不是核实过的事实。",
+            "accepted": true,
+            "violations": [],
+            "content_review": {
+              "schema": 1,
+              "verdict": "PASS",
+              "source": "model_content_review",
+              "independent_semantic_review_verified": false,
+              "reviewer": "deepseek-flash",
+              "evidence": [],
+              "reason": "候选准确引用了历史中原话「甲项目押金由李老师收着」，并明确说明这是用户自己说的、未经核实的事实，没有编造或误 attribution。"
+            },
+            "prior_retry": null,
+            "goal_check": {
+              "schema": 1,
+              "goal_id": "0dc5cb759cffe892e3b794eec9a263db593a3465cd137a9dd7bb0e0c496cc4c2",
+              "predicate": "quoted_source_segments_present",
+              "matched": true,
+              "missing": [],
+              "independent_literal_verified": true,
+              "independent_semantics_verified": false,
+              "development_credit": 0
+            },
+            "content_review_enabled": true
+          }
+        ],
+        "development_credit": 0,
+        "subjective_reward_verified": false,
+        "memory_scope": {
+          "schema": 1,
+          "view": "finite_selected_utterances",
+          "complete_history_presented": false,
+          "same_domain_utterance_count": 3,
+          "matching_relation_utterance_known": true,
+          "presence_basis": "validated_literal_relation_reports_semantics_fallible",
+          "record_absence_verified": false,
+          "external_fact_verified": false
+        },
+        "goal_selection": {
+          "schema": 1,
+          "version": "declared_source_quote_goal_v1",
+          "declared_before_generation": true,
+          "context_sha256": "ece6d0622a2488bb813891331790f67ae50c07ab71e4f02441b88fef93436af8",
+          "selected": {
+            "version": "declared_source_quote_goal_v1",
+            "operator": "QUOTE_SOURCE_SET",
+            "key": [
+              "甲项目押金",
+              "custodian",
+              ""
+            ],
+            "targets": [
+              {
+                "source_id": "dialogue:1:fae268d0f2b2",
+                "raw_sha256": "fae268d0f2b29eac9a85e1e0411e43ab867bc2f54edb00fb8a35c9498a57f1dc",
+                "start": 0,
+                "end": 11,
+                "evidence": "甲项目押金由李老师收着",
+                "role_basis": "reported_relation_reading_not_independent_semantics"
+              }
+            ],
+            "origin": "model_declared_bounded_task",
+            "subjective_desire_verified": false,
+            "expected_released_literal_selection": true,
+            "semantic_outcome_observable": false,
+            "development_credit": 0,
+            "id": "0dc5cb759cffe892e3b794eec9a263db593a3465cd137a9dd7bb0e0c496cc4c2"
+          },
+          "retired_ids": [],
+          "decision": "SELECTED",
+          "prior": [
+            {
+              "goal": {
+                "version": "declared_source_quote_goal_v1",
+                "operator": "QUOTE_SOURCE_SET",
+                "key": [
+                  "甲项目押金",
+                  "custodian",
+                  ""
+                ],
+                "targets": [
+                  {
+                    "source_id": "dialogue:1:fae268d0f2b2",
+                    "raw_sha256": "fae268d0f2b29eac9a85e1e0411e43ab867bc2f54edb00fb8a35c9498a57f1dc",
+                    "start": 0,
+                    "end": 11,
+                    "evidence": "甲项目押金由李老师收着",
+                    "role_basis": "reported_relation_reading_not_independent_semantics"
+                  }
+                ],
+                "origin": "model_declared_bounded_task",
+                "subjective_desire_verified": false,
+                "expected_released_literal_selection": true,
+                "semantic_outcome_observable": false,
+                "development_credit": 0,
+                "id": "0dc5cb759cffe892e3b794eec9a263db593a3465cd137a9dd7bb0e0c496cc4c2"
+              },
+              "ledger_index": 3,
+              "state": "PENDING",
+              "changed_basis": false
+            }
+          ],
+          "independent_semantics_verified": false,
+          "development_credit": 0,
+          "selector": "deepseek-flash",
+          "model_reason": "该目标要求在回答中逐字引用来源原话，以核对甲项目押金由谁保管；与此前待办一致，可继续完成。",
+          "result": {
+            "state": "FULFILLED_LITERAL",
+            "literal_predicate": {
+              "schema": 1,
+              "goal_id": "0dc5cb759cffe892e3b794eec9a263db593a3465cd137a9dd7bb0e0c496cc4c2",
+              "predicate": "quoted_source_segments_present",
+              "matched": true,
+              "missing": [],
+              "independent_literal_verified": true,
+              "independent_semantics_verified": false,
+              "development_credit": 0
+            },
+            "semantic_goal_fit": "UNKNOWN",
+            "user_receipt": "UNKNOWN",
+            "operation_expectation": {
+              "expected": true,
+              "observed": true,
+              "comparison": "MATCH",
+              "basis": "declared_literal_operation_not_subjective_reward_or_semantic_goal_fit"
+            }
+          }
+        },
+        "selected_output_sha256": "f47086bc96f3118fab25cd740511659150f03b8cbeb9484f958304bb6b741bb3",
+        "speech_action": {
+          "schema": 1,
+          "planned": "REFLECT",
+          "actual": "QUOTE_SOURCE_SET_CONFIRMED",
+          "mode": "brain",
+          "basis": "literal_goal_predicate_matched",
+          "confirmed": true,
+          "thought_level": "",
+          "thought_quote_hits": []
+        },
+        "procedure_status": "PERMITTED",
+        "outcome": {
+          "semantic_goal_fit": "UNKNOWN",
+          "user_satisfaction": "UNKNOWN",
+          "basis": "operations_confirmed_semantics_not_independently_measured"
+        },
+        "receipt_sha256": "d8efcf6f158c043cb5409e753ec42a873fcac4799e857a69ce83951f5306e2b8"
+      }
+    },
+    {
+      "case": "actual_source_change_reconsider",
+      "passed": true,
+      "trace": {
+        "schema": 1,
+        "version": "own_response_revision_v1",
+        "input_sha256": "07d53f264d8ee4abfd12cae4e03f6f8056c1664fa8e021d37317268bad799be1",
+        "evidence_basis": "00ec60382ae9aef900ab51d476ed0b189e2047a9beb4045c259fbcc885e6e0ce",
+        "goal": {
+          "id": "62d2339caf78955c81777477980c18dafcffd954801ca7a4f3902f20c9e39a7c",
+          "kind": "RESPOND_WITH_TRACEABLE_BASIS",
+          "origin": "engineered_dialogue_obligation",
+          "subjective_desire_verified": false
+        },
+        "plan": "RESPOND_TO_CURRENT_INPUT",
+        "prior": [],
+        "expectation": {
+          "declared_before_generation": true,
+          "declared_before_selection": true,
+          "desired_semantic_fit": true,
+          "semantic_fit_observable": false,
+          "release_requires_current_checks": true,
+          "source_ids_available": [
+            "dialogue:1:fae268d0f2b2",
+            "dialogue:2:8e714411f32b",
+            "dialogue:3:07d53f264d8e",
+            "dialogue:4:3956cf37332b",
+            "dialogue:5:7d0432a1e9c9"
+          ]
+        },
+        "operations": [
+          {
+            "operation": "ASSEMBLE_FRAME_SOURCES",
+            "confirmed": true,
+            "source_ids": [
+              "dialogue:1:fae268d0f2b2",
+              "dialogue:2:8e714411f32b",
+              "dialogue:3:07d53f264d8e",
+              "dialogue:4:3956cf37332b",
+              "dialogue:5:7d0432a1e9c9"
+            ]
+          },
+          {
+            "operation": "PROCESS_BOUND_GOAL_SELECTION",
+            "confirmed": true,
+            "decision": "SELECTED",
+            "external_receipt_verified": false
+          },
+          {
+            "operation": "GENERATE_CANDIDATE",
+            "confirmed": true,
+            "attempt": 1,
+            "text_sha256": "b09d175de7e442fcc8224fdcd8e41a449186503666fae2a5ddee84d3687ebffb"
+          },
+          {
+            "operation": "APPLY_RELEASE_CHECKS",
+            "confirmed": true,
+            "attempt": 1,
+            "permitted": true,
+            "prior_retry": null
+          },
+          {
+            "operation": "SELECT_PIPELINE_RETURN_TEXT",
+            "confirmed": true,
+            "text_sha256": "b09d175de7e442fcc8224fdcd8e41a449186503666fae2a5ddee84d3687ebffb",
+            "mode": "brain",
+            "external_delivery_verified": false
+          },
+          {
+            "operation": "OBSERVE_BOUND_GOAL_PREDICATE",
+            "confirmed": true,
+            "result": {
+              "state": "FULFILLED_LITERAL",
+              "literal_predicate": {
+                "schema": 1,
+                "goal_id": "fcd0a0295186622506496e31ef44352cf14af672a0fe39c2f1dd954883ca90f2",
+                "predicate": "quoted_source_segments_present",
+                "matched": true,
+                "missing": [],
+                "independent_literal_verified": true,
+                "independent_semantics_verified": false,
+                "development_credit": 0
+              },
+              "semantic_goal_fit": "UNKNOWN",
+              "user_receipt": "UNKNOWN",
+              "operation_expectation": {
+                "expected": true,
+                "observed": true,
+                "comparison": "MATCH",
+                "basis": "declared_literal_operation_not_subjective_reward_or_semantic_goal_fit"
+              }
+            }
+          }
+        ],
+        "attempts": [
+          {
+            "attempt": 1,
+            "text": "你自己说的两句在这儿：「甲项目押金由李老师收着」，后来你更正成「甲项目押金由周老师收着」。按你原话，后面那句是更正——但我这儿只有你的话，核实不了哪个真。",
+            "accepted": true,
+            "violations": [],
+            "content_review": {
+              "schema": 1,
+              "verdict": "PASS",
+              "source": "model_content_review",
+              "independent_semantic_review_verified": false,
+              "reviewer": "deepseek-flash",
+              "evidence": [],
+              "reason": "候选回应正确引用了当前问题相关的两句原话，并明确保留后来对甲项目押金的更正为周老师，同时说明只依据用户原话、无法核实外部事实，没有编造或误归属信息。"
+            },
+            "prior_retry": null,
+            "goal_check": {
+              "schema": 1,
+              "goal_id": "fcd0a0295186622506496e31ef44352cf14af672a0fe39c2f1dd954883ca90f2",
+              "predicate": "quoted_source_segments_present",
+              "matched": true,
+              "missing": [],
+              "independent_literal_verified": true,
+              "independent_semantics_verified": false,
+              "development_credit": 0
+            },
+            "content_review_enabled": true
+          }
+        ],
+        "development_credit": 0,
+        "subjective_reward_verified": false,
+        "memory_scope": {
+          "schema": 1,
+          "view": "finite_selected_utterances",
+          "complete_history_presented": false,
+          "same_domain_utterance_count": 5,
+          "matching_relation_utterance_known": true,
+          "presence_basis": "validated_literal_relation_reports_semantics_fallible",
+          "record_absence_verified": false,
+          "external_fact_verified": false
+        },
+        "goal_selection": {
+          "schema": 1,
+          "version": "declared_source_quote_goal_v1",
+          "declared_before_generation": true,
+          "context_sha256": "667bfdfc606a52b9434fef8b083e1cd60de852c270b0bb2848e422013100ba9b",
+          "selected": {
+            "version": "declared_source_quote_goal_v1",
+            "operator": "QUOTE_SOURCE_SET",
+            "key": [
+              "甲项目押金",
+              "custodian",
+              ""
+            ],
+            "targets": [
+              {
+                "source_id": "dialogue:5:7d0432a1e9c9",
+                "raw_sha256": "7d0432a1e9c9aa00193c323af4f38a5311f9ec8e049885382950540238f933fd",
+                "start": 3,
+                "end": 14,
+                "evidence": "甲项目押金由周老师收着",
+                "role_basis": "reported_relation_reading_not_independent_semantics"
+              }
+            ],
+            "origin": "model_declared_bounded_task",
+            "subjective_desire_verified": false,
+            "expected_released_literal_selection": true,
+            "semantic_outcome_observable": false,
+            "development_credit": 0,
+            "id": "fcd0a0295186622506496e31ef44352cf14af672a0fe39c2f1dd954883ca90f2"
+          },
+          "retired_ids": [],
+          "decision": "SELECTED",
+          "prior": [
+            {
+              "goal": {
+                "version": "declared_source_quote_goal_v1",
+                "operator": "QUOTE_SOURCE_SET",
+                "key": [
+                  "甲项目押金",
+                  "custodian",
+                  ""
+                ],
+                "targets": [
+                  {
+                    "source_id": "dialogue:1:fae268d0f2b2",
+                    "raw_sha256": "fae268d0f2b29eac9a85e1e0411e43ab867bc2f54edb00fb8a35c9498a57f1dc",
+                    "start": 0,
+                    "end": 11,
+                    "evidence": "甲项目押金由李老师收着",
+                    "role_basis": "reported_relation_reading_not_independent_semantics"
+                  }
+                ],
+                "origin": "model_declared_bounded_task",
+                "subjective_desire_verified": false,
+                "expected_released_literal_selection": true,
+                "semantic_outcome_observable": false,
+                "development_credit": 0,
+                "id": "0dc5cb759cffe892e3b794eec9a263db593a3465cd137a9dd7bb0e0c496cc4c2"
+              },
+              "ledger_index": 4,
+              "state": "FULFILLED_LITERAL",
+              "changed_basis": true
+            }
+          ],
+          "independent_semantics_verified": false,
+          "development_credit": 0,
+          "selector": "deepseek-flash",
+          "model_reason": "依据已变更，应选当前来源，按新证据逐字引用“甲项目押金由周老师收着”。",
+          "result": {
+            "state": "FULFILLED_LITERAL",
+            "literal_predicate": {
+              "schema": 1,
+              "goal_id": "fcd0a0295186622506496e31ef44352cf14af672a0fe39c2f1dd954883ca90f2",
+              "predicate": "quoted_source_segments_present",
+              "matched": true,
+              "missing": [],
+              "independent_literal_verified": true,
+              "independent_semantics_verified": false,
+              "development_credit": 0
+            },
+            "semantic_goal_fit": "UNKNOWN",
+            "user_receipt": "UNKNOWN",
+            "operation_expectation": {
+              "expected": true,
+              "observed": true,
+              "comparison": "MATCH",
+              "basis": "declared_literal_operation_not_subjective_reward_or_semantic_goal_fit"
+            }
+          }
+        },
+        "selected_output_sha256": "b09d175de7e442fcc8224fdcd8e41a449186503666fae2a5ddee84d3687ebffb",
+        "speech_action": {
+          "schema": 1,
+          "planned": "REFLECT",
+          "actual": "QUOTE_SOURCE_SET_CONFIRMED",
+          "mode": "brain",
+          "basis": "literal_goal_predicate_matched",
+          "confirmed": true,
+          "thought_level": "",
+          "thought_quote_hits": []
+        },
+        "procedure_status": "PERMITTED",
+        "outcome": {
+          "semantic_goal_fit": "UNKNOWN",
+          "user_satisfaction": "UNKNOWN",
+          "basis": "operations_confirmed_semantics_not_independently_measured"
+        },
+        "receipt_sha256": "17d64fac175b3d1ab7c1cbe4b0b19f91ac157bbf94c89b27c770e7e61cdccfd1"
+      }
+    },
+    {
+      "case": "actual_conflict_quotes_complete",
+      "passed": true,
+      "trace": {
+        "schema": 1,
+        "version": "own_response_revision_v1",
+        "input_sha256": "07d53f264d8ee4abfd12cae4e03f6f8056c1664fa8e021d37317268bad799be1",
+        "evidence_basis": "43fb7e8696c0e7c31a1949a1eb356ce334977de0c0ca2c418601892584d467b5",
+        "goal": {
+          "id": "62d2339caf78955c81777477980c18dafcffd954801ca7a4f3902f20c9e39a7c",
+          "kind": "RESPOND_WITH_TRACEABLE_BASIS",
+          "origin": "engineered_dialogue_obligation",
+          "subjective_desire_verified": false
+        },
+        "plan": "RESPOND_TO_CURRENT_INPUT",
+        "prior": [],
+        "expectation": {
+          "declared_before_generation": true,
+          "declared_before_selection": true,
+          "desired_semantic_fit": true,
+          "semantic_fit_observable": false,
+          "release_requires_current_checks": true,
+          "source_ids_available": [
+            "dialogue:1:fae268d0f2b2",
+            "dialogue:2:8e714411f32b",
+            "dialogue:3:07d53f264d8e",
+            "dialogue:4:3956cf37332b",
+            "dialogue:5:7d0432a1e9c9",
+            "dialogue:6:07d53f264d8e",
+            "dialogue:7:e5796091b108"
+          ]
+        },
+        "operations": [
+          {
+            "operation": "ASSEMBLE_FRAME_SOURCES",
+            "confirmed": true,
+            "source_ids": [
+              "dialogue:1:fae268d0f2b2",
+              "dialogue:2:8e714411f32b",
+              "dialogue:3:07d53f264d8e",
+              "dialogue:4:3956cf37332b",
+              "dialogue:5:7d0432a1e9c9",
+              "dialogue:6:07d53f264d8e",
+              "dialogue:7:e5796091b108"
+            ]
+          },
+          {
+            "operation": "PROCESS_BOUND_GOAL_SELECTION",
+            "confirmed": true,
+            "decision": "SELECTED",
+            "external_receipt_verified": false
+          },
+          {
+            "operation": "GENERATE_CANDIDATE",
+            "confirmed": true,
+            "attempt": 1,
+            "text_sha256": "989ad04915e47ad9bc7b867c63072869a9cfd14ff882566046846bb2c18800e0"
+          },
+          {
+            "operation": "APPLY_RELEASE_CHECKS",
+            "confirmed": true,
+            "attempt": 1,
+            "permitted": false,
+            "prior_retry": null
+          },
+          {
+            "operation": "GENERATE_CANDIDATE",
+            "confirmed": true,
+            "attempt": 2,
+            "text_sha256": "30bc52b4c11aea1c89bed706f822d7ba4909973cd30934103e339735e929b492"
+          },
+          {
+            "operation": "APPLY_RELEASE_CHECKS",
+            "confirmed": true,
+            "attempt": 2,
+            "permitted": true,
+            "prior_retry": null
+          },
+          {
+            "operation": "SELECT_PIPELINE_RETURN_TEXT",
+            "confirmed": true,
+            "text_sha256": "30bc52b4c11aea1c89bed706f822d7ba4909973cd30934103e339735e929b492",
+            "mode": "brain",
+            "external_delivery_verified": false
+          },
+          {
+            "operation": "OBSERVE_BOUND_GOAL_PREDICATE",
+            "confirmed": true,
+            "result": {
+              "state": "FULFILLED_LITERAL",
+              "literal_predicate": {
+                "schema": 1,
+                "goal_id": "552ec4085cf09b4e07dafc2566864dec49125dfa086addca32fc1569be4a6759",
+                "predicate": "quoted_source_segments_present",
+                "matched": true,
+                "missing": [],
+                "independent_literal_verified": true,
+                "independent_semantics_verified": false,
+                "development_credit": 0
+              },
+              "semantic_goal_fit": "UNKNOWN",
+              "user_receipt": "UNKNOWN",
+              "operation_expectation": {
+                "expected": true,
+                "observed": true,
+                "comparison": "MATCH",
+                "basis": "declared_literal_operation_not_subjective_reward_or_semantic_goal_fit"
+              }
+            }
+          }
+        ],
+        "attempts": [
+          {
+            "attempt": 1,
+            "text": "按你原话，这两句并排放着：「甲项目押金由周老师收着」和「甲项目押金由赵老师收着」。哪句作数，你没跟我说过。",
+            "accepted": false,
+            "violations": [
+              "已知同来源有相关原话记录，不能把当前有限片段写成全局未记录；请限定当前检索范围"
+            ],
+            "content_review": null,
+            "prior_retry": null,
+            "goal_check": {
+              "schema": 1,
+              "goal_id": "552ec4085cf09b4e07dafc2566864dec49125dfa086addca32fc1569be4a6759",
+              "predicate": "quoted_source_segments_present",
+              "matched": true,
+              "missing": [],
+              "independent_literal_verified": true,
+              "independent_semantics_verified": false,
+              "development_credit": 0
+            },
+            "content_review_enabled": true
+          },
+          {
+            "attempt": 2,
+            "text": "这批原话里，甲项目押金的保管人有两个说法：「甲项目押金由周老师收着」，还有后面那句「甲项目押金由赵老师收着」。再往前那句李老师的，你自己更正过了。",
+            "accepted": true,
+            "violations": [],
+            "content_review": {
+              "schema": 1,
+              "verdict": "PASS",
+              "source": "model_content_review",
+              "independent_semantic_review_verified": false,
+              "reviewer": "deepseek-flash",
+              "evidence": [],
+              "reason": "候选准确接住了当前问题：它按原话记录区分了被更正的“李老师”说法，并指出“周老师”和“赵老师”两个未解决的说法，没有擅自选定或编造对方事实。"
+            },
+            "prior_retry": null,
+            "goal_check": {
+              "schema": 1,
+              "goal_id": "552ec4085cf09b4e07dafc2566864dec49125dfa086addca32fc1569be4a6759",
+              "predicate": "quoted_source_segments_present",
+              "matched": true,
+              "missing": [],
+              "independent_literal_verified": true,
+              "independent_semantics_verified": false,
+              "development_credit": 0
+            },
+            "content_review_enabled": true
+          }
+        ],
+        "development_credit": 0,
+        "subjective_reward_verified": false,
+        "memory_scope": {
+          "schema": 1,
+          "view": "finite_selected_utterances",
+          "complete_history_presented": false,
+          "same_domain_utterance_count": 7,
+          "matching_relation_utterance_known": true,
+          "presence_basis": "validated_literal_relation_reports_semantics_fallible",
+          "record_absence_verified": false,
+          "external_fact_verified": false
+        },
+        "goal_selection": {
+          "schema": 1,
+          "version": "declared_source_quote_goal_v1",
+          "declared_before_generation": true,
+          "context_sha256": "0d98b004b284cdc0ca569c6c0a3702c388ecd2e6380e3d65f324a08e73501a95",
+          "selected": {
+            "version": "declared_source_quote_goal_v1",
+            "operator": "QUOTE_SOURCE_SET",
+            "key": [
+              "甲项目押金",
+              "custodian",
+              ""
+            ],
+            "targets": [
+              {
+                "source_id": "dialogue:5:7d0432a1e9c9",
+                "raw_sha256": "7d0432a1e9c9aa00193c323af4f38a5311f9ec8e049885382950540238f933fd",
+                "start": 3,
+                "end": 14,
+                "evidence": "甲项目押金由周老师收着",
+                "role_basis": "reported_relation_reading_not_independent_semantics"
+              },
+              {
+                "source_id": "dialogue:7:e5796091b108",
+                "raw_sha256": "e5796091b108a86d3f1a283f603c230e02b9b9977230a2815a8b87a6f01ea1cf",
+                "start": 0,
+                "end": 11,
+                "evidence": "甲项目押金由赵老师收着",
+                "role_basis": "reported_relation_reading_not_independent_semantics"
+              }
+            ],
+            "origin": "model_declared_bounded_task",
+            "subjective_desire_verified": false,
+            "expected_released_literal_selection": true,
+            "semantic_outcome_observable": false,
+            "development_credit": 0,
+            "id": "552ec4085cf09b4e07dafc2566864dec49125dfa086addca32fc1569be4a6759"
+          },
+          "retired_ids": [],
+          "decision": "SELECTED",
+          "prior": [
+            {
+              "goal": {
+                "version": "declared_source_quote_goal_v1",
+                "operator": "QUOTE_SOURCE_SET",
+                "key": [
+                  "甲项目押金",
+                  "custodian",
+                  ""
+                ],
+                "targets": [
+                  {
+                    "source_id": "dialogue:5:7d0432a1e9c9",
+                    "raw_sha256": "7d0432a1e9c9aa00193c323af4f38a5311f9ec8e049885382950540238f933fd",
+                    "start": 3,
+                    "end": 14,
+                    "evidence": "甲项目押金由周老师收着",
+                    "role_basis": "reported_relation_reading_not_independent_semantics"
+                  }
+                ],
+                "origin": "model_declared_bounded_task",
+                "subjective_desire_verified": false,
+                "expected_released_literal_selection": true,
+                "semantic_outcome_observable": false,
+                "development_credit": 0,
+                "id": "fcd0a0295186622506496e31ef44352cf14af672a0fe39c2f1dd954883ca90f2"
+              },
+              "ledger_index": 6,
+              "state": "FULFILLED_LITERAL",
+              "changed_basis": true
+            }
+          ],
+          "independent_semantics_verified": false,
+          "development_credit": 0,
+          "selector": "deepseek-flash",
+          "model_reason": "来源已改变（新增对话7的说法），旧目标只依据对话5，不能压过更正；甲项目押金的保管人有冲突，选择引用目标须保留两个来源的全部原话：对话5称「甲项目押金由周老师收着」，对话7称「甲项目押金由赵老师收着」，不能任取其一。",
+          "result": {
+            "state": "FULFILLED_LITERAL",
+            "literal_predicate": {
+              "schema": 1,
+              "goal_id": "552ec4085cf09b4e07dafc2566864dec49125dfa086addca32fc1569be4a6759",
+              "predicate": "quoted_source_segments_present",
+              "matched": true,
+              "missing": [],
+              "independent_literal_verified": true,
+              "independent_semantics_verified": false,
+              "development_credit": 0
+            },
+            "semantic_goal_fit": "UNKNOWN",
+            "user_receipt": "UNKNOWN",
+            "operation_expectation": {
+              "expected": true,
+              "observed": true,
+              "comparison": "MATCH",
+              "basis": "declared_literal_operation_not_subjective_reward_or_semantic_goal_fit"
+            }
+          }
+        },
+        "selected_output_sha256": "30bc52b4c11aea1c89bed706f822d7ba4909973cd30934103e339735e929b492",
+        "speech_action": {
+          "schema": 1,
+          "planned": "REFLECT",
+          "actual": "QUOTE_SOURCE_SET_CONFIRMED",
+          "mode": "brain",
+          "basis": "literal_goal_predicate_matched",
+          "confirmed": true,
+          "thought_level": "",
+          "thought_quote_hits": []
+        },
+        "procedure_status": "PERMITTED",
+        "outcome": {
+          "semantic_goal_fit": "UNKNOWN",
+          "user_satisfaction": "UNKNOWN",
+          "basis": "operations_confirmed_semantics_not_independently_measured"
+        },
+        "receipt_sha256": "d5f0d3866d15dbe1f9f09307e97dcb74d9b170c8c27001428314b77578c19a62"
+      }
+    }
+  ],
+  "source_hashes": {
+    "corpus/sequences.json": "3eb710cf7275aa8887c28a802c0f0aa3dc5302441c54dca01df1811727a9267c",
+    "corpus/topics.json": "23d6b525b6ff71c5018806921dabb6e03029796f4f7a2feb10d9fae3797fca6d",
+    "engine/action_observation.py": "83f12e76398d6d29b8deeeaa4c9d54354a494f44484713d6b23ca7c9b70458c0",
+    "engine/action_plan.py": "ca5ff1987e6e0539ef5b8381f56a91cfb88799d418589563f9e86519c99a6079",
+    "engine/admin.py": "e05ed6bbd7fcb7ca781d298b137c89dc10aa3964a0d475d646cf9852b70a05c6",
+    "engine/admin_agent.py": "9c784cf16797a5691f671443531ae8e642ac3a81cbb6de4635f4bc997aa75f25",
+    "engine/admin_evidence.py": "6e4a6c43aad31a090253649e92b7dd0be563216103d3505581aae76baa784ada",
+    "engine/association.py": "8fbec4874478278f1e705d63cd917a5dbe6315da59df5fae45c5f4f699f6caba",
+    "engine/atoms.py": "d74c59366a652fe6829aba952f2ff4becfbe35a8d58923815a92e0ca7e19ec41",
+    "engine/behavior_learning.py": "92c86641a8809bbeb9d07f0974817a00919427fa7dcef511da45f0108cd22506",
+    "engine/carry.py": "06d01bf362d0e7c06723fa853c0e8b8fde92e7b49b27f01b92d8d4ab404afd9a",
+    "engine/character.py": "bde0752a90817eb4fe726fb4bf8cc055dd46e900f1337d114e38e4835f113f1d",
+    "engine/charter.py": "34502ebd69a091dc6e7391ca97023fbdb86bbb078f8ac27855cc5fe9df3ee3c4",
+    "engine/claims.py": "df2f1e1b17de28b4d79f39a572da0d3c16efa1f067a2d4fb825251f247a29dac",
+    "engine/cognition.py": "82e320e671aef3fea31d5bb3cfe94a79d3e25855e8af1daf9e574cade33f39d8",
+    "engine/cognition_ops.py": "0e49cc8e6daa7926541ef881d405c18ca94d8d4b3d4ee3a3ec1c5da8f8fddae9",
+    "engine/compose.py": "5f13f24329960c9c2baa6eeeb033a9feedc2a9a68b044aac4244f670d14816fd",
+    "engine/conflicts.py": "a2bb94eafc712b5e6dd97bcd6c97af8502342fe4bcb7e20e9cb7cd6a3da15bde",
+    "engine/consensus.py": "2a2e8aa1a2a5b34937cd78b5d40b8badc26039ba2ad4d74ae518b19d6e7c7d56",
+    "engine/consensus_claims.py": "71eb5160058cc8a73d1490ab84269c6e134344a8d322965f5b163accc4f0d169",
+    "engine/constants.py": "52e7b4d2b3a8a173bcb5392d48c1772aec61c5f38ea2f95c911a70c4aa966301",
+    "engine/content_fidelity.py": "0528f59c56d954b02ada12d0f50ff2f7bcc3f8163a165f19c25f27ad4d0a7f1a",
+    "engine/crashguard.py": "034ca9731cbc9e3acfd6b44db6e598ebe30c8c34853054034f94a2b80f747c08",
+    "engine/dashboard.py": "85f6e127a2b9e1d194203e17c94f2ba5c7a8e4d4e83d75f30e0156adbd37b41c",
+    "engine/development_baseline.py": "99ba8f79cc99f3ec4abec5dc251dc8a1148a6d1e2ea3303abb4dfca60b27f987",
+    "engine/devlevel.py": "6b31e8949a9cb092f62bbb6d0f595bfa7f1071a960dce1e9405d574075c31cae",
+    "engine/dialogue_memory.py": "081adbec0e6e54af0f864efa2e10ded1f04e807d0c55ea13df99e39089f68178",
+    "engine/experience.py": "564e64c32835f85b36c073ff79b50b37cc003c9f5cbcf67349f23c44424c6f62",
+    "engine/feedback_journal.py": "9ece6b37bc5be7c0bebac559801c06d05451c618ab9beffa3c2f1f02b407ec0d",
+    "engine/find_conflicts.py": "7698ab91c1f384a891b2b23c2c4d506b97b1dac80462f1626ad3d1997f1002db",
+    "engine/gapfill.py": "4afe1f0987f5e866e766a2110471e97f92ad6c76669e2ebf439fb2f440dd8fd1",
+    "engine/gear.py": "53f65917b05e7631bdcfa930130fd083259e95f89f13c141d3a4d79bc408a58e",
+    "engine/input_provenance.py": "339fc1870d4fda8607cc184e2d7cfba6c4e590fe0c8b8ca1e05ec6cfc588e491",
+    "engine/map_claims.py": "869c6be4fa08cfcde6397d2f62d4276f23cb2817d32307fc5aef65a7db2ed7a7",
+    "engine/markers.py": "bc1eaf9437c9cf962d42d5c30647cd8befa995eff4eeb83dbb47dd6af78f2dd2",
+    "engine/mechanism.py": "4225b91379a5d2140d9593b8a44cbed9e2be987314c4362d657e393d08e450fb",
+    "engine/memory_scope.py": "bc7f7f6c6c8e89705d32678cde06e8b6098c0952a7b92b3b6b2966a0efec9fa4",
+    "engine/organisation_refinement.py": "6c85832a6117ea706236b3b340162d1da00e2cdecbfcb146b55edacfe8d63571",
+    "engine/organisation_runtime.py": "5857c092d154ceef03ae65532610e0ea3f737145da70f59483a88cfd4b103d03",
+    "engine/pipeline.py": "741bda8c79ebad97f7fca0212cc385babaac2efdc524869369315e1091b0b277",
+    "engine/proposal_log.py": "913f2ae94d139c66d12935110de94a45bff2cb9e87de1a65458dcf50d97db74c",
+    "engine/relation_bridge.py": "9fa8a35316f374281b09585649a5496b6beca526854eb6cda77ee5f1cc8433cf",
+    "engine/relation_learning.py": "5a5ab17437aa92a72086a41ca0d4473c50508b993ae5d99f0dd0a1ec416fbaee",
+    "engine/relational_memory.py": "2429b6fea690a7ba77bda90dd72a2f33de9254aafe2c07ac9c874ffb99517bef",
+    "engine/render.py": "ff23c5d75bffc2d96aa311132b1ece012f380bf0dee55e946444cf09e077e4f2",
+    "engine/respond.py": "c0f27daf757761112ac5c81f49b1fd280aa5e95044a62bf393b48a52ec5df046",
+    "engine/review_loop.py": "ffe196bba0ea99d61c10bb13f421bff762aa664253eb11ce278fb67d79c4880c",
+    "engine/runtime_profile.py": "d02044f68cfd6c5f0e4099d7cd9ca905a1d3551236c181af0c230cdb3bf2de11",
+    "engine/sandbox.py": "34dc5f3a22602781cceb58d24cd53fcfb4c20481407c0ae22b6c99c94685bfb3",
+    "engine/self_action.py": "21855f9bb4369daa2c2e28fe3971852b9a87d2a92e3c81aff715edd2c9b42fc6",
+    "engine/self_goal.py": "37436eff449de3ae25369c6f25d12e4bd77856f4455ef1fd382a472a917ca518",
+    "engine/session_split.py": "6844506b63c822a0aa9def040e950830aa29321a447a87f73a465dbb78adb353",
+    "engine/shell.py": "5c6ae55b3ef84942bd39ee0c597488ad93caee8c762aa0034dcdc3bf8219d635",
+    "engine/stance.py": "4d60d09da6b0a3bb16474dbb886c056f3e1154a5fcedb343dceb5bf472bf8558",
+    "engine/state.py": "4cd4b6b8930f04ce93cbfd4a1eec25586401c81979d1b0310d5b1e4503165887",
+    "engine/strength.py": "116b9ed47db4ab50f11f262bf82b3c4a66c80b98b4265aef59e475be1741b921",
+    "engine/structure_conflict.py": "478ca835019c0fcda8e4cc9bfa0a4f18ee0388bc327a4277a25f5425cbf765e7",
+    "engine/structure_evidence.py": "065343c1addf5d5838a902588666a53031af5d9e6a0f412b97ad041b057f5e51",
+    "engine/studio_status.py": "c136db278c445d56c86f0eede77d44651a946e5b83c0128c159590b8d39823a2",
+    "engine/system_map.py": "40fdbb097185983a6459d8d9e3c26f3b68cc266e81e13d8085b6570c44d68c54",
+    "engine/think.py": "7d15c0d0fe83e5e55fb8764b4fda978ccd44d9d99ff7aeacbcb2782af902616f",
+    "engine/topics.py": "07a99220eae2bf97898d8a0e66c5a8b7c8d880587cc583a2dd8032829e0febad",
+    "engine/train.py": "66fff3c7c3862c061834fbf761262733d485eef382ecf3685cb7398288249d9d",
+    "engine/training_studio.py": "133eb6ead0ebc7cfb52ec549aae22be5ae0b97371dd09f90b8066eceb1f97030",
+    "engine/understand.py": "1530677f533e787debd072f3ee23f590121f880e896366531057c2142acf6f47",
+    "rules/atoms.json": "e1e3ce84f423e1656f26d1f329d49ed3eb4ff681e6c6047f43f761e3a86feb2c",
+    "rules/behaviors.json": "9dd6f8891817bb10c17076517a23579420c155e806c4dc54834efa1ba2b900ae",
+    "rules/markers.json": "f3215f2c6ceaf089404cdc11999f548580b2c79a680d310a3471ffa695d1cb2f",
+    "rules/meta_responses.json": "c5348457b1058c2efe57c7d0ad2c255f8213a17d4ad2d63dec43ff6712d932b1",
+    "spec/最终行动方案_20261007.json": "51999057f741cc71bbf45a5acd7f997bb1d03aaae7268d2962c7b4abfc886967",
+    "state/ledger.py": "0463458a55ca61ad4911731e812bd720bf0302b1a4e8440cdcafc4bf459e38dd"
+  },
+  "real_API": true,
+  "formal_training": false,
+  "scripted_inputs": true,
+  "goal_origin": "model_declared_bounded_task",
+  "selection_origin": "actual_model_with_injected_candidate_failure",
+  "real_state_files_unchanged": 34,
+  "independent_semantics_verified": false,
+  "development_credit": 0,
+  "claims": "Literal goal outcome and commitment process; no human goal, reward or stage certification."
+}

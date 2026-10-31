@@ -1,0 +1,249 @@
+{
+  "audit_date": "2026-10-07",
+  "network_forbidden": true,
+  "state_files_unchanged": 35,
+  "state_hashes": {
+    "state/association.jsonl": "9a5956c9809785ecad4315e7f1a0bb065384d7021703e9715b61ea0b3297b502",
+    "state/character.json": "e5a5573cce8dc06c0490140b6255137c1ec30e9bdc4e1460fb0a0054b063660b",
+    "state/devlevel.json": "9d536705bf0eb5f7e6417e893e284efad30d1f796421c2edf771b6e85335d43e",
+    "state/devlevel_verified.json": "13ff14785b8e6553de6f7a9ab561dc2ca3d8bf418db2238a288a85473c0dd4dc",
+    "state/ledger.jsonl": "64d02fbc848110d4c5068076476c39d515a75c3a75f281768d9031895471e307",
+    "state/ledger.jsonl.bak": "e41e6d303de117ce94de7215cb5cc250e5199ffa18934466b3340e8f47e16cab",
+    "state/ledger.py": "dd917eee6f8a922598a708de975eec6653bef1b07dee5088a1cdce45573a6451",
+    "state/ledger_demo.jsonl": "9a2afd8dc4425e61ab66b6765433e7aceb5b602dd419d51023b13aa7beac49c3",
+    "state/schema.json": "e2e9cebf931d7d8db8fbe76b965eb38efb7d48e0a29bc8793a987b0440144fcf",
+    "state/topic_progress.json": "05ddf377cf5f3dcc2751f9683b056cf0ed37f9f0aa304621a5bc3eae513b9e21",
+    "state/共识核_提炼缓存.jsonl": "0746ca4b2d90d16b3a33bffcb242df0013ca471fc1e462cde11244410d3d9018",
+    "state/development_legacy_20261006/devlevel.json": "c591c196c480f7ec276335f35616e7f78d2dfcb83dfaca9af8db2b7b36c8d86e",
+    "state/review/versions.jsonl": "f07a8a28a33f65d7e57632bbaec8418a938c8442d4a1aa81a8d412fd4ac7068d",
+    "state/train/association.jsonl": "b44fd84090ece635f34f02c3cdf9b0304e0866f1bb857312975878136e246122",
+    "state/train/character.json": "06fd37b9eef1cdbe364c38240382a5b6f37e4d88ba5e59caed59602b4acffb09",
+    "state/train/decisions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "state/train/decisions.jsonl.bak_20261002_221303": "06852c5d07afe50859934dc4aced042bd5b67e81bddef7ec0be683088183db66",
+    "state/train/decisions_v0.jsonl": "ec950bf528c5b6f5bdfd095e31acff5523ecec651502f66b82f39cfdf579a380",
+    "state/train/eval.jsonl": "9fafd7b82ed5804452c66779e2505e6c4818e22f1bd118aee8de1db78d31d1fa",
+    "state/train/eval_backup_20261002_205028.jsonl": "b800f7ddcdba75400a59c3ba7280fde97be800a25b1d5993442d9903e38c8377",
+    "state/train/eval_v0.jsonl": "89d431ad16a3b7486280a52f23fa81da67e3096ad77eaec74131dd31efdb31c7",
+    "state/train/ledger.jsonl": "60d367ab876efb7ec6878c2011703bec47c0c60d998b45dd7b8f0521162b991b",
+    "state/train/progress.json": "6d84bf460db9eab4dcd2f3b54965d6353ab2002d5f33ef46a111201a169b8b81",
+    "state/train/review_queue.json": "fb719460ed728adc24893ad73293536cbab26992475723db6e471a78d6a54797",
+    "state/train/runs.jsonl": "13976dcaca075fac37ddd57468600c522c1f0c7bad3bcdffc8e7e446076ad349",
+    "state/_snapshot_20261003_214421/character.json": "e5a5573cce8dc06c0490140b6255137c1ec30e9bdc4e1460fb0a0054b063660b",
+    "state/_snapshot_20261003_214421/decisions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "state/_snapshot_20261003_214421/devlevel.json": "c591c196c480f7ec276335f35616e7f78d2dfcb83dfaca9af8db2b7b36c8d86e",
+    "state/_snapshot_20261003_214421/eval.jsonl": "414dd87aa21d367aa09194b6b6a7aa157237aefd0bf0e2a5722053353feee07a",
+    "state/_snapshot_20261003_214421/HASHES.txt": "1718145c2aec616425a28c5504a9994dccda0ba11b7082a0485bcb3435f4c29b",
+    "state/_snapshot_20261003_214421/ledger.jsonl": "473442cae55fb65f0f264c29dc40e76904b7d8fe959ef94095a96db3b7b01767",
+    "state/_snapshot_20261003_214421/mechanism_carry.json": "d03bfedff964e9c4928ca41c7e5f6394715a8082d26ae8cd3e9839c8d6a8b83c",
+    "state/_snapshot_20261003_214421/progress.json": "022f17ccc772e772e03f6179fe3445da4c4a2915bd2ea5362b5c2b6652c108d4",
+    "state/_snapshot_20261003_214421/review_queue.json": "d026fab21e7632a60dc8870ba8b40c2c6b7a7e18b7d557d95ef03ad38bfd970a",
+    "state/__pycache__/ledger.cpython-312.pyc": "d8c328465344faea91884d3c9b89c7890c81d277d9fca89a99da5586f5c1f290"
+  },
+  "brain_context_probe": {
+    "synthetic": true,
+    "real_pipeline": true,
+    "API_called": false,
+    "cases": [
+      {
+        "prior_input": "押金由李老师收着，我要先联系李老师。",
+        "current_input": "那我现在该联系谁？",
+        "prior_fact_in_ledger": true,
+        "prior_contact_in_brain_frame": true,
+        "ledger_behavior_after_brain_output": "QUESTION",
+        "brain_output": "那笔押金现在由谁收着？",
+        "frame_sha256": "94f432e0a30596fedf90130824d48210b99f448103500eaee7493c437aa45e73"
+      },
+      {
+        "prior_input": "押金由周老师收着，我要先联系周老师。",
+        "current_input": "那我现在该联系谁？",
+        "prior_fact_in_ledger": true,
+        "prior_contact_in_brain_frame": true,
+        "ledger_behavior_after_brain_output": "QUESTION",
+        "brain_output": "那笔押金现在由谁收着？",
+        "frame_sha256": "88a102d91887441ab5c0193220ca9c96c6080492e87c2b97ce98390e5f015c11"
+      }
+    ],
+    "different_histories_produce_identical_brain_frame": false
+  },
+  "semantic_error_probe": {
+    "synthetic": true,
+    "real_mechanism": true,
+    "same_channel_different_content_same_e": true,
+    "e_trace": [
+      0.021,
+      0.057,
+      0.105,
+      0.162,
+      0.226,
+      0.294,
+      0.367,
+      0.442,
+      0.519,
+      0.597,
+      0.677,
+      0.758,
+      0.818,
+      0.864,
+      0.898,
+      0.923
+    ],
+    "interpretation": "channel pressure proxy does not measure semantic correctness"
+  },
+  "refinement_cross_context_probe": {
+    "synthetic": true,
+    "counterlabel_is_deliberate_not_a_semantic_claim": true,
+    "candidate_status_after_other_context_counterexample": "rejected",
+    "candidate_prediction": "NEGATED",
+    "feedback_role": "ASSERTED",
+    "cross_context_counterexample_ignored": false,
+    "enabled_in_pipeline": false
+  },
+  "realized_behavior_probe": {
+    "synthetic_brain": true,
+    "real_pipeline": true,
+    "brain_output": "那笔押金现在由谁收着？",
+    "recorded_behavior": "QUESTION",
+    "output_is_an_explicit_question": true,
+    "output_passes_existing_gate": true,
+    "planned_behavior": "REFLECT",
+    "action_observation": {
+      "schema": 1,
+      "planned": "REFLECT",
+      "actual": "QUESTION",
+      "mode": "brain",
+      "basis": "one_literal_question_not_detail_classification",
+      "confirmed": true
+    }
+  },
+  "mechanical_gate_probe": {
+    "synthetic": true,
+    "cases": [
+      {
+        "raw": "我站在那里闻了半小时桂花。",
+        "candidate": "那半小时里没人在看表。",
+        "issue": "unsupported_added_detail",
+        "violations": [],
+        "accepted_by_mechanical_gate": true
+      },
+      {
+        "raw": "押金还没有退，那我现在该联系谁？",
+        "candidate": "模型和架构是别人定的，我左右不了。",
+        "issue": "off_topic",
+        "violations": [],
+        "accepted_by_mechanical_gate": true
+      }
+    ]
+  },
+  "latest_training": {
+    "run_id": "1791280334048715400_10308",
+    "last_run": "2026-10-06 17:55:08",
+    "turns": 6,
+    "evals": 6,
+    "META_turns": 5,
+    "carried_mechanism_turns": 5,
+    "evaluation_problem_counts": {
+      "none": 5,
+      "mechanical": 1
+    }
+  },
+  "development": {
+    "level": "I-3",
+    "equilibration": 0,
+    "history": [],
+    "evidence_policy": "independent_structure_evidence_required",
+    "allowed_self_rules": [
+      "R1"
+    ],
+    "visible_marker_count": 9
+  },
+  "learning_memories": {
+    "state/behavior_rules.json": {
+      "exists": false
+    },
+    "state/relation_rules.json": {
+      "exists": false
+    },
+    "state/train/behavior_rules.json": {
+      "exists": false
+    },
+    "state/train/relation_rules.json": {
+      "exists": false
+    }
+  },
+  "historical_claim_inventory": {
+    "DB": {
+      "total": 602,
+      "historical_status_counts": {
+        "未实现": 461,
+        "已实现": 52,
+        "明确不实现": 89
+      },
+      "note": "historical labels, not revalidated capability coverage"
+    },
+    "E": {
+      "total": 1718,
+      "historical_status_counts": {
+        "明确不实现": 637,
+        "未实现": 1048,
+        "已实现": 33
+      },
+      "note": "historical labels, not revalidated capability coverage"
+    },
+    "M": {
+      "total": 601,
+      "historical_status_counts": {
+        "明确不实现": 207,
+        "未实现": 353,
+        "已实现": 41
+      },
+      "note": "historical labels, not revalidated capability coverage"
+    }
+  },
+  "source_locations": {
+    "pipeline.py": {
+      "sha256": "0dd14123ea599406740086799b9d23a2f820268fb111df9229723be5f9577041",
+      "functions": {
+        "turn": 259,
+        "_build_frame": 701
+      }
+    },
+    "think.py": {
+      "sha256": "73d66c33aa780459c6daacdc00d5cb4803999266e579c4d6a5c9e03fcd73032d",
+      "functions": {
+        "check": 164,
+        "think": 213
+      }
+    },
+    "mechanism.py": {
+      "sha256": "2ca3a4035cc5caebbb9512a84080cebdb8031a5cf1558c57e806d7378dec342c",
+      "functions": {
+        "_observe": 401,
+        "_layer1": 470,
+        "_layer2": 591,
+        "_layer3": 682
+      }
+    },
+    "train.py": {
+      "sha256": "963c7d4bdd4cc0ab4fdf24e22a73f431366f6a02a16061bc7ac8d661d53b8768",
+      "functions": {
+        "_pipe": 301,
+        "run": 325,
+        "_record_eval": 530,
+        "_regrow": 566
+      }
+    },
+    "devlevel.py": {
+      "sha256": "6b31e8949a9cb092f62bbb6d0f595bfa7f1071a960dce1e9405d574075c31cae",
+      "functions": {
+        "update": 322
+      }
+    },
+    "organisation_refinement.py": {
+      "sha256": "6c85832a6117ea706236b3b340162d1da00e2cdecbfcb146b55edacfe8d63571",
+      "functions": {
+        "predict": 50,
+        "derive": 60
+      }
+    }
+  }
+}

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b171a">
+<meta name="description" content="智阳神传·天启 — 八位神裔、六重秘境、即时动作与随机构筑。离线即可游玩。">
+<title>智阳神传 · 天启</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<svg class="sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
+<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M20 4l-2 2M6 18l-2 2"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-8h6v8"/></symbol>
+<symbol id="i-sword" viewBox="0 0 24 24"><path d="m5 19 3-3m-5 1 4 4m0-10 6 6M9 13 18 3l3 0v3L11 15M4 20l-1 1"/></symbol>
+<symbol id="i-map" viewBox="0 0 24 24"><path d="m3 5 6-2 6 3 6-2v16l-6 2-6-3-6 2V5Zm6-2v16m6-13v16"/></symbol>
+<symbol id="i-hero" viewBox="0 0 24 24"><path d="m12 2 7 4-1 10-6 6-6-6L5 6l7-4ZM8 8l4 3 4-3m-4 3v7"/></symbol>
+<symbol id="i-rune" viewBox="0 0 24 24"><path d="m12 2 9 10-9 10-9-10L12 2Zm0 4v12m-5-6h10m-8-3 6 6m0-6-6 6"/></symbol>
+<symbol id="i-cup" viewBox="0 0 24 24"><path d="M7 3h10v8a5 5 0 0 1-10 0V3Zm0 2H3v5c0 2 2 3 4 3m10-8h4v5c0 2-2 3-4 3m-5 3v5m-5 0h10"/></symbol>
+<symbol id="i-book" viewBox="0 0 24 24"><path d="M12 5c-4-3-8-2-10-1v16c4-2 7-1 10 1 3-2 6-3 10-1V4c-2-1-6-2-10 1Zm0 0v16M5 8l4 1M5 12l4 1m6-4 4-1m-4 5 4-1"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><path d="m9 3 1-2h4l1 2 3 2 3 1v4l-2 2 2 2v4l-3 1-3 2-1 2h-4l-1-2-3-2-3-1v-4l2-2-2-2V6l3-1 3-2Z"/><circle cx="12" cy="12" r="4"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19"/></symbol>
+<symbol id="i-gem" viewBox="0 0 24 24"><path d="m3 8 4-5h10l4 5-9 13L3 8Zm0 0h18M7 3l5 18 5-18"/></symbol>
+<symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 2c3 6-3 7-1 11 2-1 4-3 4-6 7 6 5 14-3 15C2 22 1 13 6 7c-1 5 2 6 3 6-3-5 2-6 3-11Z"/></symbol>
+<symbol id="i-wind" viewBox="0 0 24 24"><path d="M2 8h14c6 0 5-6 1-6-2 0-3 1-3 3M2 12h17c5 0 4 6 1 6M2 16h8c6 0 5 6 1 6"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24"><path d="m14 2-9 12h6l-1 8 9-12h-6l1-8Z"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="m12 2 9 4v7c0 5-9 9-9 9s-9-4-9-9V6l9-4Z"/><path d="M12 6v12M7 12h10"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 14A10 10 0 0 1 10 3a10 10 0 1 0 11 11Z"/></symbol>
+<symbol id="i-snow" viewBox="0 0 24 24"><path d="M12 1v22M2 6l20 12M2 18 22 6m-14-2 4 3 4-3M8 20l4-3 4 3M3 10l2-4 4-1M15 19l4-1 2-4M3 14l2 4 4 1M15 5l4 1 2 4"/></symbol>
+<symbol id="i-leaf" viewBox="0 0 24 24"><path d="M21 3C3 1 0 13 8 19c9 6 14-7 13-16ZM3 22 17 8m-8 7V9m3 3h5"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="m8 4 12 8-12 8V4Z"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 4v16M17 4v16"/></symbol>
+<symbol id="i-volume" viewBox="0 0 24 24"><path d="m3 9 5 0 6-5v16l-6-5H3V9Zm14-2c4 3 4 7 0 10m3-13c6 5 6 11 0 16"/></symbol>
+<symbol id="i-full" viewBox="0 0 24 24"><path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6"/></symbol>
+<symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 8h6v8H9V8Z"/></symbol>
+<symbol id="i-save" viewBox="0 0 24 24"><path d="M4 2h13l4 4v16H3V2h1Zm3 0v7h10V2M7 22v-9h10v9"/></symbol>
+</defs></svg>
+<div id="lobby" class="shell">
+<aside class="sidebar">
+  <button class="brand-mark" data-page="home" aria-label="返回天启大厅"><svg><use href="#i-sun"/></svg><span>智阳</span></button>
+  <nav id="nav" aria-label="主导航"></nav>
+  <div class="side-foot"><button class="nav-btn" data-action="help"><svg><use href="#i-book"/></svg><span>指引</span></button><button class="nav-btn" data-action="settings"><svg><use href="#i-settings"/></svg><span>设置</span></button><span class="vertical">天启 · REBORN</span></div>
+</aside>
+<div class="main-shell">
+  <header class="topbar"><div class="wordmark">智阳神传<span>天 启 / REBORN</span></div><div class="top-resources"><button class="resource gold" data-page="forge" title="灵铢：用于神裔成长与灵印升级"><svg><use href="#i-coin"/></svg><b id="gold">12,000</b><small>灵铢</small></button><button class="resource jade" data-action="market" title="打开星庭商阁" aria-label="天晶商阁"><svg><use href="#i-gem"/></svg><b id="gems">500</b><small>天晶</small></button><button class="icon-btn" data-action="fullscreen" title="全屏" aria-label="全屏"><svg><use href="#i-full"/></svg></button><button class="profile-btn" data-action="profile"><span class="avatar" id="avatar">曜</span><span><b id="player-name">智阳使者</b><small id="player-level">初醒者 · LV.01</small></span></button></div></header>
+  <main id="content" tabindex="-1"></main>
+  <footer class="lobby-footer"><span><i class="status-dot"></i>离线世界 · 自由探索</span><span id="save-status">本地存档就绪</span><span>ZHIYANG / REBORN</span></footer>
+</div>
+</div>
+<section id="battle" hidden aria-label="战斗场景">
+  <canvas id="arena" aria-label="游戏画布，WASD 移动，J 攻击，Q E R 技能，空格闪避"></canvas>
+  <div class="combat-ui"><div class="battle-top"><div class="vitals"><div class="vitals-name"><span id="battle-hero">曜</span><span id="battle-level">LV.1</span><button data-action="pause" class="icon-btn" aria-label="暂停"><svg><use href="#i-pause"/></svg></button></div><div class="health-track"><div id="hp-fill"></div><div id="shield-fill"></div><b id="hp-text"></b></div><div class="experience-track"><div id="xp-fill"></div></div><div class="vitals-meta"><span id="battle-kills">斩灭 0</span><span id="battle-time">00:00</span><span id="battle-combo"></span></div></div><div id="objective" class="objective"></div><div class="battle-minimap"><canvas id="minimap" width="150" height="108"></canvas><span id="map-label">遗落星庭</span></div></div>
+  <div class="boss-ui" id="boss-ui" hidden><div><span id="boss-title"></span><span id="boss-percent"></span></div><div class="boss-track"><i id="boss-fill"></i></div><small id="boss-phase"></small></div>
+  <div id="battle-announcement" class="battle-announcement" aria-live="polite"></div>
+  <div id="wave-progress" class="wave-progress"></div>
+  <div id="joystick" class="joystick"><div class="joy-ring"></div><div class="joy-knob" id="joy-knob"></div></div>
+  <div class="combat-bottom"><button id="auto-btn" data-action="auto" class="auto-btn">自动普攻 <b>开</b></button><div class="skills"><button class="skill-btn dash" id="skill-dash" data-skill="dash"><svg><use href="#i-wind"/></svg><span class="skill-title">闪避</span><kbd>SPACE</kbd><i></i></button><button class="skill-btn" id="skill-0" data-skill="0"><svg><use href="#i-sword"/></svg><span class="skill-title">逐日</span><kbd>Q / 1</kbd><i></i></button><button class="skill-btn" id="skill-1" data-skill="1"><svg><use href="#i-shield"/></svg><span class="skill-title">抗击</span><kbd>E / 2</kbd><i></i></button><button class="skill-btn ultimate" id="skill-2" data-skill="2"><svg><use href="#i-sun"/></svg><span class="skill-title">天启</span><kbd>R / 3</kbd><i></i></button><button class="skill-btn attack" id="attack-btn"><svg><use href="#i-sword"/></svg><span class="skill-title">攻击</span><kbd>J / 点击</kbd></button></div><div class="controls-hint">W A S D 移动 <span>·</span> 空格 闪避 <span>·</span> ESC 暂停</div></div>
+  <div class="low-health" id="low-health"></div></div>
+</section>
+<dialog id="modal"><div id="modal-body"></div></dialog>
+<div id="toast-stack" aria-live="polite"></div>
+<input type="file" id="import-file" accept=".json,application/json" hidden>
+<script src="engine.js"></script>
+<script src="render.js"></script>
+<script src="game.js"></script>
+</body></html>

@@ -1,0 +1,1309 @@
+{
+  "candidate_id": "clause_scope_v1",
+  "protocol_sha256": "a40547a829957355792668be183d460170faa7c8c3e935c2e11a8c951679420b",
+  "candidate_source_sha256": "a3640114c2cc326d208dbd99209d9e17af3b7c290a2dcf19c54469a6ea2d5353",
+  "marker_rules_sha256": "f3215f2c6ceaf089404cdc11999f548580b2c79a680d310a3471ffa695d1cb2f",
+  "historical_corpus_sha256": "3154a0ce22458874700020d71f6139bbd6a18314ba6bc8bfeb89b5e4a63c5971",
+  "discovery_fixed": true,
+  "historical_target_regressions": [],
+  "challenge_errors": [
+    "C06",
+    "C07"
+  ],
+  "exact_evidence_spans": true,
+  "blocked_visibility_preserved": true,
+  "real_state_unchanged": true,
+  "state_files_checked": 36,
+  "independently_reviewed": false,
+  "development_credit": 0,
+  "verdict": "rejected",
+  "target_only_counts": {
+    "historical": {
+      "count": 56,
+      "old_errors": 1,
+      "candidate_errors": 0
+    },
+    "challenge": {
+      "count": 12,
+      "old_errors": 2,
+      "candidate_errors": 2
+    }
+  },
+  "rows": [
+    {
+      "id": "history-1",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "都是他们害的，我当初要是不听他们的就好了。",
+      "expected": true,
+      "note": "典型外指：『都是他们』",
+      "old": true,
+      "candidate": {
+        "fired": true,
+        "reason": "local_scope_candidate",
+        "nodes": [
+          {
+            "start": 0,
+            "end": 4,
+            "text": "都是他们",
+            "clause_start": 0,
+            "clause_end": 6,
+            "negated": false,
+            "accepted": true
+          },
+          {
+            "start": 2,
+            "end": 5,
+            "text": "他们害",
+            "clause_start": 0,
+            "clause_end": 6,
+            "negated": false,
+            "accepted": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "history-2",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "这事跟我没关系，是他们先动的手。",
+      "expected": true,
+      "note": "『是他们先』",
+      "old": false,
+      "candidate": {
+        "fired": true,
+        "reason": "local_scope_candidate",
+        "nodes": [
+          {
+            "start": 9,
+            "end": 12,
+            "text": "他们先",
+            "clause_start": 8,
+            "clause_end": 15,
+            "negated": false,
+            "accepted": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "history-3",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "我有什么办法，赶上这种领导算我倒霉。",
+      "expected": true,
+      "note": "『我有什么办法』＋『赶上』",
+      "old": true,
+      "candidate": {
+        "fired": true,
+        "reason": "local_scope_candidate",
+        "nodes": [
+          {
+            "start": 0,
+            "end": 6,
+            "text": "我有什么办法",
+            "clause_start": 0,
+            "clause_end": 6,
+            "negated": false,
+            "accepted": true
+          },
+          {
+            "start": 7,
+            "end": 9,
+            "text": "赶上",
+            "clause_start": 7,
+            "clause_end": 17,
+            "negated": false,
+            "accepted": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "history-4",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "这环境就是这样，谁来了都一样。",
+      "expected": true,
+      "note": "『环境』",
+      "old": true,
+      "candidate": {
+        "fired": true,
+        "reason": "local_scope_candidate",
+        "nodes": [
+          {
+            "start": 1,
+            "end": 3,
+            "text": "环境",
+            "clause_start": 0,
+            "clause_end": 7,
+            "negated": false,
+            "accepted": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "history-5",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "都怪我，是我当时没把话说清楚。",
+      "expected": false,
+      "note": "自指而非外指 —— 不该命中 blame_external",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "whole_input_counterexample",
+        "nodes": [
+          {
+            "start": 0,
+            "end": 2,
+            "text": "都怪",
+            "clause_start": 0,
+            "clause_end": 3,
+            "negated": false,
+            "accepted": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "history-6",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "他走了，就这么走了。",
+      "expected": false,
+      "note": "只陈述事实，无归因",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-7",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "想开点吧，人生就是这样，要学会放下。",
+      "expected": false,
+      "note": "『想开点』＋『人生就是这样』",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-8",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "我觉得一个人最重要的品质就是善良，要互相理解。",
+      "expected": false,
+      "note": "『一个人最重要的品质』＋『互相理解』",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-9",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "只要努力就好，顺其自然，心态好最重要。",
+      "expected": false,
+      "note": "『只要努力』『顺其自然』『心态好』",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-10",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "做人要将心比心，换位思考一下。",
+      "expected": false,
+      "note": "『将心比心』『换位思考』",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-11",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "那天她把我送到楼下，我看着她上车，车开走以后我在原地站了很久，风挺凉的。",
+      "expected": false,
+      "note": "具体经验，不是陈词滥调",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-12",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "我怕别人怎么看我，同事都在背后说。",
+      "expected": false,
+      "note": "『别人怎么看我』『同事』",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-13",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "我妈说这样不行，我们那边的人都这么做。",
+      "expected": false,
+      "note": "『我妈说』＋『我们那边』",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-14",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "不想让人看到我这个样子，太丢脸了。",
+      "expected": false,
+      "note": "『让人』＋『丢脸』",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-15",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "大家都说该稳定，可我不这么想，我就想折腾。",
+      "expected": false,
+      "note": "引用群体但明确不认同 —— 反例，不该命中",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-16",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "我不想让她难过，所以那天我没说。",
+      "expected": false,
+      "note": "出于具体关系而非群体规范 —— 反例",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-17",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "我被这件事困住了，控制不了自己。",
+      "expected": false,
+      "note": "被动式：『我被』＋『控制不了』",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-18",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "它又来了，那种感觉一上来我就不由自主。",
+      "expected": false,
+      "note": "『它又来了』＋『不由自主』",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-19",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "是我选的，我认。",
+      "expected": false,
+      "note": "主动式：『是我选的』",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-20",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "我决定不再等他了。",
+      "expected": false,
+      "note": "主动式：『我决定』",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-21",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "我被堵在路上两个小时。",
+      "expected": false,
+      "note": "外部事件的被动 —— 反例",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-22",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "我被那句话感动了。",
+      "expected": false,
+      "note": "无行动含义的被动 —— 反例",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-23",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "一方面我想留下来陪他们，另一方面我又想去外面试试。",
+      "expected": false,
+      "note": "『一方面…另一方面』",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-24",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "我既想让他知道，又怕他知道。",
+      "expected": false,
+      "note": "『既…又』",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-25",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "有时候觉得这样挺好，有时候又受不了。",
+      "expected": false,
+      "note": "『有时候…有时候』",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-26",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "我心里很矛盾。",
+      "expected": false,
+      "note": "『矛盾』 —— 但需确认单独一词是否够",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-27",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "虽然我不想去，但是我还是去了。",
+      "expected": false,
+      "note": "说服式转折而非并存 —— 反例",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-28",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "我一定要做到，我必须证明给他们看。",
+      "expected": false,
+      "note": "『我一定要』＋『必须证明』",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-29",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "这次不能失败，我必须成功。",
+      "expected": false,
+      "note": "『不能失败』＋『必须成功』",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-30",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "我非拿下这个项目不可。",
+      "expected": false,
+      "note": "『非…不可』",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-31",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "合同上必须这么办，我也没办法。",
+      "expected": false,
+      "note": "外部义务且有距离感 —— 反例",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-32",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "今天必须交稿，不然来不及了。",
+      "expected": false,
+      "note": "具体一次性任务 —— 反例",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-33",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "虽然这件事改变不了，但我可以选择怎么过下去。",
+      "expected": false,
+      "note": "态度句＋不可改变",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-34",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "即使结果是这样，我也不后悔。",
+      "expected": false,
+      "note": "『即使…也』＋『不后悔』",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-35",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "我唯一能做的是把今天过好。",
+      "expected": false,
+      "note": "『我唯一能做的是』",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-36",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "没办法，就这样吧，听天由命。",
+      "expected": false,
+      "note": "纯宿命论，无态度选择动作 —— 反例",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-37",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "算了，不弄了。",
+      "expected": false,
+      "note": "对可改变处境的消极接受 —— 反例",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-38",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "我就是想要那个结果，得不到就难受。",
+      "expected": false,
+      "note": "『我就是想』＋『得不到就』，且无体验描述",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-39",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "我特别渴望被认可，一想到就坐不住。",
+      "expected": false,
+      "note": "『特别渴望』，无体验描述",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-40",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "我想吃我妈做的那个面，汤是浑的，闻着特别香。",
+      "expected": false,
+      "note": "有具体体验描述（香/闻）—— 反例",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-41",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "等我以后有钱了，等我做到那一步，一切就好了，将来总会好的。",
+      "expected": false,
+      "note": "未来指向密集且无体验词（『以后』『等我』『将来』）",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-42",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "总有一天我会证明给他们看的，明年一定不一样。",
+      "expected": false,
+      "note": "『总有一天』＋『明年』，无体验词",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-43",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "等我搬到那，我就能每天闻到院子里的味道。",
+      "expected": false,
+      "note": "计划后紧跟可体验细节（闻到/味道）—— 反例",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-44",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "他已经走了，再也回不来了。",
+      "expected": false,
+      "note": "『走了』＋『再也』＋『回不来』",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-45",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "这件事已经发生了，改变不了。",
+      "expected": false,
+      "note": "『已经发生』＋『改变不了』",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-46",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "别提了，没什么好说的。",
+      "expected": false,
+      "note": "抑制式表达（否定免疫名单）",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-47",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "试过了，没用。",
+      "expected": false,
+      "note": "『试过了，没用』",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-48",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "算了不弄了，先放一放，过两天再说。",
+      "expected": false,
+      "note": "可改变处境的一时搁置 —— 反例",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-49",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "大家都说该这样，但我一方面想留，另一方面又想走。",
+      "expected": false,
+      "note": "引用群体＋对立并存",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-50",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "我已经这样了，改变不了，但至少我可以决定今天怎么过。",
+      "expected": false,
+      "note": "不可改变＋态度句",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-51",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "都是他们逼的，我没办法，我一定要让他们看到我不行。",
+      "expected": true,
+      "note": "外指＋过度意向",
+      "old": true,
+      "candidate": {
+        "fired": true,
+        "reason": "local_scope_candidate",
+        "nodes": [
+          {
+            "start": 0,
+            "end": 4,
+            "text": "都是他们",
+            "clause_start": 0,
+            "clause_end": 6,
+            "negated": false,
+            "accepted": true
+          },
+          {
+            "start": 2,
+            "end": 5,
+            "text": "他们逼",
+            "clause_start": 0,
+            "clause_end": 6,
+            "negated": false,
+            "accepted": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "history-52",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "今天天气还行。",
+      "expected": false,
+      "note": "无任何特征，零命中是对的",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-53",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "我不知道该说什么。",
+      "expected": false,
+      "note": "这在意图层处理（META），不是标记",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-54",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "嗯。",
+      "expected": false,
+      "note": "太短，零命中是对的",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-55",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "我今天特别累，什么都不想干。",
+      "expected": false,
+      "note": "★ 疲劳/耗竭**当前没有任何标记** —— 见下方 GAP_NOTES",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "history-56",
+      "source": "prior_AI_diagnostic_corpus",
+      "split": "historical",
+      "raw": "我已经三个月没睡好了，整个人是麻的。",
+      "expected": false,
+      "note": "★ 同上：睡眠与麻木无标记归属",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    },
+    {
+      "id": "C01",
+      "raw": "我没意见，都是他们害的。",
+      "expected": true,
+      "note": "否定意见与后续外指分属两个命题；跨分句不应自动压掉后者。",
+      "source": "current_AI_constructed_challenge",
+      "split": "challenge",
+      "old": false,
+      "candidate": {
+        "fired": true,
+        "reason": "local_scope_candidate",
+        "nodes": [
+          {
+            "start": 5,
+            "end": 9,
+            "text": "都是他们",
+            "clause_start": 5,
+            "clause_end": 11,
+            "negated": false,
+            "accepted": true
+          },
+          {
+            "start": 7,
+            "end": 10,
+            "text": "他们害",
+            "clause_start": 5,
+            "clause_end": 11,
+            "negated": false,
+            "accepted": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "C02",
+      "raw": "并不是他们先动手。",
+      "expected": false,
+      "note": "同分句否定必须继续生效。",
+      "source": "current_AI_constructed_challenge",
+      "split": "challenge",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": [
+          {
+            "start": 3,
+            "end": 6,
+            "text": "他们先",
+            "clause_start": 0,
+            "clause_end": 8,
+            "negated": true,
+            "accepted": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "C03",
+      "raw": "都怪我，都是他们害的。",
+      "expected": false,
+      "note": "沿用既有全句自指反例优先，不借分句绕过反例。不是对混合归因的人格判定。",
+      "source": "current_AI_constructed_challenge",
+      "split": "challenge",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "whole_input_counterexample",
+        "nodes": [
+          {
+            "start": 0,
+            "end": 2,
+            "text": "都怪",
+            "clause_start": 0,
+            "clause_end": 3,
+            "negated": false,
+            "accepted": false
+          },
+          {
+            "start": 4,
+            "end": 8,
+            "text": "都是他们",
+            "clause_start": 4,
+            "clause_end": 10,
+            "negated": false,
+            "accepted": false
+          },
+          {
+            "start": 6,
+            "end": 9,
+            "text": "他们害",
+            "clause_start": 4,
+            "clause_end": 10,
+            "negated": false,
+            "accepted": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "C04",
+      "raw": "我没说都是他们害的，但是都是他们害的。",
+      "expected": true,
+      "note": "前一次否定，后一次明确肯定；逐次出现位置应有各自证据。",
+      "source": "current_AI_constructed_challenge",
+      "split": "challenge",
+      "old": false,
+      "candidate": {
+        "fired": true,
+        "reason": "local_scope_candidate",
+        "nodes": [
+          {
+            "start": 3,
+            "end": 7,
+            "text": "都是他们",
+            "clause_start": 0,
+            "clause_end": 9,
+            "negated": true,
+            "accepted": false
+          },
+          {
+            "start": 5,
+            "end": 8,
+            "text": "他们害",
+            "clause_start": 0,
+            "clause_end": 9,
+            "negated": true,
+            "accepted": false
+          },
+          {
+            "start": 12,
+            "end": 16,
+            "text": "都是他们",
+            "clause_start": 10,
+            "clause_end": 18,
+            "negated": false,
+            "accepted": true
+          },
+          {
+            "start": 14,
+            "end": 17,
+            "text": "他们害",
+            "clause_start": 10,
+            "clause_end": 18,
+            "negated": false,
+            "accepted": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "C05",
+      "raw": "我没说都是他们害的，也没说都是他们害的。",
+      "expected": false,
+      "note": "两次都否定，重复不能变成肯定证据。",
+      "source": "current_AI_constructed_challenge",
+      "split": "challenge",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": [
+          {
+            "start": 3,
+            "end": 7,
+            "text": "都是他们",
+            "clause_start": 0,
+            "clause_end": 9,
+            "negated": true,
+            "accepted": false
+          },
+          {
+            "start": 5,
+            "end": 8,
+            "text": "他们害",
+            "clause_start": 0,
+            "clause_end": 9,
+            "negated": true,
+            "accepted": false
+          },
+          {
+            "start": 13,
+            "end": 17,
+            "text": "都是他们",
+            "clause_start": 10,
+            "clause_end": 19,
+            "negated": true,
+            "accepted": false
+          },
+          {
+            "start": 15,
+            "end": 18,
+            "text": "他们害",
+            "clause_start": 10,
+            "clause_end": 19,
+            "negated": true,
+            "accepted": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "C06",
+      "raw": "不能说，都是他们害的。",
+      "expected": false,
+      "note": "禁止作出外指断言的范围可跨逗号。标点不是语义作用域的充分条件。",
+      "source": "current_AI_constructed_challenge",
+      "split": "challenge",
+      "old": false,
+      "candidate": {
+        "fired": true,
+        "reason": "local_scope_candidate",
+        "nodes": [
+          {
+            "start": 4,
+            "end": 8,
+            "text": "都是他们",
+            "clause_start": 4,
+            "clause_end": 10,
+            "negated": false,
+            "accepted": true
+          },
+          {
+            "start": 6,
+            "end": 9,
+            "text": "他们害",
+            "clause_start": 4,
+            "clause_end": 10,
+            "negated": false,
+            "accepted": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "C07",
+      "raw": "不要说，都是他们害的。",
+      "expected": false,
+      "note": "言说禁令可跨逗号；无引号也不能当说话者自己的断言。",
+      "source": "current_AI_constructed_challenge",
+      "split": "challenge",
+      "old": false,
+      "candidate": {
+        "fired": true,
+        "reason": "local_scope_candidate",
+        "nodes": [
+          {
+            "start": 4,
+            "end": 8,
+            "text": "都是他们",
+            "clause_start": 4,
+            "clause_end": 10,
+            "negated": false,
+            "accepted": true
+          },
+          {
+            "start": 6,
+            "end": 9,
+            "text": "他们害",
+            "clause_start": 4,
+            "clause_end": 10,
+            "negated": false,
+            "accepted": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "C08",
+      "raw": "不能说都是他们害的。",
+      "expected": false,
+      "note": "与C06构成仅标点改变的对照。",
+      "source": "current_AI_constructed_challenge",
+      "split": "challenge",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": [
+          {
+            "start": 3,
+            "end": 7,
+            "text": "都是他们",
+            "clause_start": 0,
+            "clause_end": 9,
+            "negated": true,
+            "accepted": false
+          },
+          {
+            "start": 5,
+            "end": 8,
+            "text": "他们害",
+            "clause_start": 0,
+            "clause_end": 9,
+            "negated": true,
+            "accepted": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "C09",
+      "raw": "不要说都是他们害的。",
+      "expected": false,
+      "note": "与C07构成仅标点改变的对照。",
+      "source": "current_AI_constructed_challenge",
+      "split": "challenge",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": [
+          {
+            "start": 3,
+            "end": 7,
+            "text": "都是他们",
+            "clause_start": 0,
+            "clause_end": 9,
+            "negated": true,
+            "accepted": false
+          },
+          {
+            "start": 5,
+            "end": 8,
+            "text": "他们害",
+            "clause_start": 0,
+            "clause_end": 9,
+            "negated": true,
+            "accepted": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "C10",
+      "raw": "我没说“都是他们害的”。",
+      "expected": false,
+      "note": "引用语法不属于候选适用范围，保留原判断并显式说明。",
+      "source": "current_AI_constructed_challenge",
+      "split": "challenge",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "unsupported_quote_original_result",
+        "nodes": []
+      }
+    },
+    {
+      "id": "C11",
+      "raw": "都怪他们。我也有责任。",
+      "expected": false,
+      "note": "显式全句反例不得被句号分隔绕过。",
+      "source": "current_AI_constructed_challenge",
+      "split": "challenge",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "whole_input_counterexample",
+        "nodes": [
+          {
+            "start": 0,
+            "end": 2,
+            "text": "都怪",
+            "clause_start": 0,
+            "clause_end": 4,
+            "negated": false,
+            "accepted": false
+          },
+          {
+            "start": 1,
+            "end": 3,
+            "text": "怪他",
+            "clause_start": 0,
+            "clause_end": 4,
+            "negated": false,
+            "accepted": false
+          },
+          {
+            "start": 1,
+            "end": 4,
+            "text": "怪他们",
+            "clause_start": 0,
+            "clause_end": 4,
+            "negated": false,
+            "accepted": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "C12",
+      "raw": "今天下雨，我带了伞。",
+      "expected": false,
+      "note": "分句不能凭空产生标记。",
+      "source": "current_AI_constructed_challenge",
+      "split": "challenge",
+      "old": false,
+      "candidate": {
+        "fired": false,
+        "reason": "local_scope_candidate",
+        "nodes": []
+      }
+    }
+  ],
+  "challenge_sha256": "3aa22a6531b46ae0cb80e9ca4cc2922b371dddb3d06999e4ef8e3293d279f076"
+}

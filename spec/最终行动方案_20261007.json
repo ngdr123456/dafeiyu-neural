@@ -1,0 +1,134 @@
+{
+  "schema": 1,
+  "revision": "20261008-4",
+  "objective": "在三本书边界内，还原由经历、内部组织改变和整合推动的发展过程，逐步形成像人一样的持续对话主体",
+  "books": [
+    "DB",
+    "E",
+    "M"
+  ],
+  "fixed_boundaries": [
+    "不伪造经历、奖赏、意识或阶段证据",
+    "原话和反例留痕",
+    "用户事实、系统代理读数和外部意见分开",
+    "保留伦理和感知闸门"
+  ],
+  "evidence_policy": {
+    "regression": "当前源码哈希绑定的隔离回归与变异必须全部通过",
+    "live": "当前源码哈希绑定的小批真实API诊断；不冒充真人或独立评审",
+    "organisation": "冻结旧新可执行结构；形成样本与后续验证分开；整份映射检查反证和旧能力；同模型干预对照",
+    "development": "不得从次数、压力、奖励代理、单项语言分类或模型评级推出阶段；整体证据须另建测量机制",
+    "revision": "新失败优先重开旧任务；修改假说须说明原文、对象、反例、收益、损失和下一次验证"
+  },
+  "issues": [
+    {
+      "id": "G01",
+      "question": "是否记得具体交谈内容",
+      "engineering_repair": true,
+      "implementation": [
+        "engine/dialogue_memory.py",
+        "engine/pipeline.py",
+        "engine/relational_memory.py",
+        "engine/understand.py"
+      ],
+      "remaining": "已实现带来源的对象/关系/时间/明确更正组织，并作用于大脑与复核；初始抽取词表有限且模型语义未独立核实，规则仍为工程设计。主体承诺与长期关系仍待实现"
+    },
+    {
+      "id": "G02",
+      "question": "学习依据是否为实际动作",
+      "engineering_repair": true,
+      "implementation": [
+        "engine/action_observation.py",
+        "engine/self_action.py",
+        "engine/self_goal.py",
+        "state/ledger.py",
+        "engine/association.py",
+        "engine/experience.py"
+      ],
+      "remaining": "工程作答责任已接后续重做；新增大脑在限定来源内声明/退出目标，跨问法接续承诺与来源变化重审，并核对逐字操作期待和结果。一般自主目标、语义兑现、用户收到及跨维度组织仍缺证据"
+    },
+    {
+      "id": "G03",
+      "question": "压力和奖励是否等于真实心理变化",
+      "engineering_repair": true,
+      "implementation": [
+        "engine/pipeline.py",
+        "engine/mechanism.py",
+        "engine/feedback_journal.py"
+      ],
+      "remaining": "有界声明目标已有生成前的逐字操作期待和MATCH/MISMATCH/UNKNOWN观察，失配保持承诺未决；不把该局部操作或内容意见当生理奖赏。一般目标、语义兑现和组织影响尚须验证"
+    },
+    {
+      "id": "G04",
+      "question": "组织候选是否忽略其他条件的反例",
+      "engineering_repair": true,
+      "implementation": [
+        "engine/organisation_refinement.py",
+        "engine/organisation_runtime.py"
+      ],
+      "remaining": "有界引用归属候选可在后续验证后原子启用、遇当前整份反证撤回；旧快照缺原文不发布。范围限语言关系；一般新原则、自身目标/动作/结果和阶段仍未验证。"
+    },
+    {
+      "id": "G05",
+      "question": "输出是否编造事实或偏离话题",
+      "engineering_repair": true,
+      "implementation": [
+        "engine/content_fidelity.py",
+        "engine/think.py"
+      ],
+      "remaining": "新增模型内容复核及未知阻断；复核会犯错且与生成者可能相关，独立核对仍需建立"
+    },
+    {
+      "id": "G06",
+      "question": "训练和交互是否是同一系统身份",
+      "engineering_repair": true,
+      "implementation": [
+        "engine/runtime_profile.py",
+        "engine/shell.py",
+        "engine/train.py"
+      ],
+      "remaining": "默认同一trained身份；训练虚构人物经历不作为真人事实；旧legacy身份保留"
+    },
+    {
+      "id": "G07",
+      "question": "评价到组织改变及发展测量的执行链是否完整",
+      "engineering_repair": false,
+      "implementation": [
+        "engine/action_plan.py",
+        "engine/organisation_runtime.py",
+        "engine/relation_learning.py"
+      ],
+      "remaining": "已连接有界语言关系的形成、后续验证、执行和撤回；不是任意建议执行器。主体目标、生成语义动作、实际结果和共同组织仍待接齐。"
+    },
+    {
+      "id": "G08",
+      "question": "能否由当前代码证明像人或具有人类意识",
+      "engineering_repair": false,
+      "implementation": [],
+      "remaining": "需要长期可证伪的能力评估；主观意识仍理论未决，不作为程序自证结论"
+    }
+  ],
+  "milestones": [
+    {
+      "id": "M1",
+      "title": "可信经历链",
+      "exit": "原话出处、更正、重启、来源隔离、实际动作和内容校验经过当前版本验证"
+    },
+    {
+      "id": "M2",
+      "title": "组织变化链",
+      "exit": "真实失配作用于可执行关系；后续验证有迁移且不丢旧能力；禁用组织改变时效果消失",
+      "current_slice": "关系基础、有界规则发布、自身作答重做及有界目标承诺接线；形成和后来验证分离。目标操作失配仍须接到一般组织规则及共同影响；语义兑现、一般目标生成与整体迁移仍缺。"
+    },
+    {
+      "id": "M3",
+      "title": "共同组织",
+      "exit": "同一结构同时影响理解、自我克制、人际连续性、性格与意义取向；分模块消融解释作用"
+    },
+    {
+      "id": "M4",
+      "title": "受证据约束的发展",
+      "exit": "独立评价、长期保留和更广场景仍支持共同组织变化，才能设计阶段/感知连接"
+    }
+  ]
+}

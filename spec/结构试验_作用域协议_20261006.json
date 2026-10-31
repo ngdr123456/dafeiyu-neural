@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "candidate_id": "clause_scope_v1",
+  "status": "preregistered_before_execution",
+  "origin": "过去诊断语料 corpus_probe.py 的跨分句否定误杀；不是用户真实新经历",
+  "hypothesis": "以标点分句限制否定窗口，并逐次检查同一短语的出现，可以修复旧的全句/首次出现组织方式。",
+  "target": "blame_external",
+  "comparison": "相同输入、相同标记词表、相同显式反例；仅改变否定作用域与出现位置的组织关系",
+  "development_credit": 0,
+  "criteria": {
+    "discovery_case_fixed": true,
+    "historical_target_regressions": 0,
+    "challenge_errors": 0,
+    "exact_evidence_spans": true,
+    "blocked_visibility_preserved": true,
+    "real_state_unchanged": true,
+    "independent_external_review_required_for_acceptance": true
+  },
+  "failure_action": "淘汰 tools/structure_scope_trial.py 中 ClauseScopeCandidate 作为启用候选；保留试验代码与反例供审计，不接入 engine/pipeline.py",
+  "evidence_boundary": "旧语料和本轮人工构造挑战均为项目 AI 作者提供。未参与候选编码的挑战不等于独立外部观察；即使全通过也只能进入外部评审，不能启用或升级。",
+  "relation_to_B": "本试验不是 B 通道。相同词表上重组不能满足统一模型4.6的信息来源、时间尺度、推理深度三项独立性。",
+  "production_changes": false
+}

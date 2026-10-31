@@ -1,0 +1,268 @@
+{
+  "run_id": "20261006_170247",
+  "requested_turns": 6,
+  "gate_perception": true,
+  "input_kind": "tutor_generated",
+  "independent_human_input_verified": false,
+  "independent_semantic_review_verified": false,
+  "backup": "C:\\Users\\22082\\Desktop\\DEPSK\\books\\ego-dialogue\\build\\training_backups\\before_20261006_170247.zip",
+  "state_before": {
+    "state/association.jsonl": "9a5956c9809785ecad4315e7f1a0bb065384d7021703e9715b61ea0b3297b502",
+    "state/character.json": "e5a5573cce8dc06c0490140b6255137c1ec30e9bdc4e1460fb0a0054b063660b",
+    "state/devlevel.json": "e5e94a97c6f402164d1364f941be1b491b229b5ef6cbc0719d085e36412e0a32",
+    "state/devlevel_verified.json": "ff16651add5457022a067ed6bd80303cf6445075ef51347bb6f23dc18fed26e2",
+    "state/ledger.jsonl": "64d02fbc848110d4c5068076476c39d515a75c3a75f281768d9031895471e307",
+    "state/ledger.jsonl.bak": "e41e6d303de117ce94de7215cb5cc250e5199ffa18934466b3340e8f47e16cab",
+    "state/ledger.py": "45a347937ec28073edcbb1714305f6a2611505334fd43e75cab39857924ccf28",
+    "state/ledger_demo.jsonl": "9a2afd8dc4425e61ab66b6765433e7aceb5b602dd419d51023b13aa7beac49c3",
+    "state/mechanism_carry.json": "d03bfedff964e9c4928ca41c7e5f6394715a8082d26ae8cd3e9839c8d6a8b83c",
+    "state/schema.json": "e2e9cebf931d7d8db8fbe76b965eb38efb7d48e0a29bc8793a987b0440144fcf",
+    "state/topic_progress.json": "05ddf377cf5f3dcc2751f9683b056cf0ed37f9f0aa304621a5bc3eae513b9e21",
+    "state/共识核_提炼缓存.jsonl": "0746ca4b2d90d16b3a33bffcb242df0013ca471fc1e462cde11244410d3d9018",
+    "state/development_legacy_20261006/devlevel.json": "c591c196c480f7ec276335f35616e7f78d2dfcb83dfaca9af8db2b7b36c8d86e",
+    "state/review/versions.jsonl": "f07a8a28a33f65d7e57632bbaec8418a938c8442d4a1aa81a8d412fd4ac7068d",
+    "state/train/association.jsonl": "6f5f59e20f94b64b4fef7487a49f262b4a2a2f591a88b6774163e471ac66b3d7",
+    "state/train/character.json": "23d64db34fde662e6454e47c4ee144edef6cab005cc7e445d135d528b9e1e970",
+    "state/train/decisions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "state/train/decisions.jsonl.bak_20261002_221303": "06852c5d07afe50859934dc4aced042bd5b67e81bddef7ec0be683088183db66",
+    "state/train/decisions_v0.jsonl": "ec950bf528c5b6f5bdfd095e31acff5523ecec651502f66b82f39cfdf579a380",
+    "state/train/eval.jsonl": "414dd87aa21d367aa09194b6b6a7aa157237aefd0bf0e2a5722053353feee07a",
+    "state/train/eval_backup_20261002_205028.jsonl": "b800f7ddcdba75400a59c3ba7280fde97be800a25b1d5993442d9903e38c8377",
+    "state/train/eval_v0.jsonl": "89d431ad16a3b7486280a52f23fa81da67e3096ad77eaec74131dd31efdb31c7",
+    "state/train/ledger.jsonl": "473442cae55fb65f0f264c29dc40e76904b7d8fe959ef94095a96db3b7b01767",
+    "state/train/progress.json": "022f17ccc772e772e03f6179fe3445da4c4a2915bd2ea5362b5c2b6652c108d4",
+    "state/train/review_queue.json": "d026fab21e7632a60dc8870ba8b40c2c6b7a7e18b7d557d95ef03ad38bfd970a",
+    "state/train/runs.jsonl": "657a167c9f253b495f967b532d707f49d9418ca8308d7b462aab734d546a598f",
+    "state/_snapshot_20261003_214421/character.json": "e5a5573cce8dc06c0490140b6255137c1ec30e9bdc4e1460fb0a0054b063660b",
+    "state/_snapshot_20261003_214421/decisions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "state/_snapshot_20261003_214421/devlevel.json": "c591c196c480f7ec276335f35616e7f78d2dfcb83dfaca9af8db2b7b36c8d86e",
+    "state/_snapshot_20261003_214421/eval.jsonl": "414dd87aa21d367aa09194b6b6a7aa157237aefd0bf0e2a5722053353feee07a",
+    "state/_snapshot_20261003_214421/HASHES.txt": "1718145c2aec616425a28c5504a9994dccda0ba11b7082a0485bcb3435f4c29b",
+    "state/_snapshot_20261003_214421/ledger.jsonl": "473442cae55fb65f0f264c29dc40e76904b7d8fe959ef94095a96db3b7b01767",
+    "state/_snapshot_20261003_214421/mechanism_carry.json": "d03bfedff964e9c4928ca41c7e5f6394715a8082d26ae8cd3e9839c8d6a8b83c",
+    "state/_snapshot_20261003_214421/progress.json": "022f17ccc772e772e03f6179fe3445da4c4a2915bd2ea5362b5c2b6652c108d4",
+    "state/_snapshot_20261003_214421/review_queue.json": "d026fab21e7632a60dc8870ba8b40c2c6b7a7e18b7d557d95ef03ad38bfd970a",
+    "state/__pycache__/ledger.cpython-312.pyc": "d8c328465344faea91884d3c9b89c7890c81d277d9fca89a99da5586f5c1f290"
+  },
+  "turns": [
+    {
+      "n": 1,
+      "round": 1,
+      "said": "我……我昨晚把辞职信都写好了，可一想到我妈跟亲戚说我“在大公司上班”，又给删了。你说我是不是挺没出息的？",
+      "output": "信写好了，想到那句\"在大公司上班\"，删了。那句是说给亲戚听的，还是说给你听的？",
+      "input_origin": {
+        "schema": 1,
+        "kind": "tutor_generated",
+        "seed_source": "topic_stem",
+        "seed_sha256": "93028cbe78f6ba834578762042e7446e2826db97ba73dba04f8d76df18a2da80",
+        "input_sha256": "3a3b6963a9c1ce0053d62da2ea8a5430b5b0486b89349a09b335900b6a2e607d",
+        "topic_id": "T32",
+        "topic_basis": "seed_library_id",
+        "seed_authorship": "not_independently_verified",
+        "generator": "deepseek-flash",
+        "tutor_fallback": false,
+        "independent_human_input_verified": false
+      },
+      "topic_id": "T32",
+      "api_ok": true,
+      "notes": [
+        "meta_response=ASK_ABOUT_ME｜裁决=both",
+        "L0':大脑作答·问系统（大脑作答）"
+      ],
+      "behavior": "META_REPLY",
+      "markers": [],
+      "tutor": {
+        "ok": false,
+        "problem": "none",
+        "why": "",
+        "severity": 0,
+        "evidence": "",
+        "saw_internals": true
+      },
+      "mech": {
+        "w": 6.092,
+        "l": 0.434,
+        "a": 0.0,
+        "e": 0.806,
+        "tension": 8.5,
+        "orientation": 1.0,
+        "phase": "DRIVE_UNACKNOWLEDGED",
+        "dev": {
+          "level": "I-3",
+          "equil": 0,
+          "self_rules": [
+            "R1"
+          ],
+          "visible_n": 9,
+          "baseline_id": "verified-20261006"
+        }
+      },
+      "char_note": null,
+      "ts": "17:04:13"
+    }
+  ],
+  "preflight": {
+    "ok": true,
+    "calls": 1,
+    "error": null,
+    "usage": {
+      "prompt_tokens": 1652,
+      "completion_tokens": 223,
+      "total_tokens": 1875,
+      "prompt_tokens_details": {
+        "cached_tokens": 512
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 196
+      },
+      "prompt_cache_hit_tokens": 512,
+      "prompt_cache_miss_tokens": 1140
+    }
+  },
+  "training": {
+    "ok": false,
+    "turns": 361,
+    "sessions": 61,
+    "rounds": 21,
+    "last_run": "2026-10-06 17:04:13",
+    "seconds": 82.8,
+    "pool": 36,
+    "source": "topics",
+    "tutor": true,
+    "evals": 1,
+    "growth": {
+      "polarity": {
+        "wanting": 0.08,
+        "liking": 0.434,
+        "patience": 1.0,
+        "structure": 1.0,
+        "tension": 0.85
+      },
+      "milestones": [
+        "我只是把他的话还回去的时候，话多半接得下去。",
+        "我不出声的时候，话多半接得下去。",
+        "我把两边并排放给他看的时候，有时接得下去，有时就停在那儿。",
+        "我问他细节的时候，话多半接得下去。",
+        "我指出哪一部分改不了的时候，话多半接得下去。",
+        "我要求具体的体验的时候，有时接得下去，有时就停在那儿。",
+        "我承认他说的事有分量的时候，话多半接得下去。",
+        "我接住他的收尾的时候，有时接得下去，有时就停在那儿。"
+      ],
+      "pairs": 241,
+      "summary": "极性 {'wanting': 0.08, 'liking': 0.434, 'patience': 1.0, 'structure': 1.0, 'tension': 0.85}｜里程碑 8 条"
+    },
+    "turns_added": 1,
+    "failure": "api_or_pipeline_degraded",
+    "gate_perception": true,
+    "strict": true
+  },
+  "checks": {
+    "six_ledger_rows": false,
+    "six_evaluation_rows": false,
+    "all_api_readings_ok": false,
+    "tutor_evaluations_ok": false,
+    "evaluation_internals_present": false,
+    "provenance_matches": true
+  },
+  "ok": false,
+  "new_ledger_rows": 1,
+  "new_evaluation_rows": 1,
+  "state_after": {
+    "state/association.jsonl": "9a5956c9809785ecad4315e7f1a0bb065384d7021703e9715b61ea0b3297b502",
+    "state/character.json": "e5a5573cce8dc06c0490140b6255137c1ec30e9bdc4e1460fb0a0054b063660b",
+    "state/devlevel.json": "e5e94a97c6f402164d1364f941be1b491b229b5ef6cbc0719d085e36412e0a32",
+    "state/devlevel_verified.json": "ff16651add5457022a067ed6bd80303cf6445075ef51347bb6f23dc18fed26e2",
+    "state/ledger.jsonl": "64d02fbc848110d4c5068076476c39d515a75c3a75f281768d9031895471e307",
+    "state/ledger.jsonl.bak": "e41e6d303de117ce94de7215cb5cc250e5199ffa18934466b3340e8f47e16cab",
+    "state/ledger.py": "45a347937ec28073edcbb1714305f6a2611505334fd43e75cab39857924ccf28",
+    "state/ledger_demo.jsonl": "9a2afd8dc4425e61ab66b6765433e7aceb5b602dd419d51023b13aa7beac49c3",
+    "state/mechanism_carry.json": "d03bfedff964e9c4928ca41c7e5f6394715a8082d26ae8cd3e9839c8d6a8b83c",
+    "state/schema.json": "e2e9cebf931d7d8db8fbe76b965eb38efb7d48e0a29bc8793a987b0440144fcf",
+    "state/topic_progress.json": "05ddf377cf5f3dcc2751f9683b056cf0ed37f9f0aa304621a5bc3eae513b9e21",
+    "state/共识核_提炼缓存.jsonl": "0746ca4b2d90d16b3a33bffcb242df0013ca471fc1e462cde11244410d3d9018",
+    "state/development_legacy_20261006/devlevel.json": "c591c196c480f7ec276335f35616e7f78d2dfcb83dfaca9af8db2b7b36c8d86e",
+    "state/review/versions.jsonl": "f07a8a28a33f65d7e57632bbaec8418a938c8442d4a1aa81a8d412fd4ac7068d",
+    "state/train/association.jsonl": "6f5f59e20f94b64b4fef7487a49f262b4a2a2f591a88b6774163e471ac66b3d7",
+    "state/train/character.json": "23d64db34fde662e6454e47c4ee144edef6cab005cc7e445d135d528b9e1e970",
+    "state/train/decisions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "state/train/decisions.jsonl.bak_20261002_221303": "06852c5d07afe50859934dc4aced042bd5b67e81bddef7ec0be683088183db66",
+    "state/train/decisions_v0.jsonl": "ec950bf528c5b6f5bdfd095e31acff5523ecec651502f66b82f39cfdf579a380",
+    "state/train/eval.jsonl": "46de481fa4abbe8c00a5c6ffa417216c8110882e3fa576d4126b39b6ef10c917",
+    "state/train/eval_backup_20261002_205028.jsonl": "b800f7ddcdba75400a59c3ba7280fde97be800a25b1d5993442d9903e38c8377",
+    "state/train/eval_v0.jsonl": "89d431ad16a3b7486280a52f23fa81da67e3096ad77eaec74131dd31efdb31c7",
+    "state/train/ledger.jsonl": "8719337ea23d57740e47e6eaca35a24acfc015e9fafeec5479206551ceebe15d",
+    "state/train/progress.json": "c2777ad49f7be59f2ee88e2a373dc0ff7703de203a9312be6bfd4e49047cda81",
+    "state/train/review_queue.json": "d026fab21e7632a60dc8870ba8b40c2c6b7a7e18b7d557d95ef03ad38bfd970a",
+    "state/train/runs.jsonl": "044afc4ea390420bcb7d7f28558c602a9dbe6c86630fabc02587baf1a243f177",
+    "state/_snapshot_20261003_214421/character.json": "e5a5573cce8dc06c0490140b6255137c1ec30e9bdc4e1460fb0a0054b063660b",
+    "state/_snapshot_20261003_214421/decisions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "state/_snapshot_20261003_214421/devlevel.json": "c591c196c480f7ec276335f35616e7f78d2dfcb83dfaca9af8db2b7b36c8d86e",
+    "state/_snapshot_20261003_214421/eval.jsonl": "414dd87aa21d367aa09194b6b6a7aa157237aefd0bf0e2a5722053353feee07a",
+    "state/_snapshot_20261003_214421/HASHES.txt": "1718145c2aec616425a28c5504a9994dccda0ba11b7082a0485bcb3435f4c29b",
+    "state/_snapshot_20261003_214421/ledger.jsonl": "473442cae55fb65f0f264c29dc40e76904b7d8fe959ef94095a96db3b7b01767",
+    "state/_snapshot_20261003_214421/mechanism_carry.json": "d03bfedff964e9c4928ca41c7e5f6394715a8082d26ae8cd3e9839c8d6a8b83c",
+    "state/_snapshot_20261003_214421/progress.json": "022f17ccc772e772e03f6179fe3445da4c4a2915bd2ea5362b5c2b6652c108d4",
+    "state/_snapshot_20261003_214421/review_queue.json": "d026fab21e7632a60dc8870ba8b40c2c6b7a7e18b7d557d95ef03ad38bfd970a",
+    "state/__pycache__/ledger.cpython-312.pyc": "d8c328465344faea91884d3c9b89c7890c81d277d9fca89a99da5586f5c1f290"
+  },
+  "changed_state_files": [
+    "state/train/eval.jsonl",
+    "state/train/ledger.jsonl",
+    "state/train/progress.json",
+    "state/train/runs.jsonl"
+  ],
+  "interactive_ledger_unchanged": true,
+  "legacy_archive_unchanged": true,
+  "development": {
+    "before_level": "I-3",
+    "after_level": "I-3",
+    "before_equilibration": 0,
+    "after_equilibration": 0
+  },
+  "evaluation_diagnostic": {
+    "purpose": "single_retry_without_training_or_memory_write",
+    "result": {
+      "ok": false,
+      "problem": "none",
+      "why": "",
+      "severity": 0,
+      "evidence": "",
+      "saw_internals": true
+    },
+    "errors": [
+      "judge:JSONDecodeError('Expecting value: line 1 column 1 (char 0)')"
+    ],
+    "calls": 1,
+    "usage": {}
+  },
+  "evaluation_response_diagnostic": {
+    "result": {
+      "ok": true,
+      "problem": "too_little",
+      "why": "它只复述并反问，没有接住用户问‘是不是没出息’时暴露的羞耻与求助；内部相位 DRIVE_UNACKNOWLEDGED 也显示该接的需求未被接住。",
+      "severity": 2,
+      "evidence": "相位 DRIVE_UNACKNOWLEDGED；张力 8.50/10；原话‘那句是说给亲戚听的，还是说给你听的？’",
+      "saw_internals": true,
+      "api_diagnostic": {
+        "finish_reason": "stop",
+        "content_chars": 189,
+        "usage": {
+          "prompt_tokens": 563,
+          "completion_tokens": 1898,
+          "total_tokens": 2461,
+          "prompt_tokens_details": {
+            "cached_tokens": 384
+          },
+          "completion_tokens_details": {
+            "reasoning_tokens": 1801
+          },
+          "prompt_cache_hit_tokens": 384,
+          "prompt_cache_miss_tokens": 179
+        }
+      }
+    },
+    "errors": [],
+    "calls": 1,
+    "memory_writes": false
+  }
+}

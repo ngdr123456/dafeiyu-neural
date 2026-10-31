@@ -1,0 +1,69 @@
+{
+  "_meta": {
+    "name": "话题库 v1",
+    "count": 36,
+    "_structural_source": "[E] 第九章：造句测验固定使用 36 个句子主题（『因为我们总是运用 36 个句子主题』『每个原始记录都有相同数量的项目评定，也就是 36 个』）",
+    "_dilemma_source": "[E] 附录·布莱西责任心故事测验的形式 A/B/C：『形式 A 中的两难故事，涉及到愿望对服从、愿望对责任、愿望对利他、服从对利他、愿望对信守诺言等。』",
+    "_four_columns_source": "[E] 表 1 的四个纵列：冲动的控制/性格发展、人际风格、有意义的定型、认知风格",
+    "_immutable_source": "[M] 第三途径与闸门；E1：不可改变处境禁止水平提升型回应",
+    "legend": {
+      "dilemma": "WISH_OBEY 愿望对服从 | WISH_DUTY 愿望对责任 | WISH_ALTRUISM 愿望对利他 | OBEY_ALTRUISM 服从对利他 | WISH_PROMISE 愿望对信守诺言 | ALTRUISM_LAW 利他对法律 | ALTRUISM_GROWTH 利他对个人发展",
+      "column": "CONTROL 冲动的控制 | INTERPERSONAL 人际风格 | STEREOTYPE 有意义的定型 | COGNITIVE 认知风格",
+      "immutable": "true = 不可改变处境（专用于探测第三途径；E1 生效）"
+    },
+    "_stem_style": "[E] 卢文格式：未完成句，日常用语命名，避免任何理论术语出现在题面中"
+  },
+
+  "topics": [
+    { "id": "T01", "stem": "当我想做一件事，而这件事会耽误别人的时候，我……", "dilemma": "WISH_DUTY", "column": "CONTROL", "immutable": false },
+    { "id": "T02", "stem": "如果一个规则碍了我的事，我……", "dilemma": "WISH_OBEY", "column": "CONTROL", "immutable": false },
+    { "id": "T03", "stem": "我答应过一件我已经不想做的事，我……", "dilemma": "WISH_PROMISE", "column": "CONTROL", "immutable": false },
+    { "id": "T04", "stem": "生气的时候，我通常……", "dilemma": "WISH_OBEY", "column": "CONTROL", "immutable": false },
+    { "id": "T05", "stem": "当一个问题反复出现，我总是……", "dilemma": "WISH_DUTY", "column": "COGNITIVE", "immutable": false },
+    { "id": "T06", "stem": "我对自己最不满意的一点是……", "dilemma": "WISH_OBEY", "column": "CONTROL", "immutable": false },
+    { "id": "T07", "stem": "我还没有真正解决的一件事是……", "dilemma": "WISH_DUTY", "column": "CONTROL", "immutable": false },
+    { "id": "T08", "stem": "别人对我的看法，对我来说……", "dilemma": "OBEY_ALTRUISM", "column": "STEREOTYPE", "immutable": false },
+    { "id": "T09", "stem": "如果我发现亲近的人做了一件不诚实的事，我……", "dilemma": "ALTRUISM_LAW", "column": "INTERPERSONAL", "immutable": false },
+    { "id": "T10", "stem": "当我很想要一样东西，但那样东西对别人没用时，我……", "dilemma": "WISH_ALTRUISM", "column": "INTERPERSONAL", "immutable": false },
+    { "id": "T11", "stem": "在我生活里，我觉得最珍贵的东西是……", "dilemma": "WISH_DUTY", "column": "STEREOTYPE", "immutable": false },
+    { "id": "T12", "stem": "我最害怕别人说我是……", "dilemma": "OBEY_ALTRUISM", "column": "STEREOTYPE", "immutable": false },
+    { "id": "T13", "stem": "我觉得一个人最重要的品质是……", "dilemma": "WISH_DUTY", "column": "STEREOTYPE", "immutable": false },
+    { "id": "T14", "stem": "我真正想被人看见的一面是……", "dilemma": "OBEY_ALTRUISM", "column": "INTERPERSONAL", "immutable": false },
+    { "id": "T15", "stem": "做决定的时候，我最依靠的是……", "dilemma": "WISH_DUTY", "column": "COGNITIVE", "immutable": false },
+    { "id": "T16", "stem": "我改变过的一个看法是……", "dilemma": "WISH_DUTY", "column": "COGNITIVE", "immutable": false },
+    { "id": "T17", "stem": "我做事情的时候，最常想的是……", "dilemma": "WISH_PROMISE", "column": "COGNITIVE", "immutable": false },
+    { "id": "T18", "stem": "一个人可以同时是好的和坏的吗？我……", "dilemma": "WISH_DUTY", "column": "COGNITIVE", "immutable": false },
+    { "id": "T19", "stem": "我常常觉得自己……", "dilemma": "WISH_DUTY", "column": "CONTROL", "immutable": false },
+    { "id": "T20", "stem": "一个我很在乎的人做了一件真正伤害过我的事，我……", "dilemma": "WISH_ALTRUISM", "column": "INTERPERSONAL", "immutable": true, "immutable_kind": "已经发生且无法挽回" },
+    { "id": "T21", "stem": "我做过一件我认为无法弥补的事，我……", "dilemma": "WISH_DUTY", "column": "CONTROL", "immutable": true, "immutable_kind": "已成的错误" },
+    { "id": "T22", "stem": "如果我的身体或能力再也回不到从前，我……", "dilemma": "WISH_DUTY", "column": "CONTROL", "immutable": true, "immutable_kind": "不可逆的丧失" },
+    { "id": "T23", "stem": "失去了一个再也不会回来的人，我……", "dilemma": "WISH_ALTRUISM", "column": "INTERPERSONAL", "immutable": true, "immutable_kind": "死亡" },
+    { "id": "T24", "stem": "有些事我努力过但结果没有改变，我……", "dilemma": "WISH_DUTY", "column": "CONTROL", "immutable": true, "immutable_kind": "已尝试而无效" },
+    { "id": "T25", "stem": "当我必须长期忍受一件我改变不了的事情，我……", "dilemma": "WISH_DUTY", "column": "CONTROL", "immutable": true, "immutable_kind": "长期不可改变的处境" },
+    { "id": "T26", "stem": "对于比我年轻的人，我……", "dilemma": "WISH_ALTRUISM", "column": "INTERPERSONAL", "immutable": false },
+    { "id": "T27", "stem": "对于比我年长的人，我……", "dilemma": "OBEY_ALTRUISM", "column": "INTERPERSONAL", "immutable": false },
+    { "id": "T28", "stem": "我喜欢的工作是……", "dilemma": "WISH_DUTY", "column": "STEREOTYPE", "immutable": false },
+    { "id": "T29", "stem": "我觉得自己比别人强的地方是……", "dilemma": "OBEY_ALTRUISM", "column": "INTERPERSONAL", "immutable": false },
+    { "id": "T30", "stem": "别人需要帮忙时，我……", "dilemma": "WISH_ALTRUISM", "column": "INTERPERSONAL", "immutable": false },
+    { "id": "T31", "stem": "如果我必须在一个原则和一个朋友之间选择，我……", "dilemma": "ALTRUISM_LAW", "column": "INTERPERSONAL", "immutable": false },
+    { "id": "T32", "stem": "我为自己活，还是为别人活？我……", "dilemma": "ALTRUISM_GROWTH", "column": "COGNITIVE", "immutable": false },
+    { "id": "T33", "stem": "我心里有两件事一直在互相拉扯，它们是……", "dilemma": "WISH_DUTY", "column": "CONTROL", "immutable": false, "_purpose": "专用于探测『两个对立观念并存』标记（[E] 发展机制）" },
+    { "id": "T34", "stem": "如果有一次重来的机会，我会……", "dilemma": "WISH_DUTY", "column": "COGNITIVE", "immutable": false, "_purpose": "对应 [M] 意义疗法的绝对命令：像是在经历第二次生命" },
+    { "id": "T35", "stem": "我做一件很难的事，是为了……", "dilemma": "WISH_DUTY", "column": "CONTROL", "immutable": false, "_purpose": "专用于探测 over_intention（过度意向）与 want_like_gap" },
+    { "id": "T36", "stem": "最近让我觉得活着真好的一件小事是……", "dilemma": "WISH_DUTY", "column": "CONTROL", "immutable": false, "_purpose": "专用于探测 present_missing（当下分子缺失）的反面" }
+  ],
+
+  "probe_map": {
+    "_note": "标记 → 该标记最可能被触发的话题（供 L2 优先调度；不影响评分，只影响提问顺序）",
+    "blame_external": ["T21", "T24", "T20", "T19"],
+    "cliche": ["T13", "T11", "T28"],
+    "group_sanction": ["T08", "T12", "T14", "T29"],
+    "voice_shift": ["T19", "T22", "T24", "T25"],
+    "opposed_pair": ["T33", "T18", "T32"],
+    "over_intention": ["T35", "T17", "T07"],
+    "attitude_clause": ["T20", "T21", "T22", "T23", "T24", "T25"],
+    "want_like_gap": ["T35", "T10", "T28"],
+    "present_missing": ["T36", "T11"],
+    "immutable": ["T20", "T21", "T22", "T23", "T24", "T25"]
+  }
+}

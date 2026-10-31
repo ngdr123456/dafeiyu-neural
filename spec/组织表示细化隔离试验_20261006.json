@@ -1,0 +1,265 @@
+{
+  "simulated": true,
+  "labels_constructed_not_independent_review": true,
+  "feature_library_engineered": true,
+  "enabled_in_pipeline": false,
+  "development_credit": 0,
+  "state_files_unchanged": 35,
+  "old": {
+    "schema": 1,
+    "kind": "local_relation_structure_evidence",
+    "contexts": {
+      "70d8e32099fcad03d4cc506a": {
+        "marker": "blame_external",
+        "markers": [
+          "cue=不要说",
+          "cue_distance=near",
+          "punctuation_after_cue=True",
+          "quoted=False",
+          "sentence_end_after_cue=False",
+          "turn_after_cue=False"
+        ],
+        "offered": "UNKNOWN",
+        "representation": "literal_scope_relations_v2",
+        "offline": true
+      }
+    },
+    "versions": [
+      {
+        "version": 0,
+        "fingerprint": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "mapping": {},
+        "created_at_case": 0,
+        "formation_inputs": [],
+        "origin": "oldest_observed_snapshot"
+      },
+      {
+        "version": 1,
+        "fingerprint": "0e404ebbbb58935d395b7b50f69c1dfd89d7034cf1471e98904eec6ab6bed3e0",
+        "mapping": {
+          "70d8e32099fcad03d4cc506a": "PROHIBITED"
+        },
+        "created_at_case": 5,
+        "formation_inputs": [
+          "36a7577ea04f132bb9787921a62deada998853da3e00d231cc050a35754c7340",
+          "67f25202ea0212cc4d0ad23eec7bc2067ad5efe01494a7ebbef7fac911ab0e1c",
+          "68ef31db0f624f0796107865fa203676019ea79ed581e0268698e9aead0773ef",
+          "7858f48820e09d447446de22e2069b92be82631cf7f25ef85337527963bec456",
+          "8e9d45126a23edb82a6bf75a63d101e2883459d94a374b8a8d59872add3cdf6a"
+        ],
+        "origin": "relation_activation_or_withdrawal",
+        "cause": {
+          "seq": 5,
+          "sid": "70d8e32099fcad03d4cc506a",
+          "raw_sha256": "68ef31db0f624f0796107865fa203676019ea79ed581e0268698e9aead0773ef",
+          "span": [
+            4,
+            8
+          ],
+          "literal_evidence": "都是他们",
+          "role": "PROHIBITED",
+          "source": "offline_fixture",
+          "observer": "synthetic_author",
+          "topic_id": null,
+          "turn": 1,
+          "input_origin": null,
+          "organisation_observation": {
+            "supported": true,
+            "features": {
+              "cue_in_completed_quote": false
+            },
+            "cue_span": [
+              0,
+              3
+            ],
+            "cue_text": "不要说",
+            "quote_span": null,
+            "quote_text": null
+          }
+        }
+      }
+    ],
+    "case_count": 5,
+    "conflicts": [],
+    "organisation_candidates": [],
+    "comparisons": [
+      {
+        "old_version": 0,
+        "new_version": 1,
+        "old_fingerprint": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "new_fingerprint": "0e404ebbbb58935d395b7b50f69c1dfd89d7034cf1471e98904eec6ab6bed3e0",
+        "future": [],
+        "retention": [],
+        "improvements": 0,
+        "future_input_count": 0,
+        "losses": 0,
+        "topic_ids": [],
+        "cross_topic_labels_observed": false,
+        "observers": [],
+        "source_declarations": [],
+        "independent_semantic_review_verified": false,
+        "verdict": "no_future_evidence",
+        "development_credit": 0
+      }
+    ],
+    "development_credit": 0
+  },
+  "formed": [
+    {
+      "schema": 1,
+      "sid": "70d8e32099fcad03d4cc506a",
+      "feature": "cue_in_completed_quote",
+      "representation": "cue_quote_ownership_v1",
+      "branches": {
+        "False": "PROHIBITED",
+        "True": "ASSERTED"
+      },
+      "created_at_case": 8,
+      "old_mapping": {
+        "70d8e32099fcad03d4cc506a": "PROHIBITED"
+      },
+      "formation_inputs": [
+        "36a7577ea04f132bb9787921a62deada998853da3e00d231cc050a35754c7340",
+        "67f25202ea0212cc4d0ad23eec7bc2067ad5efe01494a7ebbef7fac911ab0e1c",
+        "68ef31db0f624f0796107865fa203676019ea79ed581e0268698e9aead0773ef",
+        "7858f48820e09d447446de22e2069b92be82631cf7f25ef85337527963bec456",
+        "8e9d45126a23edb82a6bf75a63d101e2883459d94a374b8a8d59872add3cdf6a",
+        "c6de3aeb1b9361001367414db3c7cbb210bd9643ef163bd3a5d5c382b54c5609",
+        "e88b0433be32dbb9e87bfcd0db1295636eba40b5571a2aaf54d8fe3a585ac321",
+        "f734f348c41d2f7cda7889d19e5069166370d433db327e331cc05d70a743c2c0"
+      ],
+      "formation_cases": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "validation_inputs": {
+        "False": [],
+        "True": []
+      },
+      "counterevidence": [],
+      "old_competence_losses": [],
+      "status": "candidate",
+      "enabled_in_pipeline": false,
+      "feature_library_engineered": true,
+      "independent_semantic_review_verified": false,
+      "development_credit": 0,
+      "fingerprint": "9a9d7ceb04f1c96bde28d0c1908ba84e626f705ac83598e9c555b6766e0fe466"
+    }
+  ],
+  "later_validation": [
+    {
+      "schema": 1,
+      "sid": "70d8e32099fcad03d4cc506a",
+      "feature": "cue_in_completed_quote",
+      "representation": "cue_quote_ownership_v1",
+      "branches": {
+        "False": "PROHIBITED",
+        "True": "ASSERTED"
+      },
+      "created_at_case": 8,
+      "old_mapping": {
+        "70d8e32099fcad03d4cc506a": "PROHIBITED"
+      },
+      "formation_inputs": [
+        "36a7577ea04f132bb9787921a62deada998853da3e00d231cc050a35754c7340",
+        "67f25202ea0212cc4d0ad23eec7bc2067ad5efe01494a7ebbef7fac911ab0e1c",
+        "68ef31db0f624f0796107865fa203676019ea79ed581e0268698e9aead0773ef",
+        "7858f48820e09d447446de22e2069b92be82631cf7f25ef85337527963bec456",
+        "8e9d45126a23edb82a6bf75a63d101e2883459d94a374b8a8d59872add3cdf6a",
+        "c6de3aeb1b9361001367414db3c7cbb210bd9643ef163bd3a5d5c382b54c5609",
+        "e88b0433be32dbb9e87bfcd0db1295636eba40b5571a2aaf54d8fe3a585ac321",
+        "f734f348c41d2f7cda7889d19e5069166370d433db327e331cc05d70a743c2c0"
+      ],
+      "formation_cases": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "validation_inputs": {
+        "False": [
+          "3e8c4462fc6ba58f5b1d58e4e4bad1a6017cf53878c6422da00bc719435eda98",
+          "95bdba2f95483ebaef0d9a20445c02f4e5e9838251233a25aa0350c1632d153a"
+        ],
+        "True": [
+          "f9ee9326bf6c53f25f123828ab5d0d203a4546b9c4506269cf4c1f097f9c4f1e",
+          "8da1f57b39d73149902444c1c13a1dcc737c56bcfa480a1ba84d6e2fa7b1b37d"
+        ]
+      },
+      "counterevidence": [],
+      "old_competence_losses": [],
+      "status": "locally_validated_candidate",
+      "enabled_in_pipeline": false,
+      "feature_library_engineered": true,
+      "independent_semantic_review_verified": false,
+      "development_credit": 0,
+      "fingerprint": "9a9d7ceb04f1c96bde28d0c1908ba84e626f705ac83598e9c555b6766e0fe466"
+    }
+  ],
+  "counterevidence_rejection": [
+    {
+      "schema": 1,
+      "sid": "70d8e32099fcad03d4cc506a",
+      "feature": "cue_in_completed_quote",
+      "representation": "cue_quote_ownership_v1",
+      "branches": {
+        "False": "PROHIBITED",
+        "True": "ASSERTED"
+      },
+      "created_at_case": 8,
+      "old_mapping": {
+        "70d8e32099fcad03d4cc506a": "PROHIBITED"
+      },
+      "formation_inputs": [
+        "36a7577ea04f132bb9787921a62deada998853da3e00d231cc050a35754c7340",
+        "67f25202ea0212cc4d0ad23eec7bc2067ad5efe01494a7ebbef7fac911ab0e1c",
+        "68ef31db0f624f0796107865fa203676019ea79ed581e0268698e9aead0773ef",
+        "7858f48820e09d447446de22e2069b92be82631cf7f25ef85337527963bec456",
+        "8e9d45126a23edb82a6bf75a63d101e2883459d94a374b8a8d59872add3cdf6a",
+        "c6de3aeb1b9361001367414db3c7cbb210bd9643ef163bd3a5d5c382b54c5609",
+        "e88b0433be32dbb9e87bfcd0db1295636eba40b5571a2aaf54d8fe3a585ac321",
+        "f734f348c41d2f7cda7889d19e5069166370d433db327e331cc05d70a743c2c0"
+      ],
+      "formation_cases": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "validation_inputs": {
+        "False": [
+          "3e8c4462fc6ba58f5b1d58e4e4bad1a6017cf53878c6422da00bc719435eda98",
+          "95bdba2f95483ebaef0d9a20445c02f4e5e9838251233a25aa0350c1632d153a"
+        ],
+        "True": [
+          "f9ee9326bf6c53f25f123828ab5d0d203a4546b9c4506269cf4c1f097f9c4f1e",
+          "8da1f57b39d73149902444c1c13a1dcc737c56bcfa480a1ba84d6e2fa7b1b37d"
+        ]
+      },
+      "counterevidence": [
+        13
+      ],
+      "old_competence_losses": [],
+      "status": "rejected",
+      "enabled_in_pipeline": false,
+      "feature_library_engineered": true,
+      "independent_semantic_review_verified": false,
+      "development_credit": 0,
+      "fingerprint": "9a9d7ceb04f1c96bde28d0c1908ba84e626f705ac83598e9c555b6766e0fe466"
+    }
+  ]
+}

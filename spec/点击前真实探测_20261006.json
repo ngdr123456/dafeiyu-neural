@@ -1,0 +1,30 @@
+{
+  "desktop_api_probe": {
+    "ok": true,
+    "detail": "deepseek-flash｜3.23s｜返回「可用」"
+  },
+  "quote_correction": {
+    "first_candidate_source": "explicit_rejected_fixture",
+    "correction_source": "real_configured_api",
+    "real_api_calls": 1,
+    "accepted": true,
+    "attempts": [
+      {
+        "attempt": 1,
+        "text": "你说“每个人都在等我变回去”。",
+        "accepted": false,
+        "violations": [
+          "引用了他没说过的话：「每个人都在等我变回去」"
+        ]
+      },
+      {
+        "attempt": 2,
+        "text": "你原话是\"好像每个人都在等我变回以前那个样子\"。那句里你自己先放了\"好像\"。",
+        "accepted": true,
+        "violations": []
+      }
+    ],
+    "stage_credit": 0,
+    "training_memory_written": false
+  }
+}

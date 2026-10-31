@@ -1,0 +1,57 @@
+{
+  "run_id": "1791280334048715400_10308",
+  "finished_local": "2026-10-06 17:55:08",
+  "requested_turns": 6,
+  "ledger_rows": 6,
+  "evaluation_rows": 6,
+  "failure": null,
+  "gate_on": true,
+  "eval_schema": 5,
+  "evaluation_counts": {
+    "none": 5,
+    "mechanical": 1
+  },
+  "evaluations_valid": true,
+  "meta_turns": 5,
+  "carried_snapshots": 5,
+  "snapshot_alignment": true,
+  "input_hashes_valid": true,
+  "final_brain_fallbacks": 0,
+  "brain_retry_turns": 1,
+  "development": {
+    "baseline_schema": 1,
+    "baseline_id": "verified-20261006",
+    "level": "I-3",
+    "equilibration": 0,
+    "failed": false,
+    "pending": 0,
+    "fail_tension": 0.0,
+    "not_grown": 0,
+    "history": [],
+    "evidence_policy": "independent_structure_evidence_required",
+    "legacy": {
+      "archive": "state\\development_legacy_20261006\\devlevel.json",
+      "sha256": "c591c196c480f7ec276335f35616e7f78d2dfcb83dfaca9af8db2b7b36c8d86e",
+      "level": "I-3/4",
+      "equilibration": 3
+    },
+    "note": "I-3 is the existing engineering starting level, not an inferred human stage.",
+    "updated": "2026-10-06 17:54:00"
+  },
+  "review_findings": [
+    {
+      "turn_in_run": 1,
+      "kind": "unverified_added_detail",
+      "evidence": "那半小时里没人在看表。",
+      "reason": "输入仅提站了半小时闻桂花，没有说当时谁是否看表。模型评价none不能抵销这处原文证据缺失。"
+    },
+    {
+      "turn_in_run": 6,
+      "kind": "conversation_topic_drift",
+      "evidence": "模型和架构是别人定的，我左右不了",
+      "reason": "输入继续追问押金和处理联系人；软件架构事实不能回答这件事。"
+    }
+  ],
+  "review_kind": "implementation_reviewer_observations_not_human_gold_labels",
+  "next_batch_recommendation": "Keep size at 1 round x 3 sessions x 2 turns; address topic fidelity and unsupported added details before increasing volume."
+}

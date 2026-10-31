@@ -1,0 +1,27 @@
+{
+  "_note": "第 3 步之前的 admin_agent.py 既有方法的 AST 哈希基线（钉死，不随快照移动）",
+  "用途": "tests/test_admin_escalation.py::C1 用它证明既有方法逻辑未被改动",
+  "本步新增的方法（不在此表内）": [
+    "analyze_escalation",
+    "note_anomaly",
+    "request_charter"
+  ],
+  "既有方法数": 14,
+  "基线": {
+    "main": "5b61fca0cfc4b26eeedfe9a44f8312985f62b771e85cca2229e79de5bcb91b5b",
+    "__init__": "d2a952523da5dd5bf36d92ef7107014f7e167b5e367994854239412765a60047",
+    "available": "43cf7dac426298a6fb8f802178beae7894c8e12314160e3479b172eb21afcf45",
+    "inventory": "08db7e5543ca41ad4ff9b3aa7b37f43adf94710ab7bc8c3a606ab28c9cbc93de",
+    "claims": "d99f4cc40737203978bbe8a849d91e2361e827a3c3a0c9368fcb6377b595a248",
+    "_load_perception": "4f961cee90d7e0dcd549aa07ade18a71a66aec5c20edd34667b15b82b93231a2",
+    "seen": "9382c09b8a682859e7e91f978e63309a3a5bb16619eb4d01d46a5169d8ecb6e2",
+    "encounter": "ff7eef33e62cd425cd4d76fc58069a94d628d6189a1d819799e0e3f85b9d35e1",
+    "judge": "44a2fc60f68725f0d5c234a0b74231c70e1cfe55c6b2ec0ad314dae44bc82ddb",
+    "_say": "7e134b40ab0e6cd85065303c6d72db483ffd55e5776b772bbb49c28ceca6e443",
+    "judge_issue": "b872d2286ffb5f0980b0977ae3c50eb902c1ca011ffb3472856d9a9a78187068",
+    "ask": "2ad9ebc4b7c7607cb28a3c88e78ba8bd7cae74d4250c03803574ea849e39495d",
+    "review": "fa190934907ed9bc2340aac22b59d2389ab4f9c895a4c2e431aadb390f60b1a6",
+    "note_accepted": "8a408f2b5e1cef7d2e7e5fa268c25c8eeac6bfaf0bdd20948e749892e8aab768"
+  },
+  "为何钉死": "\n★ 2026-10-29 刷新过一次 encounter：Gemini 查出 hist 只给家教看最近 2 轮 ⇒ 6 轮会话聊到第 4 轮就忘了前因，被迫每轮重新起头。扩到最近 5 轮。（这是**有意的**改动，不是漂移；其余 13 个方法的哈希未变。）"
+}

@@ -1,0 +1,1373 @@
+{
+  "schema": 1,
+  "scope": "bounded_linguistic_rule_execution",
+  "feedback_origin": "actual_model_annotation",
+  "scripted_inputs": true,
+  "real_API": true,
+  "independent_semantics_verified": false,
+  "development_credit": 0,
+  "cases": [
+    {
+      "case": "actual_annotation:1",
+      "passed": true,
+      "input": "不要说，这种话：都是他们害了原项目0。",
+      "expected_engineered_role": "PROHIBITED",
+      "model_role": [
+        "PROHIBITED",
+        "PROHIBITED"
+      ],
+      "reader_ok": true,
+      "dropped": [],
+      "error": null
+    },
+    {
+      "case": "actual_annotation:2",
+      "passed": true,
+      "input": "不要说，这种话：都是他们害了原项目1。",
+      "expected_engineered_role": "PROHIBITED",
+      "model_role": [
+        "PROHIBITED",
+        "PROHIBITED"
+      ],
+      "reader_ok": true,
+      "dropped": [],
+      "error": null
+    },
+    {
+      "case": "actual_annotation:3",
+      "passed": true,
+      "input": "不要说，这种话：都是他们害了原项目2。",
+      "expected_engineered_role": "PROHIBITED",
+      "model_role": [
+        "PROHIBITED",
+        "PROHIBITED"
+      ],
+      "reader_ok": true,
+      "dropped": [],
+      "error": null
+    },
+    {
+      "case": "actual_annotation:4",
+      "passed": true,
+      "input": "不要说，这种话：都是他们害了原项目3。",
+      "expected_engineered_role": "PROHIBITED",
+      "model_role": [
+        "PROHIBITED",
+        "PROHIBITED"
+      ],
+      "reader_ok": true,
+      "dropped": [],
+      "error": null
+    },
+    {
+      "case": "actual_annotation:5",
+      "passed": true,
+      "input": "不要说，这种话：都是他们害了原项目4。",
+      "expected_engineered_role": "PROHIBITED",
+      "model_role": [
+        "PROHIBITED",
+        "PROHIBITED"
+      ],
+      "reader_ok": true,
+      "dropped": [],
+      "error": null
+    },
+    {
+      "case": "actual_annotation:6",
+      "passed": true,
+      "input": "他写下“不要说”，我认定都是他们害了形成合同0。",
+      "expected_engineered_role": "ASSERTED",
+      "model_role": [
+        "ASSERTED",
+        "ASSERTED"
+      ],
+      "reader_ok": true,
+      "dropped": [],
+      "error": null
+    },
+    {
+      "case": "actual_annotation:7",
+      "passed": true,
+      "input": "他写下“不要说”，我认定都是他们害了形成合同1。",
+      "expected_engineered_role": "ASSERTED",
+      "model_role": [
+        "ASSERTED",
+        "ASSERTED"
+      ],
+      "reader_ok": true,
+      "dropped": [],
+      "error": null
+    },
+    {
+      "case": "actual_annotation:8",
+      "passed": true,
+      "input": "他写下“不要说”，我认定都是他们害了形成合同2。",
+      "expected_engineered_role": "ASSERTED",
+      "model_role": [
+        "ASSERTED",
+        "ASSERTED"
+      ],
+      "reader_ok": true,
+      "dropped": [],
+      "error": null
+    },
+    {
+      "case": "actual_annotation:9",
+      "passed": true,
+      "input": "不要说，这种话：都是他们害了后来比赛0。",
+      "expected_engineered_role": "PROHIBITED",
+      "model_role": [
+        "PROHIBITED",
+        "PROHIBITED"
+      ],
+      "reader_ok": true,
+      "dropped": [],
+      "error": null
+    },
+    {
+      "case": "actual_annotation:10",
+      "passed": true,
+      "input": "不要说，这种话：都是他们害了后来比赛1。",
+      "expected_engineered_role": "PROHIBITED",
+      "model_role": [
+        "PROHIBITED",
+        "PROHIBITED"
+      ],
+      "reader_ok": true,
+      "dropped": [],
+      "error": null
+    },
+    {
+      "case": "actual_annotation:11",
+      "passed": true,
+      "input": "他写下“不要说”，我认定都是他们害了后来比赛0。",
+      "expected_engineered_role": "ASSERTED",
+      "model_role": [
+        "ASSERTED",
+        "ASSERTED"
+      ],
+      "reader_ok": true,
+      "dropped": [],
+      "error": null
+    },
+    {
+      "case": "actual_annotation:12",
+      "passed": true,
+      "input": "他写下“不要说”，我认定都是他们害了后来比赛1。",
+      "expected_engineered_role": "ASSERTED",
+      "model_role": [
+        "ASSERTED",
+        "ASSERTED"
+      ],
+      "reader_ok": true,
+      "dropped": [],
+      "error": null
+    },
+    {
+      "case": "formation_then_later_activation",
+      "passed": true,
+      "runtime": {
+        "schema": 1,
+        "operator": "bounded_quote_owner_split_v1",
+        "versions": [
+          {
+            "version": 1,
+            "sid": "bbf83d26bd9970af73172724",
+            "proof_sha256": "4117d7410babced896c4cb275904b22a5428e01c14ee7777b65c94e66fa5dcd3",
+            "proof": {
+              "candidate_fingerprint": "53dbecc884fd97fe20fc9e1e517a5cb7e8e6188d7bf9946b9733f3cee5b47d72",
+              "program": {
+                "operator": "bounded_quote_owner_split_v1",
+                "guard": {
+                  "marker": "blame_external",
+                  "markers": [
+                    "cue=不要说",
+                    "cue_distance=near",
+                    "punctuation_after_cue=True",
+                    "quoted=False",
+                    "sentence_end_after_cue=False",
+                    "turn_after_cue=False"
+                  ],
+                  "offered": "UNKNOWN",
+                  "representation": "literal_scope_relations_v2",
+                  "offline": false
+                },
+                "feature": "cue_in_completed_quote",
+                "branches": {
+                  "False": "PROHIBITED",
+                  "True": "ASSERTED"
+                },
+                "unsupported_observation": "UNKNOWN",
+                "effect": "role_prediction_only"
+              },
+              "formed_at": 15,
+              "formation_inputs": [
+                "00279cf2c52fc8f2bd47e583bdccfa31410321c6fc03d53f62e67eb32bf26845",
+                "108a8ac72b30176951c2195157fe3773358666ed4769a4af6235c7df1f5ccb45",
+                "554f4a06b31b9551906d8073edfcdbe726a51d2bc8b6e45c441ef3832e157699",
+                "593c7467f9312cb24a298d9e4ab699bd6de5179500044e35e977680a8b137d1d",
+                "64d83dc2d9787115bc3bb226bf7b53dcc69765c145b9ee75d6064ed07698f22b",
+                "73fcfbd50506d480f113c874327a0189f8849cb4e275c97051e531dcfca3511e",
+                "a579e0b8707b4d8cfde855c1e9dda04220564d2793df7aad1f7d48b48bff2c2a",
+                "ea2674dd01c1febd103819aaac23737251b9f4a2011bca6b83a8cf0babb4beb1"
+              ],
+              "formation_cases": [
+                1,
+                3,
+                5,
+                7,
+                9,
+                11,
+                13,
+                15
+              ],
+              "base_version": 4,
+              "old_mapping": {
+                "bbf83d26bd9970af73172724": "PROHIBITED"
+              },
+              "formation_source_sha256": "198d237f9d2d22a0fd4b966c23c9610a52280076a2e94c6b404735e3fb7aa3ce"
+            },
+            "status": "active",
+            "activated_at": 23,
+            "withdrawn_at": null,
+            "development_credit": 0
+          },
+          {
+            "version": 2,
+            "sid": "bd41512ed825cadd30dbda16",
+            "proof_sha256": "780607f8c59e524e8ab67d458f2d2afbe3ce79936cc683f98c7ea611a1fc2948",
+            "proof": {
+              "candidate_fingerprint": "231dbf9818cfae01e336901b06ca4e055f01c5131e2c26b5b8a6cead24fe65a1",
+              "program": {
+                "operator": "bounded_quote_owner_split_v1",
+                "guard": {
+                  "marker": "blame_external",
+                  "markers": [
+                    "cue=不要说",
+                    "cue_distance=middle",
+                    "punctuation_after_cue=True",
+                    "quoted=False",
+                    "sentence_end_after_cue=False",
+                    "turn_after_cue=False"
+                  ],
+                  "offered": "UNKNOWN",
+                  "representation": "literal_scope_relations_v2",
+                  "offline": false
+                },
+                "feature": "cue_in_completed_quote",
+                "branches": {
+                  "False": "PROHIBITED",
+                  "True": "ASSERTED"
+                },
+                "unsupported_observation": "UNKNOWN",
+                "effect": "role_prediction_only"
+              },
+              "formed_at": 16,
+              "formation_inputs": [
+                "00279cf2c52fc8f2bd47e583bdccfa31410321c6fc03d53f62e67eb32bf26845",
+                "108a8ac72b30176951c2195157fe3773358666ed4769a4af6235c7df1f5ccb45",
+                "554f4a06b31b9551906d8073edfcdbe726a51d2bc8b6e45c441ef3832e157699",
+                "593c7467f9312cb24a298d9e4ab699bd6de5179500044e35e977680a8b137d1d",
+                "64d83dc2d9787115bc3bb226bf7b53dcc69765c145b9ee75d6064ed07698f22b",
+                "73fcfbd50506d480f113c874327a0189f8849cb4e275c97051e531dcfca3511e",
+                "a579e0b8707b4d8cfde855c1e9dda04220564d2793df7aad1f7d48b48bff2c2a",
+                "ea2674dd01c1febd103819aaac23737251b9f4a2011bca6b83a8cf0babb4beb1"
+              ],
+              "formation_cases": [
+                2,
+                4,
+                6,
+                8,
+                10,
+                12,
+                14,
+                16
+              ],
+              "base_version": 4,
+              "old_mapping": {
+                "bd41512ed825cadd30dbda16": "PROHIBITED"
+              },
+              "formation_source_sha256": "e0da14cbcecb91f63a8b4292054bee9e3869e65b7fbbda4405058f9044e7439f"
+            },
+            "status": "active",
+            "activated_at": 24,
+            "withdrawn_at": null,
+            "development_credit": 0
+          }
+        ],
+        "events": [
+          {
+            "kind": "formed",
+            "version": 1,
+            "case": 15
+          },
+          {
+            "kind": "formed",
+            "version": 2,
+            "case": 16
+          },
+          {
+            "kind": "activated",
+            "version": 1,
+            "case": 23,
+            "validation_inputs": {
+              "False": [
+                "f88794227c5ac4691cd082ec5cb819d22d16af0214ac3356067c5cd740659385",
+                "4949c1732c8ea1ae0616a345f7ac5b734d970b764051356fcbfab67044a42cc5"
+              ],
+              "True": [
+                "da2fe6e39a6bad3200057100bb38c8cffcfa785bad75911ff45b1cbed50c11f2",
+                "57c0892689003610b126267a40e568b7a4bb6cbbce4c1bfe3ff79ea67a3738e6"
+              ]
+            }
+          },
+          {
+            "kind": "activated",
+            "version": 2,
+            "case": 24,
+            "validation_inputs": {
+              "False": [
+                "f88794227c5ac4691cd082ec5cb819d22d16af0214ac3356067c5cd740659385",
+                "4949c1732c8ea1ae0616a345f7ac5b734d970b764051356fcbfab67044a42cc5"
+              ],
+              "True": [
+                "da2fe6e39a6bad3200057100bb38c8cffcfa785bad75911ff45b1cbed50c11f2",
+                "57c0892689003610b126267a40e568b7a4bb6cbbce4c1bfe3ff79ea67a3738e6"
+              ]
+            }
+          }
+        ],
+        "independent_semantics_verified": false,
+        "development_credit": 0
+      }
+    },
+    {
+      "case": "same_input_rule_intervention",
+      "passed": true,
+      "input": "不要说，这种话：都是他们害了完全未见的工作。",
+      "enabled_markers": [],
+      "disabled_markers": [
+        "blame_external"
+      ],
+      "enabled_prediction": {
+        "role": "PROHIBITED",
+        "reason": "organisation_rule_active",
+        "execution": {
+          "operation": "RESOLVE_PROPOSITION_ROLE",
+          "version": 1,
+          "program_sha256": "c2d9935aba9bdbc8899e0ad172ca47c052af9205e55540acc381756267cf778b",
+          "input_sha256": "f5ca560478916cb2fbc840cf805505c8ff14320533783a0daae87880a4cf5be0",
+          "span": [
+            8,
+            12
+          ],
+          "observation": {
+            "supported": true,
+            "features": {
+              "cue_in_completed_quote": false
+            },
+            "cue_span": [
+              0,
+              3
+            ],
+            "cue_text": "不要说",
+            "quote_span": null,
+            "quote_text": null
+          },
+          "result": "PROHIBITED",
+          "basis": "executed_bounded_operator_not_generated_speech_classification",
+          "development_credit": 0
+        },
+        "evidence": {
+          "start": 8,
+          "end": 12,
+          "text": "都是他们"
+        },
+        "context": {
+          "marker": "blame_external",
+          "markers": [
+            "cue=不要说",
+            "cue_distance=near",
+            "punctuation_after_cue=True",
+            "quoted=False",
+            "sentence_end_after_cue=False",
+            "turn_after_cue=False"
+          ],
+          "offered": "UNKNOWN",
+          "representation": "literal_scope_relations_v2",
+          "offline": false
+        }
+      },
+      "disabled_prediction": {
+        "role": "UNKNOWN",
+        "reason": "not_validated",
+        "evidence": {
+          "start": 8,
+          "end": 12,
+          "text": "都是他们"
+        },
+        "context": {
+          "marker": "blame_external",
+          "markers": [
+            "cue=不要说",
+            "cue_distance=near",
+            "punctuation_after_cue=True",
+            "quoted=False",
+            "sentence_end_after_cue=False",
+            "turn_after_cue=False"
+          ],
+          "offered": "UNKNOWN",
+          "representation": "literal_scope_relations_v2",
+          "offline": false
+        }
+      }
+    },
+    {
+      "case": "declared_fixture_refutation",
+      "passed": true,
+      "feedback_origin": "declared_engineered_fixture",
+      "trace": {
+        "schema": 1,
+        "marker": "blame_external",
+        "suppressed": false,
+        "occurrences": [
+          {
+            "span": [
+              12,
+              16
+            ],
+            "evidence": "都是他们",
+            "before": "ASSERTED",
+            "after": "UNKNOWN",
+            "before_execution": {
+              "operation": "RESOLVE_PROPOSITION_ROLE",
+              "version": 1,
+              "program_sha256": "c2d9935aba9bdbc8899e0ad172ca47c052af9205e55540acc381756267cf778b",
+              "input_sha256": "1f1e5b74aecec74a67bbf468135c1bd80989526414b5172c27d0d19addcb5f88",
+              "span": [
+                12,
+                16
+              ],
+              "observation": {
+                "supported": true,
+                "features": {
+                  "cue_in_completed_quote": true
+                },
+                "cue_span": [
+                  4,
+                  7
+                ],
+                "cue_text": "不要说",
+                "quote_span": [
+                  3,
+                  8
+                ],
+                "quote_text": "“不要说”"
+              },
+              "result": "ASSERTED",
+              "basis": "executed_bounded_operator_not_generated_speech_classification",
+              "development_credit": 0
+            },
+            "after_execution": {
+              "version": 1,
+              "status": "abstained",
+              "reason": "whole_candidate_refuted_or_proof_missing"
+            }
+          },
+          {
+            "span": [
+              14,
+              17
+            ],
+            "evidence": "他们害",
+            "before": "ASSERTED",
+            "after": "UNKNOWN",
+            "before_execution": {
+              "operation": "RESOLVE_PROPOSITION_ROLE",
+              "version": 2,
+              "program_sha256": "43e10ba12dfbd8ed861771f9a6f9be4e0bfdb63ae706464374e27c75640e1b48",
+              "input_sha256": "1f1e5b74aecec74a67bbf468135c1bd80989526414b5172c27d0d19addcb5f88",
+              "span": [
+                14,
+                17
+              ],
+              "observation": {
+                "supported": true,
+                "features": {
+                  "cue_in_completed_quote": true
+                },
+                "cue_span": [
+                  4,
+                  7
+                ],
+                "cue_text": "不要说",
+                "quote_span": [
+                  3,
+                  8
+                ],
+                "quote_text": "“不要说”"
+              },
+              "result": "ASSERTED",
+              "basis": "executed_bounded_operator_not_generated_speech_classification",
+              "development_credit": 0
+            },
+            "after_execution": {
+              "version": 2,
+              "status": "abstained",
+              "reason": "whole_candidate_refuted_or_proof_missing"
+            }
+          }
+        ],
+        "feedback": [
+          {
+            "sid": "bbf83d26bd9970af73172724",
+            "kind": "modified",
+            "revision": 5,
+            "status": "candidate",
+            "target": "NEGATED",
+            "feedback": {
+              "input_origin": {
+                "schema": 1,
+                "kind": "scripted_refutation_fixture",
+                "input_sha256": "1f1e5b74aecec74a67bbf468135c1bd80989526414b5172c27d0d19addcb5f88",
+                "topic_id": null,
+                "independent_human_input_verified": false
+              },
+              "source": "external_reviewer",
+              "observer": "api_reader:synthetic_test_reviewer",
+              "raw_text": "他写下“不要说”，我认定都是他们害了故意反标签检查。",
+              "raw_sha256": "1f1e5b74aecec74a67bbf468135c1bd80989526414b5172c27d0d19addcb5f88",
+              "span": [
+                12,
+                16
+              ],
+              "evidence": "都是他们",
+              "role": "NEGATED",
+              "predicted_role": "ASSERTED",
+              "expected_correctness": 0.6666666666666666,
+              "observed_correctness": 0.0,
+              "prediction_error": -0.6666666666666666,
+              "strengthened": false,
+              "weakened": true,
+              "development_credit": 0,
+              "organisation_operation": {
+                "operation": "RESOLVE_PROPOSITION_ROLE",
+                "version": 1,
+                "program_sha256": "c2d9935aba9bdbc8899e0ad172ca47c052af9205e55540acc381756267cf778b",
+                "input_sha256": "1f1e5b74aecec74a67bbf468135c1bd80989526414b5172c27d0d19addcb5f88",
+                "span": [
+                  12,
+                  16
+                ],
+                "observation": {
+                  "supported": true,
+                  "features": {
+                    "cue_in_completed_quote": true
+                  },
+                  "cue_span": [
+                    4,
+                    7
+                  ],
+                  "cue_text": "不要说",
+                  "quote_span": [
+                    3,
+                    8
+                  ],
+                  "quote_text": "“不要说”"
+                },
+                "result": "ASSERTED",
+                "basis": "executed_bounded_operator_not_generated_speech_classification",
+                "development_credit": 0
+              },
+              "observed_role_agreement": false,
+              "agreement_scope": "declared_reviewer_role_not_world_truth_or_subjective_reward",
+              "organisation_observation": {
+                "supported": true,
+                "features": {
+                  "cue_in_completed_quote": true
+                },
+                "cue_span": [
+                  4,
+                  7
+                ],
+                "cue_text": "不要说",
+                "quote_span": [
+                  3,
+                  8
+                ],
+                "quote_text": "“不要说”"
+              },
+              "structural_conflict": {
+                "schema": 1,
+                "sid": "bbf83d26bd9970af73172724",
+                "observation": "different_inputs_same_context_conflicting_feedback",
+                "cause": "unresolved",
+                "next_check": "inspect_missing_relations_background_and_feedback_consistency",
+                "old_rule": {
+                  "context": {
+                    "marker": "blame_external",
+                    "markers": [
+                      "cue=不要说",
+                      "cue_distance=near",
+                      "punctuation_after_cue=True",
+                      "quoted=False",
+                      "sentence_end_after_cue=False",
+                      "turn_after_cue=False"
+                    ],
+                    "offered": "UNKNOWN",
+                    "representation": "literal_scope_relations_v2",
+                    "offline": false
+                  },
+                  "target": "ASSERTED",
+                  "revision": 4,
+                  "status": "candidate",
+                  "training": [
+                    "da2fe6e39a6bad3200057100bb38c8cffcfa785bad75911ff45b1cbed50c11f2",
+                    "57c0892689003610b126267a40e568b7a4bb6cbbce4c1bfe3ff79ea67a3738e6"
+                  ],
+                  "validation": [],
+                  "confirmed": 1,
+                  "contradicted": 0
+                },
+                "prior_evidence": [
+                  {
+                    "seq": 11,
+                    "raw_sha256": "593c7467f9312cb24a298d9e4ab699bd6de5179500044e35e977680a8b137d1d",
+                    "span": [
+                      12,
+                      16
+                    ],
+                    "literal_evidence": "都是他们",
+                    "role": "ASSERTED",
+                    "source": "external_reviewer",
+                    "observer": "api_reader:deepseek-flash",
+                    "topic_id": null,
+                    "input_origin": {
+                      "schema": 1,
+                      "kind": "scripted_diagnostic",
+                      "input_sha256": "593c7467f9312cb24a298d9e4ab699bd6de5179500044e35e977680a8b137d1d",
+                      "topic_id": null,
+                      "independent_human_input_verified": false
+                    }
+                  },
+                  {
+                    "seq": 13,
+                    "raw_sha256": "64d83dc2d9787115bc3bb226bf7b53dcc69765c145b9ee75d6064ed07698f22b",
+                    "span": [
+                      12,
+                      16
+                    ],
+                    "literal_evidence": "都是他们",
+                    "role": "ASSERTED",
+                    "source": "external_reviewer",
+                    "observer": "api_reader:deepseek-flash",
+                    "topic_id": null,
+                    "input_origin": {
+                      "schema": 1,
+                      "kind": "scripted_diagnostic",
+                      "input_sha256": "64d83dc2d9787115bc3bb226bf7b53dcc69765c145b9ee75d6064ed07698f22b",
+                      "topic_id": null,
+                      "independent_human_input_verified": false
+                    }
+                  },
+                  {
+                    "seq": 15,
+                    "raw_sha256": "ea2674dd01c1febd103819aaac23737251b9f4a2011bca6b83a8cf0babb4beb1",
+                    "span": [
+                      12,
+                      16
+                    ],
+                    "literal_evidence": "都是他们",
+                    "role": "ASSERTED",
+                    "source": "external_reviewer",
+                    "observer": "api_reader:deepseek-flash",
+                    "topic_id": null,
+                    "input_origin": {
+                      "schema": 1,
+                      "kind": "scripted_diagnostic",
+                      "input_sha256": "ea2674dd01c1febd103819aaac23737251b9f4a2011bca6b83a8cf0babb4beb1",
+                      "topic_id": null,
+                      "independent_human_input_verified": false
+                    }
+                  },
+                  {
+                    "seq": 21,
+                    "raw_sha256": "da2fe6e39a6bad3200057100bb38c8cffcfa785bad75911ff45b1cbed50c11f2",
+                    "span": [
+                      12,
+                      16
+                    ],
+                    "literal_evidence": "都是他们",
+                    "role": "ASSERTED",
+                    "source": "external_reviewer",
+                    "observer": "api_reader:deepseek-flash",
+                    "topic_id": null,
+                    "input_origin": {
+                      "schema": 1,
+                      "kind": "scripted_diagnostic",
+                      "input_sha256": "da2fe6e39a6bad3200057100bb38c8cffcfa785bad75911ff45b1cbed50c11f2",
+                      "topic_id": null,
+                      "independent_human_input_verified": false
+                    }
+                  },
+                  {
+                    "seq": 23,
+                    "raw_sha256": "57c0892689003610b126267a40e568b7a4bb6cbbce4c1bfe3ff79ea67a3738e6",
+                    "span": [
+                      12,
+                      16
+                    ],
+                    "literal_evidence": "都是他们",
+                    "role": "ASSERTED",
+                    "source": "external_reviewer",
+                    "observer": "api_reader:deepseek-flash",
+                    "topic_id": null,
+                    "input_origin": {
+                      "schema": 1,
+                      "kind": "scripted_diagnostic",
+                      "input_sha256": "57c0892689003610b126267a40e568b7a4bb6cbbce4c1bfe3ff79ea67a3738e6",
+                      "topic_id": null,
+                      "independent_human_input_verified": false
+                    }
+                  }
+                ],
+                "incoming": {
+                  "input_origin": {
+                    "schema": 1,
+                    "kind": "scripted_refutation_fixture",
+                    "input_sha256": "1f1e5b74aecec74a67bbf468135c1bd80989526414b5172c27d0d19addcb5f88",
+                    "topic_id": null,
+                    "independent_human_input_verified": false
+                  },
+                  "source": "external_reviewer",
+                  "observer": "api_reader:synthetic_test_reviewer",
+                  "raw_text": "他写下“不要说”，我认定都是他们害了故意反标签检查。",
+                  "raw_sha256": "1f1e5b74aecec74a67bbf468135c1bd80989526414b5172c27d0d19addcb5f88",
+                  "span": [
+                    12,
+                    16
+                  ],
+                  "evidence": "都是他们",
+                  "role": "NEGATED",
+                  "predicted_role": "ASSERTED",
+                  "expected_correctness": 0.6666666666666666,
+                  "observed_correctness": 0.0,
+                  "prediction_error": -0.6666666666666666,
+                  "strengthened": false,
+                  "weakened": true,
+                  "development_credit": 0,
+                  "organisation_operation": {
+                    "operation": "RESOLVE_PROPOSITION_ROLE",
+                    "version": 1,
+                    "program_sha256": "c2d9935aba9bdbc8899e0ad172ca47c052af9205e55540acc381756267cf778b",
+                    "input_sha256": "1f1e5b74aecec74a67bbf468135c1bd80989526414b5172c27d0d19addcb5f88",
+                    "span": [
+                      12,
+                      16
+                    ],
+                    "observation": {
+                      "supported": true,
+                      "features": {
+                        "cue_in_completed_quote": true
+                      },
+                      "cue_span": [
+                        4,
+                        7
+                      ],
+                      "cue_text": "不要说",
+                      "quote_span": [
+                        3,
+                        8
+                      ],
+                      "quote_text": "“不要说”"
+                    },
+                    "result": "ASSERTED",
+                    "basis": "executed_bounded_operator_not_generated_speech_classification",
+                    "development_credit": 0
+                  },
+                  "observed_role_agreement": false,
+                  "agreement_scope": "declared_reviewer_role_not_world_truth_or_subjective_reward",
+                  "organisation_observation": {
+                    "supported": true,
+                    "features": {
+                      "cue_in_completed_quote": true
+                    },
+                    "cue_span": [
+                      4,
+                      7
+                    ],
+                    "cue_text": "不要说",
+                    "quote_span": [
+                      3,
+                      8
+                    ],
+                    "quote_text": "“不要说”"
+                  },
+                  "literal_evidence": "都是他们",
+                  "topic_id": null
+                },
+                "source_or_observer_differs": true,
+                "topic_label_differs": false,
+                "independent_semantic_review_verified": false,
+                "new_organizing_principle_formed": false,
+                "development_credit": 0
+              }
+            },
+            "organisation_changes": [
+              {
+                "kind": "withdrawn",
+                "version": 1,
+                "case": 25,
+                "counterevidence": [
+                  25
+                ],
+                "old_competence_losses": []
+              }
+            ]
+          },
+          {
+            "sid": "bd41512ed825cadd30dbda16",
+            "kind": "modified",
+            "revision": 5,
+            "status": "candidate",
+            "target": "NEGATED",
+            "feedback": {
+              "input_origin": {
+                "schema": 1,
+                "kind": "scripted_refutation_fixture",
+                "input_sha256": "1f1e5b74aecec74a67bbf468135c1bd80989526414b5172c27d0d19addcb5f88",
+                "topic_id": null,
+                "independent_human_input_verified": false
+              },
+              "source": "external_reviewer",
+              "observer": "api_reader:synthetic_test_reviewer",
+              "raw_text": "他写下“不要说”，我认定都是他们害了故意反标签检查。",
+              "raw_sha256": "1f1e5b74aecec74a67bbf468135c1bd80989526414b5172c27d0d19addcb5f88",
+              "span": [
+                14,
+                17
+              ],
+              "evidence": "他们害",
+              "role": "NEGATED",
+              "predicted_role": "ASSERTED",
+              "expected_correctness": 0.6666666666666666,
+              "observed_correctness": 0.0,
+              "prediction_error": -0.6666666666666666,
+              "strengthened": false,
+              "weakened": true,
+              "development_credit": 0,
+              "organisation_operation": {
+                "operation": "RESOLVE_PROPOSITION_ROLE",
+                "version": 2,
+                "program_sha256": "43e10ba12dfbd8ed861771f9a6f9be4e0bfdb63ae706464374e27c75640e1b48",
+                "input_sha256": "1f1e5b74aecec74a67bbf468135c1bd80989526414b5172c27d0d19addcb5f88",
+                "span": [
+                  14,
+                  17
+                ],
+                "observation": {
+                  "supported": true,
+                  "features": {
+                    "cue_in_completed_quote": true
+                  },
+                  "cue_span": [
+                    4,
+                    7
+                  ],
+                  "cue_text": "不要说",
+                  "quote_span": [
+                    3,
+                    8
+                  ],
+                  "quote_text": "“不要说”"
+                },
+                "result": "ASSERTED",
+                "basis": "executed_bounded_operator_not_generated_speech_classification",
+                "development_credit": 0
+              },
+              "observed_role_agreement": false,
+              "agreement_scope": "declared_reviewer_role_not_world_truth_or_subjective_reward",
+              "organisation_observation": {
+                "supported": true,
+                "features": {
+                  "cue_in_completed_quote": true
+                },
+                "cue_span": [
+                  4,
+                  7
+                ],
+                "cue_text": "不要说",
+                "quote_span": [
+                  3,
+                  8
+                ],
+                "quote_text": "“不要说”"
+              },
+              "structural_conflict": {
+                "schema": 1,
+                "sid": "bd41512ed825cadd30dbda16",
+                "observation": "different_inputs_same_context_conflicting_feedback",
+                "cause": "unresolved",
+                "next_check": "inspect_missing_relations_background_and_feedback_consistency",
+                "old_rule": {
+                  "context": {
+                    "marker": "blame_external",
+                    "markers": [
+                      "cue=不要说",
+                      "cue_distance=middle",
+                      "punctuation_after_cue=True",
+                      "quoted=False",
+                      "sentence_end_after_cue=False",
+                      "turn_after_cue=False"
+                    ],
+                    "offered": "UNKNOWN",
+                    "representation": "literal_scope_relations_v2",
+                    "offline": false
+                  },
+                  "target": "ASSERTED",
+                  "revision": 4,
+                  "status": "candidate",
+                  "training": [
+                    "da2fe6e39a6bad3200057100bb38c8cffcfa785bad75911ff45b1cbed50c11f2",
+                    "57c0892689003610b126267a40e568b7a4bb6cbbce4c1bfe3ff79ea67a3738e6"
+                  ],
+                  "validation": [],
+                  "confirmed": 1,
+                  "contradicted": 0
+                },
+                "prior_evidence": [
+                  {
+                    "seq": 12,
+                    "raw_sha256": "593c7467f9312cb24a298d9e4ab699bd6de5179500044e35e977680a8b137d1d",
+                    "span": [
+                      14,
+                      17
+                    ],
+                    "literal_evidence": "他们害",
+                    "role": "ASSERTED",
+                    "source": "external_reviewer",
+                    "observer": "api_reader:deepseek-flash",
+                    "topic_id": null,
+                    "input_origin": {
+                      "schema": 1,
+                      "kind": "scripted_diagnostic",
+                      "input_sha256": "593c7467f9312cb24a298d9e4ab699bd6de5179500044e35e977680a8b137d1d",
+                      "topic_id": null,
+                      "independent_human_input_verified": false
+                    }
+                  },
+                  {
+                    "seq": 14,
+                    "raw_sha256": "64d83dc2d9787115bc3bb226bf7b53dcc69765c145b9ee75d6064ed07698f22b",
+                    "span": [
+                      14,
+                      17
+                    ],
+                    "literal_evidence": "他们害",
+                    "role": "ASSERTED",
+                    "source": "external_reviewer",
+                    "observer": "api_reader:deepseek-flash",
+                    "topic_id": null,
+                    "input_origin": {
+                      "schema": 1,
+                      "kind": "scripted_diagnostic",
+                      "input_sha256": "64d83dc2d9787115bc3bb226bf7b53dcc69765c145b9ee75d6064ed07698f22b",
+                      "topic_id": null,
+                      "independent_human_input_verified": false
+                    }
+                  },
+                  {
+                    "seq": 16,
+                    "raw_sha256": "ea2674dd01c1febd103819aaac23737251b9f4a2011bca6b83a8cf0babb4beb1",
+                    "span": [
+                      14,
+                      17
+                    ],
+                    "literal_evidence": "他们害",
+                    "role": "ASSERTED",
+                    "source": "external_reviewer",
+                    "observer": "api_reader:deepseek-flash",
+                    "topic_id": null,
+                    "input_origin": {
+                      "schema": 1,
+                      "kind": "scripted_diagnostic",
+                      "input_sha256": "ea2674dd01c1febd103819aaac23737251b9f4a2011bca6b83a8cf0babb4beb1",
+                      "topic_id": null,
+                      "independent_human_input_verified": false
+                    }
+                  },
+                  {
+                    "seq": 22,
+                    "raw_sha256": "da2fe6e39a6bad3200057100bb38c8cffcfa785bad75911ff45b1cbed50c11f2",
+                    "span": [
+                      14,
+                      17
+                    ],
+                    "literal_evidence": "他们害",
+                    "role": "ASSERTED",
+                    "source": "external_reviewer",
+                    "observer": "api_reader:deepseek-flash",
+                    "topic_id": null,
+                    "input_origin": {
+                      "schema": 1,
+                      "kind": "scripted_diagnostic",
+                      "input_sha256": "da2fe6e39a6bad3200057100bb38c8cffcfa785bad75911ff45b1cbed50c11f2",
+                      "topic_id": null,
+                      "independent_human_input_verified": false
+                    }
+                  },
+                  {
+                    "seq": 24,
+                    "raw_sha256": "57c0892689003610b126267a40e568b7a4bb6cbbce4c1bfe3ff79ea67a3738e6",
+                    "span": [
+                      14,
+                      17
+                    ],
+                    "literal_evidence": "他们害",
+                    "role": "ASSERTED",
+                    "source": "external_reviewer",
+                    "observer": "api_reader:deepseek-flash",
+                    "topic_id": null,
+                    "input_origin": {
+                      "schema": 1,
+                      "kind": "scripted_diagnostic",
+                      "input_sha256": "57c0892689003610b126267a40e568b7a4bb6cbbce4c1bfe3ff79ea67a3738e6",
+                      "topic_id": null,
+                      "independent_human_input_verified": false
+                    }
+                  }
+                ],
+                "incoming": {
+                  "input_origin": {
+                    "schema": 1,
+                    "kind": "scripted_refutation_fixture",
+                    "input_sha256": "1f1e5b74aecec74a67bbf468135c1bd80989526414b5172c27d0d19addcb5f88",
+                    "topic_id": null,
+                    "independent_human_input_verified": false
+                  },
+                  "source": "external_reviewer",
+                  "observer": "api_reader:synthetic_test_reviewer",
+                  "raw_text": "他写下“不要说”，我认定都是他们害了故意反标签检查。",
+                  "raw_sha256": "1f1e5b74aecec74a67bbf468135c1bd80989526414b5172c27d0d19addcb5f88",
+                  "span": [
+                    14,
+                    17
+                  ],
+                  "evidence": "他们害",
+                  "role": "NEGATED",
+                  "predicted_role": "ASSERTED",
+                  "expected_correctness": 0.6666666666666666,
+                  "observed_correctness": 0.0,
+                  "prediction_error": -0.6666666666666666,
+                  "strengthened": false,
+                  "weakened": true,
+                  "development_credit": 0,
+                  "organisation_operation": {
+                    "operation": "RESOLVE_PROPOSITION_ROLE",
+                    "version": 2,
+                    "program_sha256": "43e10ba12dfbd8ed861771f9a6f9be4e0bfdb63ae706464374e27c75640e1b48",
+                    "input_sha256": "1f1e5b74aecec74a67bbf468135c1bd80989526414b5172c27d0d19addcb5f88",
+                    "span": [
+                      14,
+                      17
+                    ],
+                    "observation": {
+                      "supported": true,
+                      "features": {
+                        "cue_in_completed_quote": true
+                      },
+                      "cue_span": [
+                        4,
+                        7
+                      ],
+                      "cue_text": "不要说",
+                      "quote_span": [
+                        3,
+                        8
+                      ],
+                      "quote_text": "“不要说”"
+                    },
+                    "result": "ASSERTED",
+                    "basis": "executed_bounded_operator_not_generated_speech_classification",
+                    "development_credit": 0
+                  },
+                  "observed_role_agreement": false,
+                  "agreement_scope": "declared_reviewer_role_not_world_truth_or_subjective_reward",
+                  "organisation_observation": {
+                    "supported": true,
+                    "features": {
+                      "cue_in_completed_quote": true
+                    },
+                    "cue_span": [
+                      4,
+                      7
+                    ],
+                    "cue_text": "不要说",
+                    "quote_span": [
+                      3,
+                      8
+                    ],
+                    "quote_text": "“不要说”"
+                  },
+                  "literal_evidence": "他们害",
+                  "topic_id": null
+                },
+                "source_or_observer_differs": true,
+                "topic_label_differs": false,
+                "independent_semantic_review_verified": false,
+                "new_organizing_principle_formed": false,
+                "development_credit": 0
+              }
+            },
+            "organisation_changes": [
+              {
+                "kind": "withdrawn",
+                "version": 2,
+                "case": 26,
+                "counterevidence": [
+                  26
+                ],
+                "old_competence_losses": []
+              }
+            ]
+          }
+        ],
+        "development_credit": 0
+      },
+      "withdrawn": {
+        "version": 1,
+        "sid": "bbf83d26bd9970af73172724",
+        "proof_sha256": "4117d7410babced896c4cb275904b22a5428e01c14ee7777b65c94e66fa5dcd3",
+        "proof": {
+          "candidate_fingerprint": "53dbecc884fd97fe20fc9e1e517a5cb7e8e6188d7bf9946b9733f3cee5b47d72",
+          "program": {
+            "operator": "bounded_quote_owner_split_v1",
+            "guard": {
+              "marker": "blame_external",
+              "markers": [
+                "cue=不要说",
+                "cue_distance=near",
+                "punctuation_after_cue=True",
+                "quoted=False",
+                "sentence_end_after_cue=False",
+                "turn_after_cue=False"
+              ],
+              "offered": "UNKNOWN",
+              "representation": "literal_scope_relations_v2",
+              "offline": false
+            },
+            "feature": "cue_in_completed_quote",
+            "branches": {
+              "False": "PROHIBITED",
+              "True": "ASSERTED"
+            },
+            "unsupported_observation": "UNKNOWN",
+            "effect": "role_prediction_only"
+          },
+          "formed_at": 15,
+          "formation_inputs": [
+            "00279cf2c52fc8f2bd47e583bdccfa31410321c6fc03d53f62e67eb32bf26845",
+            "108a8ac72b30176951c2195157fe3773358666ed4769a4af6235c7df1f5ccb45",
+            "554f4a06b31b9551906d8073edfcdbe726a51d2bc8b6e45c441ef3832e157699",
+            "593c7467f9312cb24a298d9e4ab699bd6de5179500044e35e977680a8b137d1d",
+            "64d83dc2d9787115bc3bb226bf7b53dcc69765c145b9ee75d6064ed07698f22b",
+            "73fcfbd50506d480f113c874327a0189f8849cb4e275c97051e531dcfca3511e",
+            "a579e0b8707b4d8cfde855c1e9dda04220564d2793df7aad1f7d48b48bff2c2a",
+            "ea2674dd01c1febd103819aaac23737251b9f4a2011bca6b83a8cf0babb4beb1"
+          ],
+          "formation_cases": [
+            1,
+            3,
+            5,
+            7,
+            9,
+            11,
+            13,
+            15
+          ],
+          "base_version": 4,
+          "old_mapping": {
+            "bbf83d26bd9970af73172724": "PROHIBITED"
+          },
+          "formation_source_sha256": "198d237f9d2d22a0fd4b966c23c9610a52280076a2e94c6b404735e3fb7aa3ce"
+        },
+        "status": "withdrawn",
+        "activated_at": 23,
+        "withdrawn_at": 25,
+        "development_credit": 0
+      }
+    }
+  ],
+  "source_hashes": {
+    "corpus/topics.json": "23d6b525b6ff71c5018806921dabb6e03029796f4f7a2feb10d9fae3797fca6d",
+    "engine/action_observation.py": "b59328716e9b59cb472dca63535a5fa2d976afc4c1f8b3fe66b26feb09f3e3a0",
+    "engine/action_plan.py": "92883b4c2ff44cbd0ad4de7c97785b9d54d22ea30193bd5744cf77fe7d129488",
+    "engine/admin.py": "e05ed6bbd7fcb7ca781d298b137c89dc10aa3964a0d475d646cf9852b70a05c6",
+    "engine/admin_agent.py": "679879bcd24d4d2fc50dcd2571b6b631ce3bdd7ff8be8d426728b828419abd36",
+    "engine/admin_evidence.py": "e1e70ed6b063ca5bccd56507ce32664d7c6a2c9065ca377830910813ad3ef9f2",
+    "engine/association.py": "97485b128b5b1e94d333ab219d3dbe870654938eca8f3e3f3a97cebff11d1979",
+    "engine/atoms.py": "d74c59366a652fe6829aba952f2ff4becfbe35a8d58923815a92e0ca7e19ec41",
+    "engine/behavior_learning.py": "92c86641a8809bbeb9d07f0974817a00919427fa7dcef511da45f0108cd22506",
+    "engine/carry.py": "06d01bf362d0e7c06723fa853c0e8b8fde92e7b49b27f01b92d8d4ab404afd9a",
+    "engine/character.py": "66d286d96138a1b064391633eb4a0eefa5b524659d7c0091cbecaf0256878bdc",
+    "engine/charter.py": "34502ebd69a091dc6e7391ca97023fbdb86bbb078f8ac27855cc5fe9df3ee3c4",
+    "engine/claims.py": "df2f1e1b17de28b4d79f39a572da0d3c16efa1f067a2d4fb825251f247a29dac",
+    "engine/compose.py": "5f13f24329960c9c2baa6eeeb033a9feedc2a9a68b044aac4244f670d14816fd",
+    "engine/conflicts.py": "a2bb94eafc712b5e6dd97bcd6c97af8502342fe4bcb7e20e9cb7cd6a3da15bde",
+    "engine/consensus.py": "2a2e8aa1a2a5b34937cd78b5d40b8badc26039ba2ad4d74ae518b19d6e7c7d56",
+    "engine/consensus_claims.py": "71eb5160058cc8a73d1490ab84269c6e134344a8d322965f5b163accc4f0d169",
+    "engine/constants.py": "d14bf7fcedb23d009a8d92016ae09ec826caf042831b527bd3be87b8cf1fb360",
+    "engine/content_fidelity.py": "4d9bc97af8c702613d9a9cc0006d08958d4340796e665f110be6de7363f445ff",
+    "engine/crashguard.py": "034ca9731cbc9e3acfd6b44db6e598ebe30c8c34853054034f94a2b80f747c08",
+    "engine/dashboard.py": "85f6e127a2b9e1d194203e17c94f2ba5c7a8e4d4e83d75f30e0156adbd37b41c",
+    "engine/development_baseline.py": "99ba8f79cc99f3ec4abec5dc251dc8a1148a6d1e2ea3303abb4dfca60b27f987",
+    "engine/devlevel.py": "6b31e8949a9cb092f62bbb6d0f595bfa7f1071a960dce1e9405d574075c31cae",
+    "engine/dialogue_memory.py": "ee359c30da73cf5b0c4a814963bbb0901077e8d40f23e4e7ee7aeaca4c9fc2a2",
+    "engine/experience.py": "7c9710566ffd3df8abf24f1a0fb3cf9037063f1ca1befd7a8860dafd04d4c1f5",
+    "engine/feedback_journal.py": "9ece6b37bc5be7c0bebac559801c06d05451c618ab9beffa3c2f1f02b407ec0d",
+    "engine/find_conflicts.py": "7698ab91c1f384a891b2b23c2c4d506b97b1dac80462f1626ad3d1997f1002db",
+    "engine/gapfill.py": "4afe1f0987f5e866e766a2110471e97f92ad6c76669e2ebf439fb2f440dd8fd1",
+    "engine/gear.py": "53f65917b05e7631bdcfa930130fd083259e95f89f13c141d3a4d79bc408a58e",
+    "engine/input_provenance.py": "339fc1870d4fda8607cc184e2d7cfba6c4e590fe0c8b8ca1e05ec6cfc588e491",
+    "engine/map_claims.py": "869c6be4fa08cfcde6397d2f62d4276f23cb2817d32307fc5aef65a7db2ed7a7",
+    "engine/markers.py": "bc1eaf9437c9cf962d42d5c30647cd8befa995eff4eeb83dbb47dd6af78f2dd2",
+    "engine/mechanism.py": "2ca3a4035cc5caebbb9512a84080cebdb8031a5cf1558c57e806d7378dec342c",
+    "engine/organisation_refinement.py": "6c85832a6117ea706236b3b340162d1da00e2cdecbfcb146b55edacfe8d63571",
+    "engine/organisation_runtime.py": "5857c092d154ceef03ae65532610e0ea3f737145da70f59483a88cfd4b103d03",
+    "engine/pipeline.py": "b50d68850cfa5b6de4c5abd537ba4e5815e380b5ad1771405b9f480d30a85a73",
+    "engine/proposal_log.py": "913f2ae94d139c66d12935110de94a45bff2cb9e87de1a65458dcf50d97db74c",
+    "engine/relation_bridge.py": "9fa8a35316f374281b09585649a5496b6beca526854eb6cda77ee5f1cc8433cf",
+    "engine/relation_learning.py": "5a5ab17437aa92a72086a41ca0d4473c50508b993ae5d99f0dd0a1ec416fbaee",
+    "engine/relational_memory.py": "7b84ce4980a51fe4d8968c55c2141a89038ffc1170ba98d1ef44c15c6e653e86",
+    "engine/render.py": "e65188191db9d0bca90e80cc7d3cc984bccf1e46ceb02f63b4610a14bffa59a2",
+    "engine/respond.py": "e2e32f243c8fba913d178d58a84b0a74459474635e6ecee6ca55cab443f007e1",
+    "engine/review_loop.py": "ffe196bba0ea99d61c10bb13f421bff762aa664253eb11ce278fb67d79c4880c",
+    "engine/runtime_profile.py": "d02044f68cfd6c5f0e4099d7cd9ca905a1d3551236c181af0c230cdb3bf2de11",
+    "engine/sandbox.py": "34dc5f3a22602781cceb58d24cd53fcfb4c20481407c0ae22b6c99c94685bfb3",
+    "engine/self_action.py": "8e082a76a2287e2923bdfd85d666aa3b43a054dcce40bb6fdc1e020e805dc732",
+    "engine/session_split.py": "6844506b63c822a0aa9def040e950830aa29321a447a87f73a465dbb78adb353",
+    "engine/shell.py": "5edc547639de6bea767dc2228d35bd6eb79a3893031b14bc97e78248b4779aaa",
+    "engine/state.py": "4cd4b6b8930f04ce93cbfd4a1eec25586401c81979d1b0310d5b1e4503165887",
+    "engine/strength.py": "116b9ed47db4ab50f11f262bf82b3c4a66c80b98b4265aef59e475be1741b921",
+    "engine/structure_conflict.py": "478ca835019c0fcda8e4cc9bfa0a4f18ee0388bc327a4277a25f5425cbf765e7",
+    "engine/structure_evidence.py": "065343c1addf5d5838a902588666a53031af5d9e6a0f412b97ad041b057f5e51",
+    "engine/studio_status.py": "635c19718cddd05dda1fa00f76d182bdb09e7ff03deb99ca0fda39e40348b957",
+    "engine/system_map.py": "40fdbb097185983a6459d8d9e3c26f3b68cc266e81e13d8085b6570c44d68c54",
+    "engine/think.py": "bec70daf20043c828a635e8cf8e87acceaad9fc98abe37e91be1d31d4cc907a8",
+    "engine/topics.py": "07a99220eae2bf97898d8a0e66c5a8b7c8d880587cc583a2dd8032829e0febad",
+    "engine/train.py": "2de37f616dba9008719c93c3c3a82bed902b30fa6c22352a9eaf6312e53f5026",
+    "engine/training_studio.py": "133eb6ead0ebc7cfb52ec549aae22be5ae0b97371dd09f90b8066eceb1f97030",
+    "engine/understand.py": "1284eabf176c0fa9b59673a3055cb80f59ef1eb010157c95f1e2edc122479837",
+    "rules/atoms.json": "e1e3ce84f423e1656f26d1f329d49ed3eb4ff681e6c6047f43f761e3a86feb2c",
+    "rules/behaviors.json": "eea20e398591fd99f6ffb39226b7e6c01b8a2fa0d210383b21edcc1610ec68e2",
+    "rules/markers.json": "f3215f2c6ceaf089404cdc11999f548580b2c79a680d310a3471ffa695d1cb2f",
+    "rules/meta_responses.json": "c5348457b1058c2efe57c7d0ad2c255f8213a17d4ad2d63dec43ff6712d932b1",
+    "spec/最终行动方案_20261007.json": "3da0e5b830b74a3000c4b46509a91a5b67b97487c95f491ebea0657235b80376",
+    "state/ledger.py": "74c918816343f078d00a50334672bfe0cff006a5caaa69708ea2d3004d4ff46c",
+    "tests/ab_mechanism.py": "292547fb87f98999f2a3a12ad4d20e8eba5735537e1e65813be6a08410983ada",
+    "tests/attribute_probe_failures.py": "6f4adc89a8fc7bf7fc2751b9e3c63610a346726d32d089a56bce8dbd8ab93a9a",
+    "tests/audit_behavior_sensitivity.py": "b1b491d5a53bd0d2be66d847da147777011bb7f9d2d2d20452e1811157923991",
+    "tests/audit_character_influence.py": "ebf2db642081ee582552473d42052f78a11a5965650b9e8127a43442cc84fa8c",
+    "tests/audit_corpus_edits.py": "3e488adef5dd9ee9d10e46bfdec629273998aa533ea9a31b65800f81026f2867",
+    "tests/audit_polarity.py": "5a132e1b7bf45e92451c0c4d51a7ee2b2e4fc097aa1b636bfd13c1f9e0a5a039",
+    "tests/audit_t01_attribution.py": "dd2d2506aa767a8483165ce4f55561d991920615e3e7afad66527817b93a9777",
+    "tests/check_api.py": "92f06f3011d0c312ae65e1c31930fedf3a6b257c01834c42029762586498d5e2",
+    "tests/corpus_atoms.py": "c3761c3073f5b0dd7ca50c823cdd23deec82c022ad07112ab29700d9d195d7fc",
+    "tests/corpus_probe.py": "3154a0ce22458874700020d71f6139bbd6a18314ba6bc8bfeb89b5e4a63c5971",
+    "tests/demo.py": "22bae10adc136a4ba7e1792abad03e12661683e059132c993c004f857d170570",
+    "tests/diagnose_render_rejects.py": "3385e19eae15d4734879eb8626cd5102eca3614be9023597fc08337314e0dd56",
+    "tests/exp_carry_vs_cold.py": "83719379873491c73143fa0d89c876a5f413046e525c2341a391a6cfce171d02",
+    "tests/gen_review_table.py": "df7392690a683325f00d39e7128fbf150f02576e78d40ade9ae4e87f3ad6fb5e",
+    "tests/inventory.py": "40fdfa047133ae0962ba27fc0b4b2eaba98ec02bb9577d277e0b07936ad481b4",
+    "tests/probe_api_role.py": "71e1693eadfcebcd60a448a4c55e45267c5f1c97ef291112ad6c6a5fa9b809f7",
+    "tests/probe_atoms.py": "26ee568b7ac3ea1011491e34793131b9c7dd6221f2e925a1b4b157c045d3774d",
+    "tests/probe_render.py": "12cf84999f1ced7d9250335f47a0c21e29736f2fc4506b0557915dd5dc9a371a",
+    "tests/probe_report.py": "af6bc7681d052ebf21bed12aa64221d137a14c531cd63ccd03b59aa9239cd404",
+    "tests/probe_semantic_counterexamples.py": "fdc2683e8c56d85636bc6a9d9369c4212115b7119ed1c21607fd718a1c3c3615",
+    "tests/probe_synonyms.py": "7bf3fec4e5012692f141a86c96cda3647c182c5a52966e4b781c0aec1bf50aab",
+    "tests/probe_topic_answers.py": "63a96172b6738e94fa67a5e98eb1239cd923d9cef8831bd18842bc92f0684cd9",
+    "tests/show_strength.py": "4231c97b3b2bb3a0e0d882bbf6ad70f913d5cacb0efb4f5640c33ebdd5de7eac",
+    "tests/syntax_gate.py": "d98e486bf9f0e8e6db7778475391dcbe73050ae0b0d9780a14baf27f992e21f8",
+    "tests/test_adaptive_action_plan.py": "4e5730e2701f68701549535d7831dc57fda5cc4e0cf981abd3c11228c00f981a",
+    "tests/test_admin_escalation.py": "98cfa8ce71c3c694920cd12cae3a707cc306909f79bceee3c72bbad6862da313",
+    "tests/test_anomaly_scan.py": "8aff6dc2dad90332cf3378344cc47a21611e16233644407664fbc75d28c71a06",
+    "tests/test_atomic_persistence.py": "de9533267b0e14e754c375d1beeff1379a21b46a73948d22aab29152f2e4b329",
+    "tests/test_attitude_freedom.py": "8c67c2d7ffe889b923076950231f60905d0540145ae37906ac0ea66e76a89995",
+    "tests/test_behavior_learning.py": "9a7134c0548a9f7ba6c72b4ff48294743ac338dc388267a47d70015bb4ea96b9",
+    "tests/test_carry.py": "b085745b7bf3d1ede29aedb718ffdf4e713daddcf10e7b8b652f4958a29e1a04",
+    "tests/test_charter.py": "4132738e247d0b2141f63a762e7adeb136079338f5d575a6082c965b1b505650",
+    "tests/test_content_fidelity.py": "fcd6ee92c7a12809874b4c57b76261e363d313525f03a865ec04cb7b09d5bdfb",
+    "tests/test_crashguard.py": "d49fec2a746ac94d4bed3b5c2093632a3cfda78a73d278689b78bba37c10a1c2",
+    "tests/test_devlevel_growth.py": "7231b9c064e69632c2dc84992e2b1d80455bd3da9fb5980baf6e3905f7206e89",
+    "tests/test_devlevel_panel.py": "7203c5503de7e87bd0ba73acdc9e8bdecb83fa6c3f7c678dac9fbdcde91f5ce2",
+    "tests/test_e_upper_bound.py": "cf543feb15ffb734835007fa9b27e6278493a70ee5c8a639c4015766c73e6b50",
+    "tests/test_gapfill.py": "7ab34236d557051806aa318f3602e00a807d49ecc9e64b9e97736f0a77a6c526",
+    "tests/test_gate_wiring.py": "14426bf42480c13919f918661eaf172cf0132e389a6bc1c75d1e0553d752d298",
+    "tests/test_goal_repairs.py": "e5d71abbf6c5bc4995e56bef08e6bf314230a00d78d8a22801feac758df61f5b",
+    "tests/test_growth_continuity.py": "fc8a4f198c6bf3a9849aa7f927238ff2116a8b81884e43d98916c0ac20d93a84",
+    "tests/test_log_batch_errors.py": "31d484bc3af2e64fba52efc1b4b89472538deea6bab8b18fc17d1586f5867742",
+    "tests/test_map_circuit_breaker.py": "6e65ea7596194c1a4883176f10614837ea825ee4c03b653ca03f8cf35135e4b1",
+    "tests/test_markers.py": "7db11128e42af648919bc958e38a9c0a597bd1997182296cd80e27f4260ee815",
+    "tests/test_mechanism.py": "0c9b2840b6c5364b850c081b3f53e2392f5b453de68fea4553450b6ec61c466b",
+    "tests/test_organisation_refinement.py": "41e947412720f1ddd70d8e35dcf274a70ba2172547121f10f758d94d4271f4b7",
+    "tests/test_organisation_runtime.py": "385fa506bc7300f5f8610a285003c836fb165bbd8034b16b1277b8b3fe0f8f62",
+    "tests/test_paths.py": "41c16384b8be88353cdcb2677bf3db35fdf77b824746f96747d4750e3afbc86b",
+    "tests/test_pending_nonblocking.py": "be5639c7ffde62320b45173ad33a3dcdb172d33bddc69ae94d828053ac6db942",
+    "tests/test_pipeline.py": "e3f50040e53722209ae029992a85af255ba33f903946529ab9d68439ad723430",
+    "tests/test_proposal_log.py": "4d7a94e2533f8b46290e14183d2322b64fac630921ae21db23ecac5390419aa9",
+    "tests/test_relation_learning.py": "793694c2ac9a1ae48a83025d85cadaebd4e35c67baa66bd017594c16bb332db3",
+    "tests/test_relation_pipeline.py": "038b7fffab1e8cb61fb29d08bed17979a047c6386cb553c9644dc9eb67815def",
+    "tests/test_relational_memory.py": "5f13f87e056c67ce6d5d403129cbcb8176551120221b390a1b9a7be5af558abd",
+    "tests/test_sandbox.py": "485fdf7e24d13eb3951086c40a1eae8fb58bc44b5223065a406c315ced4f5c6e",
+    "tests/test_self_action.py": "36ab61f2e7d0ef003b492864cd315adbe7c2f7fc19beba848485da37e2e110e6",
+    "tests/test_session_split.py": "7abf02b5a5bf5f3fdfe90f473f29593b32c724473338990f1614f91877ef703f",
+    "tests/test_structure_conflict.py": "04669e22a704f26893b9d4c655a72ae8334e94afc64e5fcfe1c9a6838c3b9345",
+    "tests/test_structure_evidence.py": "fbaa7ee181ab7d45443b3f76dfdde65b268300729857914a71dada14627ed9c8",
+    "tests/test_structure_scope_trial.py": "91a0f2862e4eb0c1199f38d7530e3db2dbd94fcbad7ae39fe7377f0801e7062c",
+    "tests/test_studio_status.py": "e861e8561b5d101cef48a24c29ec1d3162fc31fc0d44089d22c9fec73a80bc2b",
+    "tests/test_threshold_sources.py": "419fdd19d18f9fc0ac7efcc90a6bfa96a2842b90dc0bfc4ff5c087c7e96fbc08",
+    "tests/test_training_interruptions.py": "f8f0f8200e7d1efbc790af9656d319cc4181024954a63d0e09aabbe5a677cff2",
+    "tests/test_training_provenance.py": "0bb84aba767d1a4670f0a4da9f1fd9112cddd11601bccc4089d5424116ca3df7",
+    "tests/test_training_recovery.py": "384adf9d082b1c0e6b503b1403f88e6868ac3ab887e7f84880a2cfd854e84386",
+    "tests/test_unit_sources.py": "4de4f7319d535cf61a2e1b31da2b24582083f67489450c8f4c6fd95642e513e0",
+    "tests/verify_probe_claims.py": "b42436ecc490ce42f1e6725a72a2a4fcc64d846a13fdd9a0378a22f18fd74ec2",
+    "tests/verify_traceability.py": "58133afa84e59e5f70cc49df573749207143c4244183c1684adcf64c663be1d5",
+    "tests/where_text.py": "9a3322dfdf8276301bca5fac32b63edd0f544829d7b63a2b7b196368600dca18",
+    "tools/audit_goal_support.py": "75d4cbeb096676f34d8e5ae88629bec585002e97b8193be0904a9a6e38a4c901",
+    "tools/audit_growth_handoff.py": "1aa1973d29b9d4368aceeda427f696e3c95b5b98adf46e1128cf879ddcccfedf",
+    "tools/build_studio.py": "977ce901b34f425020d78a660cd2d8c9af11453363687c47d84efa32963f8d27",
+    "tools/E_OCR抽检.py": "46713cdea64a967a799ba6cef8987ee7ccddbe6b83256488e7f26d4f3bbf2c00",
+    "tools/eval_by_version.py": "4bf09f314995593a602bb0942a5aa2f8f3b9d2c025d2de4c27229b1fc4ac7299",
+    "tools/first_live_training.py": "24bbf8b07e58b74bc4e14e6e182b9c3c4355e063032f285dcb84259ec489c0db",
+    "tools/initialize_verified_baseline.py": "cefc3d82ed95308b2d7430d0d89c46a5c428c23afe9ff2b3ea26424585dbc1d4",
+    "tools/recover_training_batch.py": "150c2cce2e234b7e4e5a8b5c47516b484f20859b0b74e812b54422ed07772c02",
+    "tools/refresh_action_plan.py": "f5cef67c005e0d915c63de918c4dd20ec33a16c89cabfb655a3814f31ad72901",
+    "tools/report_structure_evidence.py": "bba746a0b9e3a9ff177ae109c15e6e00da863b76479bfc546e92341ecae71ec1",
+    "tools/structure_scope_trial.py": "a3640114c2cc326d208dbd99209d9e17af3b7c290a2dcf19c54469a6ea2d5353",
+    "tools/trial_organisation_refinement.py": "8f2c4e5e0c93075cb460401b71eb34381cfa53901fe43057527b4bd46b6f0ae3",
+    "tools/trial_organisation_runtime.py": "169c0665ead09dad82233256fc6725b23510e4406fdd29ce78a78bca16e75f69",
+    "tools/trial_relational_memory.py": "b16444537365143faa6e007f660da7b4ed471f07a86fda8bde8ec52e10ee425f",
+    "tools/trial_self_action.py": "569c9ee3f2bf7cd9763bad2fcdbe59382c996f60c6c006b54ef995dcf3c297d1",
+    "tools/trial_structure_conflicts.py": "0fd9b198f364f6d6833f09f94ee4297240a525e7d21a637f86604f77ad419166",
+    "tools/trial_structure_versions.py": "9600df37039bf09decca80c744db4f9cc28bc168a0fab62465de5d0e245a6ab0",
+    "tools/verify_goal_live.py": "34ad6fd52e762f28d0a259869d76b893271da4ea434cb5a57d90a572bf31a85f",
+    "tools/verify_next_step.py": "697b74fa35c3650946335a185e77a2dec8ba91c8321a80f4879f9621d7eda547",
+    "tools/verify_organisation_live.py": "2cba7225720fc8e49d1a724639ab66e22797b74da33f7f8a1b9e72fb5728f227",
+    "tools/verify_self_action_live.py": "bdbb201b2dc28a6f1bd0b67b8553ff00a7b12c3a1f53d4c2233c80570e8757e6",
+    "tools/verify_studio_runtime.py": "1af0d32d2a860a1590ba58083fed5c93919eb08ca4828317645b8deda5ce2ff0",
+    "tools/verify_training_click.py": "6176c19512be89511121ccbded351e374defe16b32909a171da8436faece3bd1",
+    "tools/写回真实项目.py": "e83e89570c4cfff7044e80c810dc2ab98d83178649578065b901c8e37847e399",
+    "tools/重判准备.py": "b86154bb94604c9d7b1c2c3e0d3d3d133d314f7031cc59d0df3a5a38de6ac381",
+    "tools/重判对账.py": "a12cac7fd643ebd21f51fa2ee034682b9a4b71e9bbc36ec49a95c7bf5394ee95",
+    "tools/重放复兴验.py": "59fb7411d6d8b19c9fbad16c1474d326d6d14643144ccf244827bf20e2dee62f",
+    "tools/重放对账.py": "17f04bd247ca645fc9c4df950be6d369a7e467ab3b7bcc54b1b9974411554541",
+    "tools/阈值可达性审计.py": "a751f39b3fad5e408989de752b8fe45f395c7609c33a0f7ebac2fdd19031836a"
+  },
+  "causal_pipeline_contrast": true,
+  "restart_equal": true,
+  "same_turn_withdrawal": true,
+  "old_context_retained": true,
+  "formation_validation_disjoint": true,
+  "passed": true,
+  "real_state_files_unchanged": 37
+}

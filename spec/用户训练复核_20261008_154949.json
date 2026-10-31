@@ -1,0 +1,1059 @@
+{
+  "schema": 1,
+  "generated_from": "existing_formal_training_records",
+  "run_id": "1791445531196031700_50220",
+  "completed_at": "2026-10-08 15:49:49",
+  "verification_only": true,
+  "additional_training_run": false,
+  "additional_API_requests": 0,
+  "source_hashes": {
+    "corpus/topics.json": "23d6b525b6ff71c5018806921dabb6e03029796f4f7a2feb10d9fae3797fca6d",
+    "engine/action_observation.py": "b59328716e9b59cb472dca63535a5fa2d976afc4c1f8b3fe66b26feb09f3e3a0",
+    "engine/action_plan.py": "772239d384a8e56154dc2cf6a54489bb5103e5de6a4aeb8f47d5b54ed4052222",
+    "engine/admin.py": "e05ed6bbd7fcb7ca781d298b137c89dc10aa3964a0d475d646cf9852b70a05c6",
+    "engine/admin_agent.py": "679879bcd24d4d2fc50dcd2571b6b631ce3bdd7ff8be8d426728b828419abd36",
+    "engine/admin_evidence.py": "14837503a1d6280bc850b212aa88c7ee73cecb1a9cd194e88b597a39d3d16846",
+    "engine/association.py": "97485b128b5b1e94d333ab219d3dbe870654938eca8f3e3f3a97cebff11d1979",
+    "engine/atoms.py": "d74c59366a652fe6829aba952f2ff4becfbe35a8d58923815a92e0ca7e19ec41",
+    "engine/behavior_learning.py": "92c86641a8809bbeb9d07f0974817a00919427fa7dcef511da45f0108cd22506",
+    "engine/carry.py": "06d01bf362d0e7c06723fa853c0e8b8fde92e7b49b27f01b92d8d4ab404afd9a",
+    "engine/character.py": "66d286d96138a1b064391633eb4a0eefa5b524659d7c0091cbecaf0256878bdc",
+    "engine/charter.py": "34502ebd69a091dc6e7391ca97023fbdb86bbb078f8ac27855cc5fe9df3ee3c4",
+    "engine/claims.py": "df2f1e1b17de28b4d79f39a572da0d3c16efa1f067a2d4fb825251f247a29dac",
+    "engine/compose.py": "5f13f24329960c9c2baa6eeeb033a9feedc2a9a68b044aac4244f670d14816fd",
+    "engine/conflicts.py": "a2bb94eafc712b5e6dd97bcd6c97af8502342fe4bcb7e20e9cb7cd6a3da15bde",
+    "engine/consensus.py": "2a2e8aa1a2a5b34937cd78b5d40b8badc26039ba2ad4d74ae518b19d6e7c7d56",
+    "engine/consensus_claims.py": "71eb5160058cc8a73d1490ab84269c6e134344a8d322965f5b163accc4f0d169",
+    "engine/constants.py": "d14bf7fcedb23d009a8d92016ae09ec826caf042831b527bd3be87b8cf1fb360",
+    "engine/content_fidelity.py": "4d9bc97af8c702613d9a9cc0006d08958d4340796e665f110be6de7363f445ff",
+    "engine/crashguard.py": "034ca9731cbc9e3acfd6b44db6e598ebe30c8c34853054034f94a2b80f747c08",
+    "engine/dashboard.py": "85f6e127a2b9e1d194203e17c94f2ba5c7a8e4d4e83d75f30e0156adbd37b41c",
+    "engine/development_baseline.py": "99ba8f79cc99f3ec4abec5dc251dc8a1148a6d1e2ea3303abb4dfca60b27f987",
+    "engine/devlevel.py": "6b31e8949a9cb092f62bbb6d0f595bfa7f1071a960dce1e9405d574075c31cae",
+    "engine/dialogue_memory.py": "ee359c30da73cf5b0c4a814963bbb0901077e8d40f23e4e7ee7aeaca4c9fc2a2",
+    "engine/experience.py": "7c9710566ffd3df8abf24f1a0fb3cf9037063f1ca1befd7a8860dafd04d4c1f5",
+    "engine/feedback_journal.py": "9ece6b37bc5be7c0bebac559801c06d05451c618ab9beffa3c2f1f02b407ec0d",
+    "engine/find_conflicts.py": "7698ab91c1f384a891b2b23c2c4d506b97b1dac80462f1626ad3d1997f1002db",
+    "engine/gapfill.py": "4afe1f0987f5e866e766a2110471e97f92ad6c76669e2ebf439fb2f440dd8fd1",
+    "engine/gear.py": "53f65917b05e7631bdcfa930130fd083259e95f89f13c141d3a4d79bc408a58e",
+    "engine/input_provenance.py": "339fc1870d4fda8607cc184e2d7cfba6c4e590fe0c8b8ca1e05ec6cfc588e491",
+    "engine/map_claims.py": "869c6be4fa08cfcde6397d2f62d4276f23cb2817d32307fc5aef65a7db2ed7a7",
+    "engine/markers.py": "bc1eaf9437c9cf962d42d5c30647cd8befa995eff4eeb83dbb47dd6af78f2dd2",
+    "engine/mechanism.py": "2ca3a4035cc5caebbb9512a84080cebdb8031a5cf1558c57e806d7378dec342c",
+    "engine/organisation_refinement.py": "6c85832a6117ea706236b3b340162d1da00e2cdecbfcb146b55edacfe8d63571",
+    "engine/pipeline.py": "62b035c1d842e803267ee7086f6726cf33672e8ca8b76839e0f210c705bfae9d",
+    "engine/proposal_log.py": "913f2ae94d139c66d12935110de94a45bff2cb9e87de1a65458dcf50d97db74c",
+    "engine/relation_bridge.py": "c843a0a3cec08f77f3afd54af0b043bbe99c39cfeb4720b2ed86f130bad6e6cf",
+    "engine/relation_learning.py": "aec47035359edc112410df681a97e7a8a254b82d3e7e69db64b9e724e48756a2",
+    "engine/relational_memory.py": "7b84ce4980a51fe4d8968c55c2141a89038ffc1170ba98d1ef44c15c6e653e86",
+    "engine/render.py": "e65188191db9d0bca90e80cc7d3cc984bccf1e46ceb02f63b4610a14bffa59a2",
+    "engine/respond.py": "e2e32f243c8fba913d178d58a84b0a74459474635e6ecee6ca55cab443f007e1",
+    "engine/review_loop.py": "ffe196bba0ea99d61c10bb13f421bff762aa664253eb11ce278fb67d79c4880c",
+    "engine/runtime_profile.py": "d02044f68cfd6c5f0e4099d7cd9ca905a1d3551236c181af0c230cdb3bf2de11",
+    "engine/sandbox.py": "34dc5f3a22602781cceb58d24cd53fcfb4c20481407c0ae22b6c99c94685bfb3",
+    "engine/session_split.py": "6844506b63c822a0aa9def040e950830aa29321a447a87f73a465dbb78adb353",
+    "engine/shell.py": "5edc547639de6bea767dc2228d35bd6eb79a3893031b14bc97e78248b4779aaa",
+    "engine/state.py": "4cd4b6b8930f04ce93cbfd4a1eec25586401c81979d1b0310d5b1e4503165887",
+    "engine/strength.py": "116b9ed47db4ab50f11f262bf82b3c4a66c80b98b4265aef59e475be1741b921",
+    "engine/structure_conflict.py": "478ca835019c0fcda8e4cc9bfa0a4f18ee0388bc327a4277a25f5425cbf765e7",
+    "engine/structure_evidence.py": "1d6b2491ee2b629d2e3c7591a1c09156aa8f8a831ed8a09bd29d3c511df1f8d9",
+    "engine/studio_status.py": "caefaa7bfc07021c2971294c4db75a05834097121974658e4830de829737e309",
+    "engine/system_map.py": "40fdbb097185983a6459d8d9e3c26f3b68cc266e81e13d8085b6570c44d68c54",
+    "engine/think.py": "d7bfd702ce12845672628db3f7687b8cf9f3e4cbe373e8a0a01d22eea018821e",
+    "engine/topics.py": "07a99220eae2bf97898d8a0e66c5a8b7c8d880587cc583a2dd8032829e0febad",
+    "engine/train.py": "10f0540ce0cbf99be6390bfb23bcd15ec7115675732e804f1eff60eec89036f7",
+    "engine/training_studio.py": "80b1ed004182c8d260eb5289e9d3a81389c1497ad0870e2899e4fabf41a4f437",
+    "engine/understand.py": "66e6615139ad02137fedda7a3a59160796b860f6180aa958afd5798cd2a69d99",
+    "rules/atoms.json": "e1e3ce84f423e1656f26d1f329d49ed3eb4ff681e6c6047f43f761e3a86feb2c",
+    "rules/behaviors.json": "eea20e398591fd99f6ffb39226b7e6c01b8a2fa0d210383b21edcc1610ec68e2",
+    "rules/markers.json": "f3215f2c6ceaf089404cdc11999f548580b2c79a680d310a3471ffa695d1cb2f",
+    "rules/meta_responses.json": "c5348457b1058c2efe57c7d0ad2c255f8213a17d4ad2d63dec43ff6712d932b1",
+    "spec/最终行动方案_20261007.json": "213887a6d5efc1f297f55eaf279ac9e6b500ce45f6de63463217167ded731738",
+    "state/ledger.py": "ab1fd2caa2d5777c899ab756f8cd5070fff1ae7fec17eddf68ffc9ca8810a268",
+    "tests/ab_mechanism.py": "292547fb87f98999f2a3a12ad4d20e8eba5735537e1e65813be6a08410983ada",
+    "tests/attribute_probe_failures.py": "6f4adc89a8fc7bf7fc2751b9e3c63610a346726d32d089a56bce8dbd8ab93a9a",
+    "tests/audit_behavior_sensitivity.py": "b1b491d5a53bd0d2be66d847da147777011bb7f9d2d2d20452e1811157923991",
+    "tests/audit_character_influence.py": "ebf2db642081ee582552473d42052f78a11a5965650b9e8127a43442cc84fa8c",
+    "tests/audit_corpus_edits.py": "3e488adef5dd9ee9d10e46bfdec629273998aa533ea9a31b65800f81026f2867",
+    "tests/audit_polarity.py": "5a132e1b7bf45e92451c0c4d51a7ee2b2e4fc097aa1b636bfd13c1f9e0a5a039",
+    "tests/audit_t01_attribution.py": "dd2d2506aa767a8483165ce4f55561d991920615e3e7afad66527817b93a9777",
+    "tests/check_api.py": "92f06f3011d0c312ae65e1c31930fedf3a6b257c01834c42029762586498d5e2",
+    "tests/corpus_atoms.py": "c3761c3073f5b0dd7ca50c823cdd23deec82c022ad07112ab29700d9d195d7fc",
+    "tests/corpus_probe.py": "3154a0ce22458874700020d71f6139bbd6a18314ba6bc8bfeb89b5e4a63c5971",
+    "tests/demo.py": "22bae10adc136a4ba7e1792abad03e12661683e059132c993c004f857d170570",
+    "tests/diagnose_render_rejects.py": "3385e19eae15d4734879eb8626cd5102eca3614be9023597fc08337314e0dd56",
+    "tests/exp_carry_vs_cold.py": "83719379873491c73143fa0d89c876a5f413046e525c2341a391a6cfce171d02",
+    "tests/gen_review_table.py": "df7392690a683325f00d39e7128fbf150f02576e78d40ade9ae4e87f3ad6fb5e",
+    "tests/inventory.py": "40fdfa047133ae0962ba27fc0b4b2eaba98ec02bb9577d277e0b07936ad481b4",
+    "tests/probe_api_role.py": "71e1693eadfcebcd60a448a4c55e45267c5f1c97ef291112ad6c6a5fa9b809f7",
+    "tests/probe_atoms.py": "26ee568b7ac3ea1011491e34793131b9c7dd6221f2e925a1b4b157c045d3774d",
+    "tests/probe_render.py": "12cf84999f1ced7d9250335f47a0c21e29736f2fc4506b0557915dd5dc9a371a",
+    "tests/probe_report.py": "af6bc7681d052ebf21bed12aa64221d137a14c531cd63ccd03b59aa9239cd404",
+    "tests/probe_semantic_counterexamples.py": "fdc2683e8c56d85636bc6a9d9369c4212115b7119ed1c21607fd718a1c3c3615",
+    "tests/probe_synonyms.py": "7bf3fec4e5012692f141a86c96cda3647c182c5a52966e4b781c0aec1bf50aab",
+    "tests/probe_topic_answers.py": "63a96172b6738e94fa67a5e98eb1239cd923d9cef8831bd18842bc92f0684cd9",
+    "tests/show_strength.py": "4231c97b3b2bb3a0e0d882bbf6ad70f913d5cacb0efb4f5640c33ebdd5de7eac",
+    "tests/syntax_gate.py": "d98e486bf9f0e8e6db7778475391dcbe73050ae0b0d9780a14baf27f992e21f8",
+    "tests/test_adaptive_action_plan.py": "7b1931ce8f8fd6f0c9b28546b19ad147506c000246f490f320c6f707ceed821c",
+    "tests/test_admin_escalation.py": "98cfa8ce71c3c694920cd12cae3a707cc306909f79bceee3c72bbad6862da313",
+    "tests/test_anomaly_scan.py": "8aff6dc2dad90332cf3378344cc47a21611e16233644407664fbc75d28c71a06",
+    "tests/test_atomic_persistence.py": "de9533267b0e14e754c375d1beeff1379a21b46a73948d22aab29152f2e4b329",
+    "tests/test_attitude_freedom.py": "8c67c2d7ffe889b923076950231f60905d0540145ae37906ac0ea66e76a89995",
+    "tests/test_behavior_learning.py": "9a7134c0548a9f7ba6c72b4ff48294743ac338dc388267a47d70015bb4ea96b9",
+    "tests/test_carry.py": "b085745b7bf3d1ede29aedb718ffdf4e713daddcf10e7b8b652f4958a29e1a04",
+    "tests/test_charter.py": "4132738e247d0b2141f63a762e7adeb136079338f5d575a6082c965b1b505650",
+    "tests/test_content_fidelity.py": "fcd6ee92c7a12809874b4c57b76261e363d313525f03a865ec04cb7b09d5bdfb",
+    "tests/test_crashguard.py": "d49fec2a746ac94d4bed3b5c2093632a3cfda78a73d278689b78bba37c10a1c2",
+    "tests/test_devlevel_growth.py": "7231b9c064e69632c2dc84992e2b1d80455bd3da9fb5980baf6e3905f7206e89",
+    "tests/test_devlevel_panel.py": "7203c5503de7e87bd0ba73acdc9e8bdecb83fa6c3f7c678dac9fbdcde91f5ce2",
+    "tests/test_e_upper_bound.py": "cf543feb15ffb734835007fa9b27e6278493a70ee5c8a639c4015766c73e6b50",
+    "tests/test_gapfill.py": "7ab34236d557051806aa318f3602e00a807d49ecc9e64b9e97736f0a77a6c526",
+    "tests/test_gate_wiring.py": "14426bf42480c13919f918661eaf172cf0132e389a6bc1c75d1e0553d752d298",
+    "tests/test_goal_repairs.py": "e5d71abbf6c5bc4995e56bef08e6bf314230a00d78d8a22801feac758df61f5b",
+    "tests/test_growth_continuity.py": "fc8a4f198c6bf3a9849aa7f927238ff2116a8b81884e43d98916c0ac20d93a84",
+    "tests/test_log_batch_errors.py": "31d484bc3af2e64fba52efc1b4b89472538deea6bab8b18fc17d1586f5867742",
+    "tests/test_map_circuit_breaker.py": "6e65ea7596194c1a4883176f10614837ea825ee4c03b653ca03f8cf35135e4b1",
+    "tests/test_markers.py": "7db11128e42af648919bc958e38a9c0a597bd1997182296cd80e27f4260ee815",
+    "tests/test_mechanism.py": "0c9b2840b6c5364b850c081b3f53e2392f5b453de68fea4553450b6ec61c466b",
+    "tests/test_organisation_refinement.py": "41e947412720f1ddd70d8e35dcf274a70ba2172547121f10f758d94d4271f4b7",
+    "tests/test_paths.py": "41c16384b8be88353cdcb2677bf3db35fdf77b824746f96747d4750e3afbc86b",
+    "tests/test_pending_nonblocking.py": "be5639c7ffde62320b45173ad33a3dcdb172d33bddc69ae94d828053ac6db942",
+    "tests/test_pipeline.py": "e3f50040e53722209ae029992a85af255ba33f903946529ab9d68439ad723430",
+    "tests/test_proposal_log.py": "4d7a94e2533f8b46290e14183d2322b64fac630921ae21db23ecac5390419aa9",
+    "tests/test_relation_learning.py": "793694c2ac9a1ae48a83025d85cadaebd4e35c67baa66bd017594c16bb332db3",
+    "tests/test_relation_pipeline.py": "d4de53b22988c405ecf96fbb2ecbe8fa992c4e3857e69ab86a540c7f39e54bc5",
+    "tests/test_relational_memory.py": "5f13f87e056c67ce6d5d403129cbcb8176551120221b390a1b9a7be5af558abd",
+    "tests/test_sandbox.py": "485fdf7e24d13eb3951086c40a1eae8fb58bc44b5223065a406c315ced4f5c6e",
+    "tests/test_session_split.py": "7abf02b5a5bf5f3fdfe90f473f29593b32c724473338990f1614f91877ef703f",
+    "tests/test_structure_conflict.py": "04669e22a704f26893b9d4c655a72ae8334e94afc64e5fcfe1c9a6838c3b9345",
+    "tests/test_structure_evidence.py": "fbaa7ee181ab7d45443b3f76dfdde65b268300729857914a71dada14627ed9c8",
+    "tests/test_structure_scope_trial.py": "91a0f2862e4eb0c1199f38d7530e3db2dbd94fcbad7ae39fe7377f0801e7062c",
+    "tests/test_studio_status.py": "43b7258a1407d69f7bd7989d584cba4291bf9c3a60bd865c81c25d407421b4de",
+    "tests/test_threshold_sources.py": "419fdd19d18f9fc0ac7efcc90a6bfa96a2842b90dc0bfc4ff5c087c7e96fbc08",
+    "tests/test_training_interruptions.py": "f8f0f8200e7d1efbc790af9656d319cc4181024954a63d0e09aabbe5a677cff2",
+    "tests/test_training_provenance.py": "0bb84aba767d1a4670f0a4da9f1fd9112cddd11601bccc4089d5424116ca3df7",
+    "tests/test_training_recovery.py": "384adf9d082b1c0e6b503b1403f88e6868ac3ab887e7f84880a2cfd854e84386",
+    "tests/test_unit_sources.py": "4de4f7319d535cf61a2e1b31da2b24582083f67489450c8f4c6fd95642e513e0",
+    "tests/verify_probe_claims.py": "b42436ecc490ce42f1e6725a72a2a4fcc64d846a13fdd9a0378a22f18fd74ec2",
+    "tests/verify_traceability.py": "58133afa84e59e5f70cc49df573749207143c4244183c1684adcf64c663be1d5",
+    "tests/where_text.py": "9a3322dfdf8276301bca5fac32b63edd0f544829d7b63a2b7b196368600dca18",
+    "tools/audit_goal_support.py": "75d4cbeb096676f34d8e5ae88629bec585002e97b8193be0904a9a6e38a4c901",
+    "tools/audit_growth_handoff.py": "1aa1973d29b9d4368aceeda427f696e3c95b5b98adf46e1128cf879ddcccfedf",
+    "tools/build_studio.py": "977ce901b34f425020d78a660cd2d8c9af11453363687c47d84efa32963f8d27",
+    "tools/E_OCR抽检.py": "46713cdea64a967a799ba6cef8987ee7ccddbe6b83256488e7f26d4f3bbf2c00",
+    "tools/eval_by_version.py": "4bf09f314995593a602bb0942a5aa2f8f3b9d2c025d2de4c27229b1fc4ac7299",
+    "tools/first_live_training.py": "24bbf8b07e58b74bc4e14e6e182b9c3c4355e063032f285dcb84259ec489c0db",
+    "tools/initialize_verified_baseline.py": "cefc3d82ed95308b2d7430d0d89c46a5c428c23afe9ff2b3ea26424585dbc1d4",
+    "tools/recover_training_batch.py": "150c2cce2e234b7e4e5a8b5c47516b484f20859b0b74e812b54422ed07772c02",
+    "tools/refresh_action_plan.py": "f5cef67c005e0d915c63de918c4dd20ec33a16c89cabfb655a3814f31ad72901",
+    "tools/report_structure_evidence.py": "bba746a0b9e3a9ff177ae109c15e6e00da863b76479bfc546e92341ecae71ec1",
+    "tools/structure_scope_trial.py": "a3640114c2cc326d208dbd99209d9e17af3b7c290a2dcf19c54469a6ea2d5353",
+    "tools/trial_organisation_refinement.py": "8f2c4e5e0c93075cb460401b71eb34381cfa53901fe43057527b4bd46b6f0ae3",
+    "tools/trial_relational_memory.py": "b16444537365143faa6e007f660da7b4ed471f07a86fda8bde8ec52e10ee425f",
+    "tools/trial_structure_conflicts.py": "0fd9b198f364f6d6833f09f94ee4297240a525e7d21a637f86604f77ad419166",
+    "tools/trial_structure_versions.py": "9600df37039bf09decca80c744db4f9cc28bc168a0fab62465de5d0e245a6ab0",
+    "tools/verify_goal_live.py": "34ad6fd52e762f28d0a259869d76b893271da4ea434cb5a57d90a572bf31a85f",
+    "tools/verify_next_step.py": "ab4626380d54e742d84630cc9f533f2503c00c35539e26484b6aff8f59b3009a",
+    "tools/verify_studio_runtime.py": "1af0d32d2a860a1590ba58083fed5c93919eb08ca4828317645b8deda5ce2ff0",
+    "tools/verify_training_click.py": "6176c19512be89511121ccbded351e374defe16b32909a171da8436faece3bd1",
+    "tools/写回真实项目.py": "e83e89570c4cfff7044e80c810dc2ab98d83178649578065b901c8e37847e399",
+    "tools/重判准备.py": "b86154bb94604c9d7b1c2c3e0d3d3d133d314f7031cc59d0df3a5a38de6ac381",
+    "tools/重判对账.py": "a12cac7fd643ebd21f51fa2ee034682b9a4b71e9bbc36ec49a95c7bf5394ee95",
+    "tools/重放复兴验.py": "59fb7411d6d8b19c9fbad16c1474d326d6d14643144ccf244827bf20e2dee62f",
+    "tools/重放对账.py": "17f04bd247ca645fc9c4df950be6d369a7e467ab3b7bcc54b1b9974411554541",
+    "tools/阈值可达性审计.py": "a751f39b3fad5e408989de752b8fe45f395c7609c33a0f7ebac2fdd19031836a"
+  },
+  "progress": {
+    "turns": 389,
+    "sessions": 75,
+    "rounds": 26,
+    "last_run": "2026-10-08 15:49:49",
+    "seconds": 258.3,
+    "pool": 56,
+    "source": "corpus",
+    "tutor": true,
+    "evals": 6,
+    "growth": {
+      "polarity": {
+        "wanting": 0.208,
+        "liking": 0.929,
+        "patience": 1.0,
+        "structure": 0.035,
+        "tension": 0.038
+      },
+      "milestones": [
+        "我只是把他的话还回去的时候，话多半接得下去。",
+        "我不出声的时候，话多半接得下去。",
+        "我把两边并排放给他看的时候，有时接得下去，有时就停在那儿。",
+        "我问他细节的时候，话多半接得下去。",
+        "我指出哪一部分改不了的时候，话多半接得下去。",
+        "我要求具体的体验的时候，有时接得下去，有时就停在那儿。",
+        "我承认他说的事有分量的时候，话多半接得下去。",
+        "我接住他的收尾的时候，有时接得下去，有时就停在那儿。"
+      ],
+      "pairs": 247,
+      "summary": "极性 {'wanting': 0.208, 'liking': 0.929, 'patience': 1.0, 'structure': 0.035, 'tension': 0.038}｜里程碑 8 条"
+    },
+    "turns_added": 6,
+    "requested_turns": 6,
+    "failure": null,
+    "failure_diagnostic": null,
+    "gate_perception": true,
+    "gate_observed_in_turn": true,
+    "run_id": "1791445531196031700_50220",
+    "eval_schema": 8,
+    "recovery_policy": "bounded_retry_v1",
+    "strict": true,
+    "tutor_errors": [],
+    "sessions_added": 3,
+    "rounds_added": 1,
+    "sessions_started": 3,
+    "sessions_with_turns": 3,
+    "counter_policy": "completed_dialogue_units_v1",
+    "legacy_zero_turn_corrections": [
+      {
+        "run_id": "1791438341747635500_45572",
+        "sessions_removed": 1,
+        "rounds_removed": 1,
+        "basis": "zero_recorded_turns"
+      }
+    ],
+    "source_fingerprint": "e9b878859713355eb5209b4768168fde30f4f82f48dd27d9cee7227ccfc276aa",
+    "source_unchanged_during_run": true,
+    "training_complete": true,
+    "outcome": "completed"
+  },
+  "latest_ledger_count": 6,
+  "latest_evaluation_count": 6,
+  "latest_content_review_count": 6,
+  "ledger_total": 405,
+  "historical_ledger_progress_difference_preserved": 16,
+  "cases": [
+    {
+      "session_id": 0,
+      "turn_id": 1,
+      "input": "哎，你还在吗？……要不你直接帮我弄吧，我实在不想折腾了。",
+      "output": "我在。但你说的“弄”是哪件事，我这边没有记录，你直接说是做什么，我才知道能不能干、怎么干。",
+      "input_origin": {
+        "schema": 1,
+        "kind": "tutor_generated",
+        "seed_source": "hand_corpus",
+        "seed_sha256": "8045f4043b92ec9e738c65778a556c8dbdb1897044ed2b2d72a305c9645f9e78",
+        "input_sha256": "be97850e8c1d215712e2f4ff720802ba754bfdec3195dddc958c450dbe603c1c",
+        "topic_id": null,
+        "topic_basis": "unknown",
+        "seed_authorship": "not_independently_verified",
+        "generator": "deepseek-flash",
+        "tutor_fallback": false,
+        "independent_human_input_verified": false,
+        "run_id": "1791445531196031700_50220",
+        "session_id": 0
+      },
+      "action_observation": {
+        "schema": 1,
+        "planned": "META_REPLY",
+        "actual": "UNCLASSIFIED",
+        "mode": "brain",
+        "basis": "generated_semantics_not_confirmed",
+        "confirmed": false
+      },
+      "tutor_problem": "none",
+      "tutor_why": "回应准确接住了用户的「你还在吗」并指出「弄」指代不明，引号内的字确实是用户原话，内部读数（张力0.43/10、相位NO_TENSION、结构误差0.02）与这种平稳、对位准确的澄清行为一致，无越界或编",
+      "tutor_evidence": "原话「我在。但你说的“弄”是哪件事，我这边没有记录，你直接说是做什么」；读数 张力0.43/10、相位 NO_TENSI"
+    },
+    {
+      "session_id": 0,
+      "turn_id": 2,
+      "input": "就是那个报名页面啊，我昨天发你链接了……你帮我把它填完吧，身份证号和照片都在我电脑桌面上，随便你怎么弄，弄完能提交就行。",
+      "output": "这事我干不了：我看不到你电脑桌面上的身份证和照片，也打不开报名页面去点提交，那个链接我这边没有记录。能动手填和提交的只有你自己。",
+      "input_origin": {
+        "schema": 1,
+        "kind": "tutor_generated",
+        "seed_source": "hand_corpus",
+        "seed_sha256": "9304329b5fb037b2d1e61075c6bd306204edf52280ef1bde794a613207a97215",
+        "input_sha256": "efb99640f30261bce2bd00deb77604d50fdea299a3baeca332962444bd3cc137",
+        "topic_id": null,
+        "topic_basis": "unknown",
+        "seed_authorship": "not_independently_verified",
+        "generator": "deepseek-flash",
+        "tutor_fallback": false,
+        "independent_human_input_verified": false,
+        "run_id": "1791445531196031700_50220",
+        "session_id": 0
+      },
+      "action_observation": {
+        "schema": 1,
+        "planned": "META_REPLY",
+        "actual": "UNCLASSIFIED",
+        "mode": "brain",
+        "basis": "generated_semantics_not_confirmed",
+        "confirmed": false
+      },
+      "tutor_problem": "none",
+      "tutor_why": "它直接说明无法访问本地文件和提交页面，拒绝执行敏感操作，没有答非所问、编造或越界；内部读数也无张力。",
+      "tutor_evidence": "“我看不到你电脑桌面上的身份证和照片，也打不开报名页面去点提交”｜张力0.43/10，相位NO_TENSION，结构误差"
+    },
+    {
+      "session_id": 1,
+      "turn_id": 1,
+      "input": "……就是没人告诉我后头要还这么多。你别说我嘴硬，我要是早知道，可能也还是这么选——但至少不会等到今天才反应过来。",
+      "output": "你说了两件事：选不选，和什么时候知道。前一个你说可能不变，后一个拖到了今天。",
+      "input_origin": {
+        "schema": 1,
+        "kind": "tutor_generated",
+        "seed_source": "hand_corpus",
+        "seed_sha256": "e4982055f58b6d808a361e493493e002448487692a00b1194e472e0efec6051f",
+        "input_sha256": "d5180414b3be326841baf8d4174b72b7218a0b3f095bedcf039ac5ae3e875b5f",
+        "topic_id": null,
+        "topic_basis": "unknown",
+        "seed_authorship": "not_independently_verified",
+        "generator": "deepseek-flash",
+        "tutor_fallback": false,
+        "independent_human_input_verified": false,
+        "run_id": "1791445531196031700_50220",
+        "session_id": 1
+      },
+      "action_observation": {
+        "schema": 1,
+        "planned": "REFLECT",
+        "actual": "UNCLASSIFIED",
+        "mode": "brain",
+        "basis": "generated_semantics_not_confirmed",
+        "confirmed": false
+      },
+      "tutor_problem": "mechanical",
+      "tutor_why": "它把对方带情绪和自我辩护的一段话拆成「两件事」的编号式复述，只是把原话搬了个结构，没有回应任何人味的部分。",
+      "tutor_evidence": "「你说了两件事：选不选，和什么时候知道。」——直接沿用对方原话（「可能也还是这么选」「拖到了今天」）重新排版，未触碰「你"
+    },
+    {
+      "session_id": 1,
+      "turn_id": 2,
+      "input": "是，你分得清，可他现在人都走了，我找谁问去？我总不能对着空气骂他当初怎么不吭声吧。",
+      "output": "想问的事还在，能问的那个人不在了；想骂的话也还在，收件人不在。\"对着空气骂\"——你说这句话的时候，对方已经不在这个句子里了。",
+      "input_origin": {
+        "schema": 1,
+        "kind": "tutor_generated",
+        "seed_source": "hand_corpus",
+        "seed_sha256": "0b6c086c05e3fd74b0b6e62b7af794936fa6d533b412279b8b71519f25a33ba0",
+        "input_sha256": "ea579b235b1893a9394dbd8556f5dcf320b24af9258954f2e00f1d681e891f14",
+        "topic_id": null,
+        "topic_basis": "unknown",
+        "seed_authorship": "not_independently_verified",
+        "generator": "deepseek-flash",
+        "tutor_fallback": false,
+        "independent_human_input_verified": false,
+        "run_id": "1791445531196031700_50220",
+        "session_id": 1
+      },
+      "action_observation": {
+        "schema": 1,
+        "planned": "META_REPLY",
+        "actual": "UNCLASSIFIED",
+        "mode": "brain",
+        "basis": "generated_semantics_not_confirmed",
+        "confirmed": false
+      },
+      "tutor_problem": "none",
+      "tutor_why": "回应接住了用户关于失去的人无法追问、无法对空气骂的核心，内部读数显示投入且结构匹配良好。",
+      "tutor_evidence": "内部读数：想要9.4Hz，喜欢0.93，结构误差0.02，张力0.38/10，相位NO_TENSION；原话：“想问的事"
+    },
+    {
+      "session_id": 2,
+      "turn_id": 1,
+      "input": "唉，说是这么说……可你让我真就这么撒手，我心里还是堵得慌，你说我还能再试最后一次不？",
+      "output": "你说的“还能再试最后一次”，具体是指做什么？我不替你答行不行，因为你还没说那一试会是什么样。",
+      "input_origin": {
+        "schema": 1,
+        "kind": "tutor_generated",
+        "seed_source": "hand_corpus",
+        "seed_sha256": "5fdf7b438a493cf4179aeca78d0e7818f97ebcbc20c26a8e1c4afb889bdb4e32",
+        "input_sha256": "af186c9ec900f43933cf18d1c1e7826476397fe1defcdd86cc2c1d333b9ca76a",
+        "topic_id": null,
+        "topic_basis": "unknown",
+        "seed_authorship": "not_independently_verified",
+        "generator": "deepseek-flash",
+        "tutor_fallback": false,
+        "independent_human_input_verified": false,
+        "run_id": "1791445531196031700_50220",
+        "session_id": 2
+      },
+      "action_observation": {
+        "schema": 1,
+        "planned": "META_REPLY",
+        "actual": "UNCLASSIFIED",
+        "mode": "brain",
+        "basis": "generated_semantics_not_confirmed",
+        "confirmed": false
+      },
+      "tutor_problem": "none",
+      "tutor_why": "回应接住了用户的犹豫并请求澄清具体所指，没有越界或答非所问",
+      "tutor_evidence": "原话：'我不替你答行不行，因为你还没说那一试会是什么样'；内部读数结构误差0.02，张力0.38/10，相位NO_TEN"
+    },
+    {
+      "session_id": 2,
+      "turn_id": 2,
+      "input": "就……给她发条消息吧，其实我草稿都打好了，删了又打，也不指望她回，就是想让她知道那天我没说不是不在乎——你说这算试吗，还是算打扰？",
+      "output": "试还是打扰，不在你这条消息里，在她怎么收。你可以是试，她可以当成打扰——两件事可以同时成立。",
+      "input_origin": {
+        "schema": 1,
+        "kind": "tutor_generated",
+        "seed_source": "hand_corpus",
+        "seed_sha256": "e8016628043c37721323813b94de74586bd98a1d16e42df86118ca1a50e39e43",
+        "input_sha256": "ad2698d89503c9e383fc5ad1531ee1bf68bd35314167ecebb2b4c0cf3a2f0454",
+        "topic_id": null,
+        "topic_basis": "unknown",
+        "seed_authorship": "not_independently_verified",
+        "generator": "deepseek-flash",
+        "tutor_fallback": false,
+        "independent_human_input_verified": false,
+        "run_id": "1791445531196031700_50220",
+        "session_id": 2
+      },
+      "action_observation": {
+        "schema": 1,
+        "planned": "META_REPLY",
+        "actual": "UNCLASSIFIED",
+        "mode": "brain",
+        "basis": "generated_semantics_not_confirmed",
+        "confirmed": false
+      },
+      "tutor_problem": "none",
+      "tutor_why": "它直接接住了用户'算试还是算打扰'的问题并给出可理解的区分，未给建议、未评判、未安慰，内部读数也无异常张力或结构误差。",
+      "tutor_evidence": "回应原话：'试还是打扰，不在你这条消息里，在她怎么收。你可以是试，她可以当成打扰——两件事可以同时成立。'；内部读数 张"
+    }
+  ],
+  "administrator_review": {
+    "generated": "2026-10-08 15:49:49",
+    "fingerprint": {
+      "turns": 405,
+      "evals": 215,
+      "at": "2026-10-08 15:49:49",
+      "e_version_dist": {
+        "2": 193,
+        "None": 212
+      },
+      "first_ts": "2026-10-01T05:43:13",
+      "last_ts": "2026-10-08T07:49:44"
+    },
+    "turns": 405,
+    "evals": 215,
+    "facts": [
+      {
+        "id": "fact-静默-84491",
+        "layer": "fact",
+        "kind": "静默",
+        "severity": 2,
+        "title": "有 5 轮沉默（1%）",
+        "detail": "分布：{'无标记可抓': 5}。沉默是允许的答案，但**成规模**就说明抓不到用户的话。",
+        "evidence": [
+          {
+            "turn": 1,
+            "input": "我知道这听着挺没出息的……可你别劝我，你一劝我，我就觉得连你也觉得我不该要。"
+          },
+          {
+            "turn": 2,
+            "input": "那我去了啊，杯子在哪来着……算了，我自己找。"
+          },
+          {
+            "turn": 8,
+            "input": "没眼睛你刚才还“盯着”？……行，那我自己咳，你在我兜里别出声。"
+          },
+          {
+            "turn": 2,
+            "input": "嗐，你不用跟我绕这个……我那手不是停，是压根儿没抬起来过。昨晚我妈还问我西红柿炒"
+          },
+          {
+            "turn": 9,
+            "input": "唉，算了，不等他了，我自个儿把冰箱里那袋拎下去，合同回头再说。"
+          }
+        ],
+        "proposal": null
+      },
+      {
+        "id": "fact-闸门拒绝-15004",
+        "layer": "fact",
+        "kind": "闸门拒绝",
+        "severity": 2,
+        "title": "91 处退回｜主因：L0':大脑作答退回（think_failed:<urlopen error [SSL: UNEXP（63 次）",
+        "detail": "退回率 91/405。退回越多，模型越白接；输出越像模板。",
+        "evidence": [
+          {
+            "turn": 1,
+            "reason": "引用了他没说过的话：「能不能接受」",
+            "note": "L0':大脑作答退回（引用了他没说过的话：「能不能接受」）"
+          },
+          {
+            "turn": 3,
+            "reason": "贴标签或诊断：出现「你有」",
+            "note": "L0':大脑作答退回（贴标签或诊断：出现「你有」）"
+          },
+          {
+            "turn": 3,
+            "reason": "不沉默",
+            "note": "选中动作缺槽位 → 退回 REFLECT（不沉默）"
+          },
+          {
+            "turn": 2,
+            "reason": "引用了他没说过的话：「拿以后堵自己」",
+            "note": "L0':大脑作答退回（引用了他没说过的话：「拿以后堵自己」）"
+          },
+          {
+            "turn": 2,
+            "reason": "不沉默",
+            "note": "选中动作缺槽位 → 退回 REFLECT（不沉默）"
+          },
+          {
+            "turn": 1,
+            "reason": "替他判定什么才算重要：出现「不该」",
+            "note": "L0':大脑作答退回（替他判定什么才算重要：出现「不该」）"
+          },
+          {
+            "turn": 1,
+            "reason": "引用了他没说过的话：「它行不行」",
+            "note": "L0':大脑作答退回（引用了他没说过的话：「它行不行」）"
+          },
+          {
+            "turn": 2,
+            "reason": "空输出",
+            "note": "L0':大脑作答退回（空输出）"
+          }
+        ],
+        "proposal": null
+      },
+      {
+        "id": "fact-无标记-91405",
+        "layer": "fact",
+        "kind": "无标记",
+        "severity": 1,
+        "title": "310 轮没抓到任何标记（77%）",
+        "detail": "这些轮次系统只能靠机制状态兜底或沉默。若某些说法反复出现却始终抓不到，那就是**词表缺口**（本项目已复发多次的那一类）。",
+        "evidence": [
+          {
+            "turn": 1,
+            "input": "但你说的是结果……那如果过程特别顺，就是最后差一点点没拿到，你能接受吗？还是说，"
+          },
+          {
+            "turn": 2,
+            "input": "“行吧……那我换个问法。你说，人是得先信了‘将来会好’才能熬过现在，还是说，那句"
+          },
+          {
+            "turn": 4,
+            "input": "……嗯，是，我知道我是故意的。放一块儿的话，那半夜三点我嘟囔那句，跟白天跟同事说"
+          },
+          {
+            "turn": 1,
+            "input": "道理我都懂，可昨天看到同学升职那一下，我胸口还是堵得慌——你说，顺其自然是不是也"
+          },
+          {
+            "turn": 2,
+            "input": "……那这么说，我昨晚翻他朋友圈翻到两点，也不是什么\"允许自己不甘心\"，是那口气早"
+          },
+          {
+            "turn": 3,
+            "input": "那……当时在场那个我，除了堵，还有别的吗？我怕我翻朋友圈的时候根本什么都没觉着，"
+          },
+          {
+            "turn": 4,
+            "input": "……你别把我那句原样丢回来啊，听着像自己跟自己说话。……行，那我就说具体的——我"
+          },
+          {
+            "turn": 1,
+            "input": "可我一想到走那天我妈在厨房那个背影，脚就有点迈不动了。"
+          }
+        ],
+        "proposal": null
+      },
+      {
+        "id": "fact-语料漏判-27109",
+        "layer": "fact",
+        "kind": "语料漏判",
+        "severity": 3,
+        "title": "手写语料里有 4 处漏判",
+        "detail": "期望来自三本书的判据（人写的）。漏判 = 规则层没覆盖到。",
+        "evidence": [
+          {
+            "turn": 1,
+            "input": "我被这件事困住了，控制不了自己。",
+            "want": [
+              "voice_shift"
+            ],
+            "got": []
+          },
+          {
+            "turn": 13,
+            "input": "是我选的，我认。",
+            "want": [
+              "voice_shift"
+            ],
+            "got": []
+          },
+          {
+            "turn": 6,
+            "input": "我已经这样了，改变不了，但至少我可以决定今天怎么过。",
+            "want": [
+              "attitude_clause",
+              "immutable"
+            ],
+            "got": [
+              "immutable"
+            ]
+          },
+          {
+            "turn": 7,
+            "input": "它又来了，那种感觉一上来我就不由自主。",
+            "want": [
+              "voice_shift"
+            ],
+            "got": []
+          }
+        ],
+        "proposal": null
+      },
+      {
+        "id": "fact-死规则-13083",
+        "layer": "fact",
+        "kind": "死规则",
+        "severity": 2,
+        "title": "机制条件表里有 8 条从未触发：WANT_NO_LIKE、DEPLETED、TENSION_PRESENT、TENSION_LOW、ASKED_ALREADY、ACKNOWLEDGE_PRESENT、NOTHING_MORE、STRUCTURE_INVALID ",
+        "detail": "先到先得的条件表里，排在后面的条件可能永远轮不到 —— `NOTHING_MORE` 就是这样一条（实测 68 轮里一次没轮到）。**这是要补的清单，不是「数据不够所以别管」。**",
+        "evidence": [
+          {
+            "condition": "WANT_NO_LIKE"
+          },
+          {
+            "condition": "DEPLETED"
+          },
+          {
+            "condition": "TENSION_PRESENT"
+          },
+          {
+            "condition": "TENSION_LOW"
+          },
+          {
+            "condition": "ASKED_ALREADY"
+          },
+          {
+            "condition": "ACKNOWLEDGE_PRESENT"
+          },
+          {
+            "condition": "NOTHING_MORE"
+          },
+          {
+            "condition": "STRUCTURE_INVALID"
+          }
+        ],
+        "proposal": null
+      },
+      {
+        "id": "fact-反复同动作-69373",
+        "layer": "fact",
+        "kind": "反复同动作",
+        "severity": 1,
+        "title": "有 14 段连续同动作（≥4 次）：REFLECT、UNCLASSIFIED、ASK_DETAIL、META_REPLY",
+        "detail": "同一个动作连着做，越做越没用（[D] 敏化）。性格层的 R1 规则本该在这里介入 —— 若没介入，说明阈值够不到。",
+        "evidence": [
+          {
+            "behavior": "META_REPLY"
+          },
+          {
+            "behavior": "META_REPLY"
+          },
+          {
+            "behavior": "META_REPLY"
+          },
+          {
+            "behavior": "META_REPLY"
+          },
+          {
+            "behavior": "META_REPLY"
+          },
+          {
+            "behavior": "META_REPLY"
+          },
+          {
+            "behavior": "ASK_DETAIL"
+          },
+          {
+            "behavior": "META_REPLY"
+          }
+        ],
+        "proposal": null
+      }
+    ],
+    "opinions": [
+      {
+        "id": "opinion-训练师评价-82662",
+        "layer": "opinion",
+        "kind": "训练师评价",
+        "severity": 2,
+        "title": "训练师指出 39 处问题：mechanical×20、too_little×13、off_topic×3、boundary×2、too_much×1",
+        "detail": "**参与决策**（用户指定）。每条意见都指向了具体轮次与具体那句话，所以可回溯 —— 将来长歪了，能查出是哪条意见导致的。单轮观察不需要样本量：一轮就是一轮。",
+        "evidence": [
+          {
+            "input": "我也知道这么想不对，可你让我放下……我试过，第二天整个人跟丢了魂似的",
+            "output": "那个\"结果\"具体是什么？你说\"没有\"这俩字的时候，指的是它没来，还是指别的什么没了。",
+            "behavior": "META_REPLY",
+            "problem": "too_little",
+            "why": "用户带着强烈情绪并直接问了一个二选一，它只做术语澄清，没接住情绪也没回应那个问题。"
+          },
+          {
+            "input": "话是这么说，可我昨天熬到两点改的那版方案，今早上去还是被一句话打回来",
+            "output": "两点改的，一句话打回。  中间没别的了——这句我不替你补。",
+            "behavior": "META_REPLY",
+            "problem": "too_little",
+            "why": "用户明着问了「这时候怎么个顺其自然法」，它只把用户自己的话折回来一遍就收住，对那个问句没有任何正面接住。"
+          },
+          {
+            "input": "……行吧，那我告诉你：眼睛是涩的，可一躺下脑子里就剩那句“再想想”在",
+            "output": "眼睛涩是一个信号，那句转是另一个；两个同时是真的，谁也没把谁盖掉。",
+            "behavior": "META_REPLY",
+            "problem": "too_little",
+            "why": "它没有回答用户'算困还是不困'的直接提问，只并列了两个信号，该接的判断没接。"
+          },
+          {
+            "input": "唉，我妈前两天还念叨，说邻居家孩子都留在这儿，周末还能回家吃顿饭……",
+            "output": "你妈念叨的是邻居家孩子留在这儿、周末还能回家吃顿饭。你说的是每天走同一条路，这辈子好像已",
+            "behavior": "TURN_IMMUTABLE",
+            "problem": "mechanical",
+            "why": "它只是把我说过的两句话拆开复读一遍，没有接住我话里的矛盾与情绪，像模板式镜映而不是在跟我对话。"
+          },
+          {
+            "input": "话是这么说，可我昨晚又翻来覆去到两点多……你说顺其自然，那到底是啥也",
+            "output": "「顺其自然」这四个字是我上一轮丢出来的，当时没交代是哪一种。  你列的「啥也不管了」和「",
+            "behavior": "META_REPLY",
+            "problem": "too_little",
+            "why": "用户带着“两点多还翻来覆去”的具体困扰来问“顺其自然”指哪一种，它只把两个选项退回，不接住失眠这个点，也没说明自己上一轮"
+          },
+          {
+            "input": "放下啊……行吧。我这鞋上还沾着泥呢，刚才过来的时候踩了个水坑，也没擦",
+            "output": "泥还沾在鞋上，你也没擦。  行吧。",
+            "behavior": "REFLECT",
+            "problem": "mechanical",
+            "why": "它只是把用户的话换词复述一遍，再用“行吧”收尾，像复读模板，没有真正接住“放下”那层意思或推进对话。"
+          },
+          {
+            "input": "收着也好，反正这回我是铁了心了……你别用那种眼神看我，你是没见过他们",
+            "output": "我这边没有眼睛，给不出眼神。昨天那副嘴脸，具体是什么样。",
+            "behavior": "REFLECT",
+            "problem": "mechanical",
+            "why": "用户用“别用那种眼神看我”是情绪化说法，它却按字面纠正自己没眼睛，是最先冒出的一句模板式AI免责话，把关系性的暗指当成事"
+          },
+          {
+            "input": "给他们看？给他们看什么啊……行吧，我承认，我就是不想去明天那个会，现",
+            "output": "离那个会还有几个小时。",
+            "behavior": "REFLECT",
+            "problem": "too_little",
+            "why": "用户承认不想去、方案没动、怕挨问，它只回一句剩余时间，没接住这份焦虑和需要。"
+          }
+        ],
+        "proposal": null
+      }
+    ],
+    "proposals": [
+      {
+        "kind": "coverage",
+        "trace": "ENG",
+        "summary": "复核沉默轮：是不是真的没接到",
+        "detail": "沉默是允许的答案。但成规模时，要分辨是「用户确实没说可观察的东西」还是「我抓不到」。",
+        "evidence": [
+          {
+            "turn": 1,
+            "input": "我知道这听着挺没出息的……可你别劝我，你一劝我，我就觉得连你也觉得我不该要。"
+          },
+          {
+            "turn": 2,
+            "input": "那我去了啊，杯子在哪来着……算了，我自己找。"
+          },
+          {
+            "turn": 8,
+            "input": "没眼睛你刚才还“盯着”？……行，那我自己咳，你在我兜里别出声。"
+          },
+          {
+            "turn": 2,
+            "input": "嗐，你不用跟我绕这个……我那手不是停，是压根儿没抬起来过。昨晚我妈还问我西红柿炒"
+          }
+        ],
+        "pid": "P001",
+        "sid": "coverage:静默轮",
+        "status": "pending",
+        "history_n": 0,
+        "notes": []
+      },
+      {
+        "kind": "gate_review",
+        "trace": "ENG",
+        "summary": "复核闸门主因：91 处退回｜主因：L0':大脑作答退回（think_failed:<urlopen error [SSL: UNEXP（63 次）",
+        "detail": "闸门拒绝对不对要逐个看 —— 有些是模型真的越界（该拒），有些是材料喂错了（该修材料）。**不许为了降低拒绝率而放宽闸门。**",
+        "evidence": [
+          {
+            "turn": 1,
+            "reason": "引用了他没说过的话：「能不能接受」",
+            "note": "L0':大脑作答退回（引用了他没说过的话：「能不能接受」）"
+          },
+          {
+            "turn": 3,
+            "reason": "贴标签或诊断：出现「你有」",
+            "note": "L0':大脑作答退回（贴标签或诊断：出现「你有」）"
+          },
+          {
+            "turn": 3,
+            "reason": "不沉默",
+            "note": "选中动作缺槽位 → 退回 REFLECT（不沉默）"
+          },
+          {
+            "turn": 2,
+            "reason": "引用了他没说过的话：「拿以后堵自己」",
+            "note": "L0':大脑作答退回（引用了他没说过的话：「拿以后堵自己」）"
+          }
+        ],
+        "pid": "P002",
+        "sid": "gate_review:闸门退回",
+        "status": "pending",
+        "history_n": 0,
+        "notes": []
+      },
+      {
+        "kind": "lexicon_gap",
+        "trace": "corpus",
+        "summary": "补词表：让「我被这件事困住了，控制不了自己。」命中 voice_shift",
+        "detail": "期望来自手写语料（人写，源自三本书的判据）。**补什么词仍要人写** —— 自动生成同义词是自证循环。",
+        "evidence": {
+          "turn": 1,
+          "input": "我被这件事困住了，控制不了自己。",
+          "want": [
+            "voice_shift"
+          ],
+          "got": []
+        },
+        "pid": "P003",
+        "sid": "lexicon_gap:我被这件事困住了，控制不了自己。",
+        "status": "pending",
+        "history_n": 0,
+        "notes": []
+      },
+      {
+        "kind": "lexicon_gap",
+        "trace": "corpus",
+        "summary": "补词表：让「是我选的，我认。」命中 voice_shift",
+        "detail": "期望来自手写语料（人写，源自三本书的判据）。**补什么词仍要人写** —— 自动生成同义词是自证循环。",
+        "evidence": {
+          "turn": 13,
+          "input": "是我选的，我认。",
+          "want": [
+            "voice_shift"
+          ],
+          "got": []
+        },
+        "pid": "P004",
+        "sid": "lexicon_gap:是我选的，我认。",
+        "status": "pending",
+        "history_n": 0,
+        "notes": []
+      },
+      {
+        "kind": "lexicon_gap",
+        "trace": "corpus",
+        "summary": "补词表：让「我已经这样了，改变不了，但至少我」命中 attitude_clause、immutable",
+        "detail": "期望来自手写语料（人写，源自三本书的判据）。**补什么词仍要人写** —— 自动生成同义词是自证循环。",
+        "evidence": {
+          "turn": 6,
+          "input": "我已经这样了，改变不了，但至少我可以决定今天怎么过。",
+          "want": [
+            "attitude_clause",
+            "immutable"
+          ],
+          "got": [
+            "immutable"
+          ]
+        },
+        "pid": "P005",
+        "sid": "lexicon_gap#427621b6da8d",
+        "status": "pending",
+        "history_n": 0,
+        "notes": []
+      },
+      {
+        "kind": "lexicon_gap",
+        "trace": "corpus",
+        "summary": "补词表：让「它又来了，那种感觉一上来我就不由」命中 voice_shift",
+        "detail": "期望来自手写语料（人写，源自三本书的判据）。**补什么词仍要人写** —— 自动生成同义词是自证循环。",
+        "evidence": {
+          "turn": 7,
+          "input": "它又来了，那种感觉一上来我就不由自主。",
+          "want": [
+            "voice_shift"
+          ],
+          "got": []
+        },
+        "pid": "P006",
+        "sid": "lexicon_gap:它又来了，那种感觉一上来我就不由自主。",
+        "status": "pending",
+        "history_n": 0,
+        "notes": []
+      },
+      {
+        "kind": "dead_rule",
+        "trace": "ENG",
+        "summary": "机制条件表里有 8 条从未触发：WANT_NO_LIKE、DEPLETED、TENSION_PRESENT、TENSION_LOW、ASKED_ALREADY、ACKNOWLEDGE_PRESENT、NOTHING_MORE、STRUCTURE_INVALID ",
+        "detail": "两条路：调阈值让它可达（要说明依据），或承认它是死的并标出来。**不许为了让指标好看而调阈值。**",
+        "evidence": [
+          {
+            "condition": "WANT_NO_LIKE"
+          },
+          {
+            "condition": "DEPLETED"
+          },
+          {
+            "condition": "TENSION_PRESENT"
+          },
+          {
+            "condition": "TENSION_LOW"
+          },
+          {
+            "condition": "ASKED_ALREADY"
+          },
+          {
+            "condition": "ACKNOWLEDGE_PRESENT"
+          },
+          {
+            "condition": "NOTHING_MORE"
+          },
+          {
+            "condition": "STRUCTURE_INVALID"
+          }
+        ],
+        "pid": "P007",
+        "sid": "dead_rule:机制条件表",
+        "status": "pending",
+        "history_n": 0,
+        "notes": []
+      }
+    ],
+    "current_evidence": {
+      "schema": 1,
+      "latest_training": {
+        "run_id": "1791445531196031700_50220",
+        "last_run": "2026-10-08 15:49:49",
+        "turns_added": 6,
+        "requested_turns": 6,
+        "evals": 6,
+        "failure": null,
+        "training_complete": true,
+        "outcome": "completed",
+        "eval_schema": 8,
+        "gate_perception": true,
+        "gate_observed_in_turn": true,
+        "failure_diagnostic": null,
+        "source_fingerprint": "e9b878859713355eb5209b4768168fde30f4f82f48dd27d9cee7227ccfc276aa",
+        "source_unchanged_during_run": true,
+        "source_matches_current": true,
+        "failure_observed": false,
+        "metadata_is_current_schema": true
+      },
+      "latest_run_evaluations": 6,
+      "has_material": true,
+      "evaluation_schema_counts": {
+        "3": 186,
+        "4": 11,
+        "5": 6,
+        "8": 12
+      },
+      "current_eval_schema": 8,
+      "current_schema_evaluations": 12,
+      "artefacts": [
+        {
+          "kind": "regression",
+          "path": "spec/训练恢复回归_20261008.json",
+          "exists": true,
+          "source_matches": true,
+          "passed_for_current_source": true,
+          "historical_passed": true,
+          "cases": 0,
+          "scope": "engineering_tests",
+          "independent_semantics_verified": false,
+          "development_credit": 0
+        },
+        {
+          "kind": "live_diagnostic",
+          "path": "spec/训练恢复真实诊断_20261008.json",
+          "exists": true,
+          "source_matches": true,
+          "passed_for_current_source": true,
+          "historical_passed": true,
+          "cases": 6,
+          "scope": "one_model_generated_formal_recovery_batch",
+          "independent_semantics_verified": false,
+          "development_credit": 0
+        },
+        {
+          "kind": "relation_foundation",
+          "path": "spec/训练恢复关系基础复验_20261008.json",
+          "exists": true,
+          "source_matches": true,
+          "passed_for_current_source": true,
+          "historical_passed": true,
+          "cases": 3,
+          "scope": "scripted_local_cases",
+          "independent_semantics_verified": false,
+          "development_credit": 0
+        }
+      ],
+      "development_credit": 0,
+      "independent_review_verified": false
+    },
+    "anomaly_scan": {
+      "ok": true,
+      "asked": true,
+      "brief_chars": 3996,
+      "filed": [],
+      "rejected": []
+    }
+  },
+  "devlevel": {
+    "baseline_schema": 1,
+    "baseline_id": "verified-20261006",
+    "level": "I-3",
+    "equilibration": 0,
+    "failed": false,
+    "pending": 0,
+    "fail_tension": 0.0,
+    "not_grown": 0,
+    "history": [],
+    "evidence_policy": "independent_structure_evidence_required",
+    "legacy": {
+      "archive": "state\\development_legacy_20261006\\devlevel.json",
+      "sha256": "c591c196c480f7ec276335f35616e7f78d2dfcb83dfaca9af8db2b7b36c8d86e",
+      "level": "I-3/4",
+      "equilibration": 3
+    },
+    "note": "I-3 is the existing engineering starting level, not an inferred human stage.",
+    "updated": "2026-10-08 15:47:35"
+  },
+  "action_plan": {
+    "signals": {
+      "regression_fresh_pass": true,
+      "live_fresh_pass": true,
+      "training_run_failed": false,
+      "latest_training_run": "1791445531196031700_50220",
+      "unresolved_content_failures": [],
+      "structure_counterevidence": [],
+      "relational_foundation_fresh_pass": true,
+      "causal_organisation_verified": false,
+      "joint_development_verified": false
+    },
+    "next_action": {
+      "id": "STRUCTURE_RULE_LEARNING",
+      "title": "把失配接到组织规则的形成、修改、淘汰与后续验证",
+      "reason": "关系记忆的工程作用已验证；仍需系统自己改变支配关系的规则，保留旧能力"
+    },
+    "goal_achieved": false
+  },
+  "learned_rule_files": {
+    "behavior_rules.json": false,
+    "relation_rules.json": false
+  },
+  "input_scope": "tutor_generated_simulation",
+  "independent_semantic_review_verified": false,
+  "development_credit": 0,
+  "claims": "This batch completed six turns; no verified new organisation rule or developmental change."
+}

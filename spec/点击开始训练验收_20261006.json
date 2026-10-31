@@ -1,0 +1,16 @@
+{
+  "simulated_api": true,
+  "network_forbidden": true,
+  "actual_exe_button_invoked": true,
+  "bulk_proposal_decision_removed": true,
+  "review_button_retained": true,
+  "default_rounds": "1",
+  "default_session_length": "2",
+  "gate_default_on": true,
+  "turns_added": 6,
+  "ui_turn_count": 6,
+  "status": "完成",
+  "start_button_state": "normal",
+  "progress": 100,
+  "real_state_files_unchanged": 35
+}

@@ -1,0 +1,76 @@
+{
+  "exe_sha256": "8efaad25a73c78afea324232eedc5a864fe9f0487aa9c546c39cd90bf9ee0610",
+  "project_code_not_frozen": true,
+  "same_exe_source_update_verified": true,
+  "missing_source_fails_explicitly": true,
+  "state_files_unchanged": 37,
+  "first_launch": {
+    "root": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-vqmk8vde\\软件验收副本",
+    "source_modules": {
+      "training_studio": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-vqmk8vde\\软件验收副本\\engine\\training_studio.py",
+        "sha256": "133eb6ead0ebc7cfb52ec549aae22be5ae0b97371dd09f90b8066eceb1f97030"
+      },
+      "pipeline": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-vqmk8vde\\软件验收副本\\engine\\pipeline.py",
+        "sha256": "2a541470cc3b6bb0a7a129f6b746dcb3a7142b2efdced28f3d8b1f565b17b976"
+      },
+      "understand": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-vqmk8vde\\软件验收副本\\engine\\understand.py",
+        "sha256": "1530677f533e787debd072f3ee23f590121f880e896366531057c2142acf6f47"
+      },
+      "relation_learning": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-vqmk8vde\\软件验收副本\\engine\\relation_learning.py",
+        "sha256": "5a5ab17437aa92a72086a41ca0d4473c50508b993ae5d99f0dd0a1ec416fbaee"
+      },
+      "relation_bridge": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-vqmk8vde\\软件验收副本\\engine\\relation_bridge.py",
+        "sha256": "9fa8a35316f374281b09585649a5496b6beca526854eb6cda77ee5f1cc8433cf"
+      },
+      "studio_status": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-vqmk8vde\\软件验收副本\\engine\\studio_status.py",
+        "sha256": "c136db278c445d56c86f0eede77d44651a946e5b83c0128c159590b8d39823a2"
+      }
+    },
+    "frozen": true,
+    "ui": {
+      "created": true,
+      "level": "I-3",
+      "status": "完整平衡化 0 次｜未计入生长 0 次｜上次落盘 2026-10-08 15:47:35\n■ 观测窗：有效轮 117/100 且平衡化仍为 0 ⇒ **触发动力学参数二次校准复盘**（HALF_LIFE_H 与 ERROR_HIGH）\n学习规则（不计作阶段升级）\n尚无经历规则"
+    }
+  },
+  "updated_launch": {
+    "root": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-vqmk8vde\\软件验收副本",
+    "source_modules": {
+      "training_studio": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-vqmk8vde\\软件验收副本\\engine\\training_studio.py",
+        "sha256": "133eb6ead0ebc7cfb52ec549aae22be5ae0b97371dd09f90b8066eceb1f97030"
+      },
+      "pipeline": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-vqmk8vde\\软件验收副本\\engine\\pipeline.py",
+        "sha256": "2a541470cc3b6bb0a7a129f6b746dcb3a7142b2efdced28f3d8b1f565b17b976"
+      },
+      "understand": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-vqmk8vde\\软件验收副本\\engine\\understand.py",
+        "sha256": "1530677f533e787debd072f3ee23f590121f880e896366531057c2142acf6f47"
+      },
+      "relation_learning": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-vqmk8vde\\软件验收副本\\engine\\relation_learning.py",
+        "sha256": "5a5ab17437aa92a72086a41ca0d4473c50508b993ae5d99f0dd0a1ec416fbaee"
+      },
+      "relation_bridge": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-vqmk8vde\\软件验收副本\\engine\\relation_bridge.py",
+        "sha256": "2a4bcc4d2802f8200cce51626d39d4aeef08a4201e5429c0a54f3102efb6dd34",
+        "executed_update_probe": "executed-new-source"
+      },
+      "studio_status": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-vqmk8vde\\软件验收副本\\engine\\studio_status.py",
+        "sha256": "c136db278c445d56c86f0eede77d44651a946e5b83c0128c159590b8d39823a2"
+      }
+    },
+    "frozen": true
+  },
+  "missing_source": {
+    "error": "项目文件缺失：C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-vqmk8vde\\软件验收副本\\engine\\training_studio.py"
+  }
+}

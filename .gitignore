@@ -1,0 +1,42 @@
+# 本地仓库排除清单（2026-10-31 建仓）
+#
+# 原则（用户裁定）：
+#   · `state/` 是**唯一不可重建的存储**（台账 / 日志 / 训练产物），一律**不入库**
+#     —— 它们只追加、不改写，用备份与日志本身管理，不混进代码历史。
+#   · 大文件（exe / 构建产物）不入库。
+#   · 不提交 API 密钥或任何敏感文件。
+
+# ── 状态与运行产物（不可重建，但也不该进代码历史）
+state/
+_backup/
+
+# ── 构建产物与大文件
+build/
+dist/
+*.exe
+*.dll
+*.pyd
+
+# ── Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# ── 临时与本地配置
+*.log
+*.tmp
+.env
+.env.*
+*secret*
+*key*.json
+!rules/*.json
+
+# ── 编辑器/系统
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+
+# ── 历史快照（已有数据，只保留在磁盘上，不入库）
+_snapshots/

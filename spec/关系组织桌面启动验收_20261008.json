@@ -1,0 +1,76 @@
+{
+  "exe_sha256": "8efaad25a73c78afea324232eedc5a864fe9f0487aa9c546c39cd90bf9ee0610",
+  "project_code_not_frozen": true,
+  "same_exe_source_update_verified": true,
+  "missing_source_fails_explicitly": true,
+  "state_files_unchanged": 35,
+  "first_launch": {
+    "root": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-rf30oeen\\软件验收副本",
+    "source_modules": {
+      "training_studio": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-rf30oeen\\软件验收副本\\engine\\training_studio.py",
+        "sha256": "18a40ebb8853fc9936789e4af4f2c325027503ef527917f43fbd39755ad46962"
+      },
+      "pipeline": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-rf30oeen\\软件验收副本\\engine\\pipeline.py",
+        "sha256": "62b035c1d842e803267ee7086f6726cf33672e8ca8b76839e0f210c705bfae9d"
+      },
+      "understand": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-rf30oeen\\软件验收副本\\engine\\understand.py",
+        "sha256": "0410c64d2c2af7a00afa452dc3188102f4f66ce3b7f13ad831ffd440be2ec45e"
+      },
+      "relation_learning": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-rf30oeen\\软件验收副本\\engine\\relation_learning.py",
+        "sha256": "aec47035359edc112410df681a97e7a8a254b82d3e7e69db64b9e724e48756a2"
+      },
+      "relation_bridge": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-rf30oeen\\软件验收副本\\engine\\relation_bridge.py",
+        "sha256": "c843a0a3cec08f77f3afd54af0b043bbe99c39cfeb4720b2ed86f130bad6e6cf"
+      },
+      "studio_status": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-rf30oeen\\软件验收副本\\engine\\studio_status.py",
+        "sha256": "caefaa7bfc07021c2971294c4db75a05834097121974658e4830de829737e309"
+      }
+    },
+    "frozen": true,
+    "ui": {
+      "created": true,
+      "level": "I-3",
+      "status": "完整平衡化 0 次｜未计入生长 0 次｜上次落盘 2026-10-06 17:54:00\n■ 观测窗：有效轮 117/100 且平衡化仍为 0 ⇒ **触发动力学参数二次校准复盘**（HALF_LIFE_H 与 ERROR_HIGH）\n学习规则（不计作阶段升级）\n尚无经历规则"
+    }
+  },
+  "updated_launch": {
+    "root": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-rf30oeen\\软件验收副本",
+    "source_modules": {
+      "training_studio": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-rf30oeen\\软件验收副本\\engine\\training_studio.py",
+        "sha256": "18a40ebb8853fc9936789e4af4f2c325027503ef527917f43fbd39755ad46962"
+      },
+      "pipeline": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-rf30oeen\\软件验收副本\\engine\\pipeline.py",
+        "sha256": "62b035c1d842e803267ee7086f6726cf33672e8ca8b76839e0f210c705bfae9d"
+      },
+      "understand": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-rf30oeen\\软件验收副本\\engine\\understand.py",
+        "sha256": "0410c64d2c2af7a00afa452dc3188102f4f66ce3b7f13ad831ffd440be2ec45e"
+      },
+      "relation_learning": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-rf30oeen\\软件验收副本\\engine\\relation_learning.py",
+        "sha256": "aec47035359edc112410df681a97e7a8a254b82d3e7e69db64b9e724e48756a2"
+      },
+      "relation_bridge": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-rf30oeen\\软件验收副本\\engine\\relation_bridge.py",
+        "sha256": "f02a2f19d16319b081361fb5731dfbf07840a85d07cdd2fd6665ca9441e7f452",
+        "executed_update_probe": "executed-new-source"
+      },
+      "studio_status": {
+        "path": "C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-rf30oeen\\软件验收副本\\engine\\studio_status.py",
+        "sha256": "caefaa7bfc07021c2971294c4db75a05834097121974658e4830de829737e309"
+      }
+    },
+    "frozen": true
+  },
+  "missing_source": {
+    "error": "项目文件缺失：C:\\Users\\22082\\AppData\\Local\\Temp\\ego-studio-rf30oeen\\软件验收副本\\engine\\training_studio.py"
+  }
+}

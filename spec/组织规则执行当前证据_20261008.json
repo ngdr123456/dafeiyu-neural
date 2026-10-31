@@ -1,0 +1,84 @@
+{
+  "schema": 1,
+  "latest_training": {
+    "run_id": "1791445531196031700_50220",
+    "last_run": "2026-10-08 15:49:49",
+    "turns_added": 6,
+    "requested_turns": 6,
+    "evals": 6,
+    "failure": null,
+    "training_complete": true,
+    "outcome": "completed",
+    "eval_schema": 8,
+    "gate_perception": true,
+    "gate_observed_in_turn": true,
+    "failure_diagnostic": null,
+    "source_fingerprint": "e9b878859713355eb5209b4768168fde30f4f82f48dd27d9cee7227ccfc276aa",
+    "source_unchanged_during_run": true,
+    "source_matches_current": false,
+    "failure_observed": false,
+    "metadata_is_current_schema": false
+  },
+  "latest_run_evaluations": 6,
+  "has_material": true,
+  "evaluation_schema_counts": {
+    "3": 186,
+    "4": 11,
+    "5": 6,
+    "8": 12
+  },
+  "current_eval_schema": 9,
+  "current_schema_evaluations": 0,
+  "artefacts": [
+    {
+      "kind": "regression",
+      "path": "spec/组织规则执行回归_20261008.json",
+      "exists": true,
+      "source_matches": true,
+      "passed_for_current_source": true,
+      "historical_passed": true,
+      "cases": 0,
+      "scope": "engineering_tests",
+      "independent_semantics_verified": false,
+      "development_credit": 0
+    },
+    {
+      "kind": "live_diagnostic",
+      "path": "spec/组织规则执行真实诊断_20261008.json",
+      "exists": true,
+      "source_matches": true,
+      "passed_for_current_source": true,
+      "historical_passed": true,
+      "cases": 28,
+      "scope": "scripted_memory_and_model_annotated_bounded_rule_execution",
+      "independent_semantics_verified": false,
+      "development_credit": 0
+    },
+    {
+      "kind": "relation_foundation",
+      "path": "spec/组织规则执行关系基础复验_20261008.json",
+      "exists": true,
+      "source_matches": true,
+      "passed_for_current_source": true,
+      "historical_passed": true,
+      "cases": 3,
+      "scope": "scripted_local_cases",
+      "independent_semantics_verified": false,
+      "development_credit": 0
+    },
+    {
+      "kind": "bounded_rule_execution",
+      "path": "spec/组织规则执行验收_20261008.json",
+      "exists": true,
+      "source_matches": true,
+      "passed_for_current_source": true,
+      "historical_passed": true,
+      "cases": 3,
+      "scope": "bounded_linguistic_rule_execution",
+      "independent_semantics_verified": false,
+      "development_credit": 0
+    }
+  ],
+  "development_credit": 0,
+  "independent_review_verified": false
+}

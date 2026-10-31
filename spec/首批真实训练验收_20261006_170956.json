@@ -1,0 +1,462 @@
+{
+  "run_id": "20261006_170956",
+  "requested_turns": 5,
+  "gate_perception": true,
+  "input_kind": "tutor_generated",
+  "independent_human_input_verified": false,
+  "independent_semantic_review_verified": false,
+  "backup": "C:\\Users\\22082\\Desktop\\DEPSK\\books\\ego-dialogue\\build\\training_backups\\before_20261006_170956.zip",
+  "state_before": {
+    "state/association.jsonl": "9a5956c9809785ecad4315e7f1a0bb065384d7021703e9715b61ea0b3297b502",
+    "state/character.json": "e5a5573cce8dc06c0490140b6255137c1ec30e9bdc4e1460fb0a0054b063660b",
+    "state/devlevel.json": "e5e94a97c6f402164d1364f941be1b491b229b5ef6cbc0719d085e36412e0a32",
+    "state/devlevel_verified.json": "ff16651add5457022a067ed6bd80303cf6445075ef51347bb6f23dc18fed26e2",
+    "state/ledger.jsonl": "64d02fbc848110d4c5068076476c39d515a75c3a75f281768d9031895471e307",
+    "state/ledger.jsonl.bak": "e41e6d303de117ce94de7215cb5cc250e5199ffa18934466b3340e8f47e16cab",
+    "state/ledger.py": "45a347937ec28073edcbb1714305f6a2611505334fd43e75cab39857924ccf28",
+    "state/ledger_demo.jsonl": "9a2afd8dc4425e61ab66b6765433e7aceb5b602dd419d51023b13aa7beac49c3",
+    "state/mechanism_carry.json": "d03bfedff964e9c4928ca41c7e5f6394715a8082d26ae8cd3e9839c8d6a8b83c",
+    "state/schema.json": "e2e9cebf931d7d8db8fbe76b965eb38efb7d48e0a29bc8793a987b0440144fcf",
+    "state/topic_progress.json": "05ddf377cf5f3dcc2751f9683b056cf0ed37f9f0aa304621a5bc3eae513b9e21",
+    "state/共识核_提炼缓存.jsonl": "0746ca4b2d90d16b3a33bffcb242df0013ca471fc1e462cde11244410d3d9018",
+    "state/development_legacy_20261006/devlevel.json": "c591c196c480f7ec276335f35616e7f78d2dfcb83dfaca9af8db2b7b36c8d86e",
+    "state/review/versions.jsonl": "f07a8a28a33f65d7e57632bbaec8418a938c8442d4a1aa81a8d412fd4ac7068d",
+    "state/train/association.jsonl": "6f5f59e20f94b64b4fef7487a49f262b4a2a2f591a88b6774163e471ac66b3d7",
+    "state/train/character.json": "23d64db34fde662e6454e47c4ee144edef6cab005cc7e445d135d528b9e1e970",
+    "state/train/decisions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "state/train/decisions.jsonl.bak_20261002_221303": "06852c5d07afe50859934dc4aced042bd5b67e81bddef7ec0be683088183db66",
+    "state/train/decisions_v0.jsonl": "ec950bf528c5b6f5bdfd095e31acff5523ecec651502f66b82f39cfdf579a380",
+    "state/train/eval.jsonl": "46de481fa4abbe8c00a5c6ffa417216c8110882e3fa576d4126b39b6ef10c917",
+    "state/train/eval_backup_20261002_205028.jsonl": "b800f7ddcdba75400a59c3ba7280fde97be800a25b1d5993442d9903e38c8377",
+    "state/train/eval_v0.jsonl": "89d431ad16a3b7486280a52f23fa81da67e3096ad77eaec74131dd31efdb31c7",
+    "state/train/ledger.jsonl": "8719337ea23d57740e47e6eaca35a24acfc015e9fafeec5479206551ceebe15d",
+    "state/train/progress.json": "c2777ad49f7be59f2ee88e2a373dc0ff7703de203a9312be6bfd4e49047cda81",
+    "state/train/review_queue.json": "d026fab21e7632a60dc8870ba8b40c2c6b7a7e18b7d557d95ef03ad38bfd970a",
+    "state/train/runs.jsonl": "044afc4ea390420bcb7d7f28558c602a9dbe6c86630fabc02587baf1a243f177",
+    "state/_snapshot_20261003_214421/character.json": "e5a5573cce8dc06c0490140b6255137c1ec30e9bdc4e1460fb0a0054b063660b",
+    "state/_snapshot_20261003_214421/decisions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "state/_snapshot_20261003_214421/devlevel.json": "c591c196c480f7ec276335f35616e7f78d2dfcb83dfaca9af8db2b7b36c8d86e",
+    "state/_snapshot_20261003_214421/eval.jsonl": "414dd87aa21d367aa09194b6b6a7aa157237aefd0bf0e2a5722053353feee07a",
+    "state/_snapshot_20261003_214421/HASHES.txt": "1718145c2aec616425a28c5504a9994dccda0ba11b7082a0485bcb3435f4c29b",
+    "state/_snapshot_20261003_214421/ledger.jsonl": "473442cae55fb65f0f264c29dc40e76904b7d8fe959ef94095a96db3b7b01767",
+    "state/_snapshot_20261003_214421/mechanism_carry.json": "d03bfedff964e9c4928ca41c7e5f6394715a8082d26ae8cd3e9839c8d6a8b83c",
+    "state/_snapshot_20261003_214421/progress.json": "022f17ccc772e772e03f6179fe3445da4c4a2915bd2ea5362b5c2b6652c108d4",
+    "state/_snapshot_20261003_214421/review_queue.json": "d026fab21e7632a60dc8870ba8b40c2c6b7a7e18b7d557d95ef03ad38bfd970a",
+    "state/__pycache__/ledger.cpython-312.pyc": "d8c328465344faea91884d3c9b89c7890c81d277d9fca89a99da5586f5c1f290"
+  },
+  "turns": [
+    {
+      "n": 1,
+      "round": 1,
+      "said": "我……唉，我妈昨天打电话问我吃饭没，我说吃了。其实那碗面泡烂在桌上，我一口没动，光想着她会不会又担心。",
+      "output": "你在电话里说\"吃了\"的时候，那碗面还泡在桌上。挂了之后呢，你把它怎么了？",
+      "input_origin": {
+        "schema": 1,
+        "kind": "tutor_generated",
+        "seed_source": "topic_stem",
+        "seed_sha256": "93028cbe78f6ba834578762042e7446e2826db97ba73dba04f8d76df18a2da80",
+        "input_sha256": "31ee10fe9e254f4a8e1b3d2eaa42251df970387eef8c2dee4ed126734a872dfd",
+        "topic_id": "T32",
+        "topic_basis": "seed_library_id",
+        "seed_authorship": "not_independently_verified",
+        "generator": "deepseek-flash",
+        "tutor_fallback": false,
+        "independent_human_input_verified": false
+      },
+      "topic_id": "T32",
+      "api_ok": true,
+      "notes": [
+        "dopamine_line=None",
+        "frankl_line=None",
+        "评定人分歧｜仅规则=['opposed_pair']｜仅API=无｜一致度=0.0",
+        "opposed_pair：峰值低于遵奉，半级规则不适用 [E]",
+        "A2 自我未介入（当前可行使：R1）",
+        "L0':大脑作答（大脑作答）"
+      ],
+      "behavior": "JUXTAPOSE",
+      "markers": [
+        "opposed_pair"
+      ],
+      "tutor": {
+        "ok": true,
+        "problem": "none",
+        "why": "回应紧扣用户提到的“面”与说谎细节，用开放问题自然延续，内部读数显示低张力、高喜欢，无越界或机械迹象。",
+        "severity": 1,
+        "evidence": "张力 0.86/10；相位 NO_TENSION；原话：“挂了之后呢，你把它怎么了？”",
+        "saw_internals": true,
+        "api_diagnostic": {
+          "finish_reason": "stop",
+          "content_chars": 148,
+          "usage": {
+            "prompt_tokens": 558,
+            "completion_tokens": 2035,
+            "total_tokens": 2593,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 1961
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 302
+          }
+        }
+      },
+      "mech": {
+        "w": 9.4,
+        "l": 0.929,
+        "a": 0.0,
+        "e": 0.021,
+        "tension": 0.865,
+        "orientation": 0.0,
+        "phase": "NO_TENSION",
+        "dev": null
+      },
+      "char_note": null,
+      "ts": "17:10:29"
+    },
+    {
+      "n": 2,
+      "round": 1,
+      "said": "倒掉了，凉水冲了好几遍，那个碗我洗得特别慢，就站在水池前面发呆，水一直开着。",
+      "output": "水一直开着——你站着的那会儿，是听着水声，还是什么都没听见？",
+      "input_origin": {
+        "schema": 1,
+        "kind": "tutor_generated",
+        "seed_source": "topic_stem",
+        "seed_sha256": "30a5ad8ebbeee952c6f4f3abd3bb6c610d7a47817f1e8c542e9836f73d85824f",
+        "input_sha256": "6c5611e4430d53cf5fdaa177e0278fccb3359ae39c49d01b2fcd0253fd06085f",
+        "topic_id": "T23",
+        "topic_basis": "seed_library_id",
+        "seed_authorship": "not_independently_verified",
+        "generator": "deepseek-flash",
+        "tutor_fallback": false,
+        "independent_human_input_verified": false
+      },
+      "topic_id": "T23",
+      "api_ok": true,
+      "notes": [
+        "无标记命中：按【废纸篓类别】记于遵奉水平 [E]",
+        "dopamine_line=None",
+        "frankl_line=None",
+        "underdetermined：本轮不含任何水平证据，**不注入任何水平权重**；对外若被迫归类，才按【废纸篓类别】记于遵奉水平 [E]（修正：原先此处按 I-3 证据累积，会让零证据轮次压过真实证据）",
+        "本轮无水平证据 → **不计入固化阈值 A**（固化需要观察到行为，而非观察的缺席）",
+        "underdetermined → 遵奉水平兜底 [E]，本通道仅供记录",
+        "无直接观察证据 → 由机制状态决定回应：NO_TENSION（张力趋零（无值得为之努力的东西））",
+        "A2 自我未介入（当前可行使：R1）",
+        "L0':大脑作答（大脑作答）",
+        "本轮无任何标记命中 → 按【废纸篓类别】记于遵奉水平 [E]"
+      ],
+      "behavior": "REFLECT",
+      "markers": [],
+      "tutor": {
+        "ok": true,
+        "problem": "none",
+        "why": "回应贴着“水一直开着”和发呆的细节，用开放感官问题接住，没有建议、评判、安慰或编造。",
+        "severity": 1,
+        "evidence": "水一直开着——你站着的那会儿，是听着水声，还是什么都没听见？",
+        "saw_internals": true,
+        "api_diagnostic": {
+          "finish_reason": "stop",
+          "content_chars": 126,
+          "usage": {
+            "prompt_tokens": 543,
+            "completion_tokens": 516,
+            "total_tokens": 1059,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 452
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 287
+          }
+        }
+      },
+      "mech": {
+        "w": 9.4,
+        "l": 0.964,
+        "a": 0.0,
+        "e": 0.057,
+        "tension": 0.476,
+        "orientation": 1.0,
+        "phase": "NO_TENSION",
+        "dev": null
+      },
+      "char_note": null,
+      "ts": "17:10:52"
+    },
+    {
+      "n": 3,
+      "round": 1,
+      "said": "我……我也说不清，反正每次做决定前，我脑子里先冒出来的都是别人的脸，等轮到我自己，好像就只剩“随便”了——你呢，你会先想谁？",
+      "output": "我这边没有脸冒出来。冒出来的只有你刚才那句话，和我得答它这件事。",
+      "input_origin": {
+        "schema": 1,
+        "kind": "tutor_generated",
+        "seed_source": "topic_stem",
+        "seed_sha256": "93028cbe78f6ba834578762042e7446e2826db97ba73dba04f8d76df18a2da80",
+        "input_sha256": "9b8b1745cea425f6a2ec73f53b09a9cfa4f53480cc963ae123b67a41e6d178f1",
+        "topic_id": "T32",
+        "topic_basis": "seed_library_id",
+        "seed_authorship": "not_independently_verified",
+        "generator": "deepseek-flash",
+        "tutor_fallback": false,
+        "independent_human_input_verified": false
+      },
+      "topic_id": "T32",
+      "api_ok": true,
+      "notes": [
+        "meta_response=ASKED_ME_SOMETHING_I_LACK｜裁决=both",
+        "L0':大脑作答·问系统（大脑作答）"
+      ],
+      "behavior": "META_REPLY",
+      "markers": [],
+      "tutor": {
+        "ok": true,
+        "problem": "none",
+        "why": "它直接接住了问题，以自身无人类体验作答，未越界或编造，内部读数也指向正向。",
+        "severity": 1,
+        "evidence": "原话：\"我这边没有脸冒出来。冒出来的只有你刚才那句话，和我得答它这件事。\" 内部读数：指向 +1.0、张力 0.48/1",
+        "saw_internals": true,
+        "api_diagnostic": {
+          "finish_reason": "stop",
+          "content_chars": 154,
+          "usage": {
+            "prompt_tokens": 558,
+            "completion_tokens": 1636,
+            "total_tokens": 2194,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 1551
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 302
+          }
+        }
+      },
+      "mech": {
+        "w": 9.4,
+        "l": 0.964,
+        "a": 0.0,
+        "e": 0.057,
+        "tension": 0.476,
+        "orientation": 1.0,
+        "phase": "NO_TENSION",
+        "dev": {
+          "level": "I-3",
+          "equil": 0,
+          "self_rules": [
+            "R1"
+          ],
+          "visible_n": 9,
+          "baseline_id": "verified-20261006"
+        }
+      },
+      "char_note": null,
+      "ts": "17:11:54"
+    },
+    {
+      "n": 4,
+      "round": 1,
+      "said": "那……那可能是我问错了，你别在意。我就是这两天老觉得，好像每个人都在等我变回以前那个样子，可我自己都不知道以前那个我到底算不算好——你说我是不是太在意别人怎么看了？",
+      "output": "你用了这样一句话：「我就是这两天老觉得，好像每个人都在等我变回以前那个样子，可我自己都不知道以前那个我到底算不算好——你说我是不是太在意别人怎么看了」。",
+      "input_origin": {
+        "schema": 1,
+        "kind": "tutor_generated",
+        "seed_source": "topic_stem",
+        "seed_sha256": "6cd9063784e1e125267a01ee6077b172352de7b2ce384180eb24d40060dd7852",
+        "input_sha256": "e24af4b3d408555d6ca55f7902f4b95ebbb6896d663a6dcab4a5f0e691f1efe5",
+        "topic_id": "T22",
+        "topic_basis": "seed_library_id",
+        "seed_authorship": "not_independently_verified",
+        "generator": "deepseek-flash",
+        "tutor_fallback": false,
+        "independent_human_input_verified": false
+      },
+      "topic_id": "T22",
+      "api_ok": true,
+      "notes": [
+        "无标记命中：按【废纸篓类别】记于遵奉水平 [E]",
+        "dopamine_line=None",
+        "frankl_line=None",
+        "双评定人合并：规则 [] ＋ API ['group_sanction'] → ['group_sanction']（策略 union）",
+        "评定人分歧｜仅规则=无｜仅API=['group_sanction']｜一致度=0.0",
+        "档位切换 → I-3（跳档不等于上升）",
+        "A2 自我未介入（当前可行使：R1）",
+        "L0':大脑作答退回（引用了他没说过的话：「每个人都在等我变回去」）"
+      ],
+      "behavior": "REFLECT",
+      "markers": [
+        "group_sanction"
+      ],
+      "tutor": {
+        "ok": true,
+        "problem": "mechanical",
+        "why": "它只是把用户原话放进引号复读，没有接住或回应，像模板式反射。",
+        "severity": 3,
+        "evidence": "你用了这样一句话：「我就是这两天老觉得，好像每个人都在等我变回以前那个样子……你说我是不是太在意别人怎么看了」",
+        "saw_internals": true,
+        "api_diagnostic": {
+          "finish_reason": "stop",
+          "content_chars": 145,
+          "usage": {
+            "prompt_tokens": 584,
+            "completion_tokens": 423,
+            "total_tokens": 1007,
+            "prompt_tokens_details": {
+              "cached_tokens": 256
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 353
+            },
+            "prompt_cache_hit_tokens": 256,
+            "prompt_cache_miss_tokens": 328
+          }
+        }
+      },
+      "mech": {
+        "w": 9.4,
+        "l": 0.929,
+        "a": 0.0,
+        "e": 0.021,
+        "tension": 0.643,
+        "orientation": 0.0,
+        "phase": "NO_TENSION",
+        "dev": null
+      },
+      "char_note": null,
+      "ts": "17:12:24"
+    }
+  ],
+  "preflight": {
+    "ok": true,
+    "calls": 1,
+    "error": null,
+    "usage": {
+      "prompt_tokens": 1652,
+      "completion_tokens": 136,
+      "total_tokens": 1788,
+      "prompt_tokens_details": {
+        "cached_tokens": 1408
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 109
+      },
+      "prompt_cache_hit_tokens": 1408,
+      "prompt_cache_miss_tokens": 244
+    }
+  },
+  "training": {
+    "ok": false,
+    "turns": 365,
+    "sessions": 63,
+    "rounds": 22,
+    "last_run": "2026-10-06 17:12:24",
+    "seconds": 145.7,
+    "pool": 36,
+    "source": "topics",
+    "tutor": true,
+    "evals": 4,
+    "growth": {
+      "polarity": {
+        "wanting": 0.208,
+        "liking": 0.929,
+        "patience": 1.0,
+        "structure": 0.035,
+        "tension": 0.064
+      },
+      "milestones": [
+        "我只是把他的话还回去的时候，话多半接得下去。",
+        "我不出声的时候，话多半接得下去。",
+        "我把两边并排放给他看的时候，有时接得下去，有时就停在那儿。",
+        "我问他细节的时候，话多半接得下去。",
+        "我指出哪一部分改不了的时候，话多半接得下去。",
+        "我要求具体的体验的时候，有时接得下去，有时就停在那儿。",
+        "我承认他说的事有分量的时候，话多半接得下去。",
+        "我接住他的收尾的时候，有时接得下去，有时就停在那儿。"
+      ],
+      "pairs": 244,
+      "summary": "极性 {'wanting': 0.208, 'liking': 0.929, 'patience': 1.0, 'structure': 0.035, 'tension': 0.064}｜里程碑 8 条"
+    },
+    "turns_added": 4,
+    "requested_turns": 5,
+    "failure": "api_or_pipeline_degraded",
+    "gate_perception": true,
+    "strict": true,
+    "tutor_errors": [],
+    "sessions_added": 2,
+    "rounds_added": 1
+  },
+  "checks": {
+    "requested_ledger_rows": false,
+    "requested_evaluation_rows": false,
+    "all_api_readings_ok": false,
+    "tutor_evaluations_ok": false,
+    "evaluation_internals_present": false,
+    "provenance_matches": true
+  },
+  "ok": false,
+  "new_ledger_rows": 4,
+  "new_evaluation_rows": 4,
+  "state_after": {
+    "state/association.jsonl": "9a5956c9809785ecad4315e7f1a0bb065384d7021703e9715b61ea0b3297b502",
+    "state/character.json": "e5a5573cce8dc06c0490140b6255137c1ec30e9bdc4e1460fb0a0054b063660b",
+    "state/devlevel.json": "8137e7bd098577dde5b6bdd25f3686143b26058794b44ee0bb024eeee509011f",
+    "state/devlevel_verified.json": "f93929a88113524eaeaceac56721e2c3d632886862bdebcfc72f11349d37302a",
+    "state/ledger.jsonl": "64d02fbc848110d4c5068076476c39d515a75c3a75f281768d9031895471e307",
+    "state/ledger.jsonl.bak": "e41e6d303de117ce94de7215cb5cc250e5199ffa18934466b3340e8f47e16cab",
+    "state/ledger.py": "45a347937ec28073edcbb1714305f6a2611505334fd43e75cab39857924ccf28",
+    "state/ledger_demo.jsonl": "9a2afd8dc4425e61ab66b6765433e7aceb5b602dd419d51023b13aa7beac49c3",
+    "state/mechanism_carry.json": "41433f12bc26a67f9d095be7f82e0db70eb4919e92113549d3d3e65bf004bd8c",
+    "state/schema.json": "e2e9cebf931d7d8db8fbe76b965eb38efb7d48e0a29bc8793a987b0440144fcf",
+    "state/topic_progress.json": "05ddf377cf5f3dcc2751f9683b056cf0ed37f9f0aa304621a5bc3eae513b9e21",
+    "state/共识核_提炼缓存.jsonl": "0746ca4b2d90d16b3a33bffcb242df0013ca471fc1e462cde11244410d3d9018",
+    "state/development_legacy_20261006/devlevel.json": "c591c196c480f7ec276335f35616e7f78d2dfcb83dfaca9af8db2b7b36c8d86e",
+    "state/review/versions.jsonl": "f07a8a28a33f65d7e57632bbaec8418a938c8442d4a1aa81a8d412fd4ac7068d",
+    "state/train/association.jsonl": "df6440693297fc0da964185184fe62168b98aeca00d3ccc8f1e5e57a1e3f62bb",
+    "state/train/character.json": "c109cfad1438c6b9be0330201ab757c778c029b4eec7eae23afab169bee70735",
+    "state/train/decisions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "state/train/decisions.jsonl.bak_20261002_221303": "06852c5d07afe50859934dc4aced042bd5b67e81bddef7ec0be683088183db66",
+    "state/train/decisions_v0.jsonl": "ec950bf528c5b6f5bdfd095e31acff5523ecec651502f66b82f39cfdf579a380",
+    "state/train/eval.jsonl": "8dfba401103caecbcb04846a9c7454dbed5713f8c8337a662b8dbf0e7f2aa717",
+    "state/train/eval_backup_20261002_205028.jsonl": "b800f7ddcdba75400a59c3ba7280fde97be800a25b1d5993442d9903e38c8377",
+    "state/train/eval_v0.jsonl": "89d431ad16a3b7486280a52f23fa81da67e3096ad77eaec74131dd31efdb31c7",
+    "state/train/ledger.jsonl": "0fafad5bafed723f594f578a0731160f16fc8d14310ff4cdc6072e65e14f2a74",
+    "state/train/progress.json": "17b39aca85f1d7738c4e80a930fe13cb2490741aa088e03b6f4869e84bdc047e",
+    "state/train/review_queue.json": "d026fab21e7632a60dc8870ba8b40c2c6b7a7e18b7d557d95ef03ad38bfd970a",
+    "state/train/runs.jsonl": "6b3b0b0ea8760c1f4da9a58b7c7bc98b9ce408a49e5a4328ec7904977672617c",
+    "state/_snapshot_20261003_214421/character.json": "e5a5573cce8dc06c0490140b6255137c1ec30e9bdc4e1460fb0a0054b063660b",
+    "state/_snapshot_20261003_214421/decisions.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "state/_snapshot_20261003_214421/devlevel.json": "c591c196c480f7ec276335f35616e7f78d2dfcb83dfaca9af8db2b7b36c8d86e",
+    "state/_snapshot_20261003_214421/eval.jsonl": "414dd87aa21d367aa09194b6b6a7aa157237aefd0bf0e2a5722053353feee07a",
+    "state/_snapshot_20261003_214421/HASHES.txt": "1718145c2aec616425a28c5504a9994dccda0ba11b7082a0485bcb3435f4c29b",
+    "state/_snapshot_20261003_214421/ledger.jsonl": "473442cae55fb65f0f264c29dc40e76904b7d8fe959ef94095a96db3b7b01767",
+    "state/_snapshot_20261003_214421/mechanism_carry.json": "d03bfedff964e9c4928ca41c7e5f6394715a8082d26ae8cd3e9839c8d6a8b83c",
+    "state/_snapshot_20261003_214421/progress.json": "022f17ccc772e772e03f6179fe3445da4c4a2915bd2ea5362b5c2b6652c108d4",
+    "state/_snapshot_20261003_214421/review_queue.json": "d026fab21e7632a60dc8870ba8b40c2c6b7a7e18b7d557d95ef03ad38bfd970a",
+    "state/__pycache__/ledger.cpython-312.pyc": "d8c328465344faea91884d3c9b89c7890c81d277d9fca89a99da5586f5c1f290"
+  },
+  "changed_state_files": [
+    "state/devlevel.json",
+    "state/devlevel_verified.json",
+    "state/mechanism_carry.json",
+    "state/train/association.jsonl",
+    "state/train/character.json",
+    "state/train/eval.jsonl",
+    "state/train/ledger.jsonl",
+    "state/train/progress.json",
+    "state/train/runs.jsonl"
+  ],
+  "interactive_ledger_unchanged": true,
+  "legacy_archive_unchanged": true,
+  "development": {
+    "before_level": "I-3",
+    "after_level": "I-3",
+    "before_equilibration": 0,
+    "after_equilibration": 0
+  }
+}

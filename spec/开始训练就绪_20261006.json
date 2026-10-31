@@ -1,0 +1,28 @@
+{
+  "ready_to_click": true,
+  "entry": "C:\\Users\\22082\\Desktop\\DEPSK\\books\\ego-dialogue\\启动训练台.exe",
+  "entry_sha256": "8efaad25a73c78afea324232eedc5a864fe9f0487aa9c546c39cd90bf9ee0610",
+  "defaults": {
+    "rounds": 1,
+    "session_len": 2,
+    "dialogue_turns": 6,
+    "desktop_gate_default_on": true
+  },
+  "current_eval_schema": 5,
+  "live_acceptance_eval_schema": 4,
+  "live_acceptance_old_records_preserved": true,
+  "regression_script_runs": 64,
+  "reports": [
+    "C:\\Users\\22082\\Desktop\\DEPSK\\books\\ego-dialogue\\spec\\首批真实训练验收_20261006_172638.json",
+    "C:\\Users\\22082\\Desktop\\DEPSK\\books\\ego-dialogue\\spec\\点击开始训练验收_20261006.json",
+    "C:\\Users\\22082\\Desktop\\DEPSK\\books\\ego-dialogue\\spec\\点击前真实探测_20261006.json",
+    "C:\\Users\\22082\\Desktop\\DEPSK\\books\\ego-dialogue\\spec\\点击训练准备验证_20261006.json"
+  ],
+  "development": {
+    "before_level": "I-3",
+    "after_level": "I-3",
+    "before_equilibration": 0,
+    "after_equilibration": 0
+  },
+  "readiness_scope": "working training entry and persisted experience; not a claim of full psychological development"
+}

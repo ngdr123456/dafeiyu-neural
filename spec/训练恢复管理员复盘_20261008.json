@@ -1,0 +1,587 @@
+{
+  "generated": "2026-10-08 15:29:02",
+  "fingerprint": {
+    "turns": 399,
+    "evals": 209,
+    "at": "2026-10-08 15:29:02",
+    "e_version_dist": {
+      "2": 187,
+      "None": 212
+    },
+    "first_ts": "2026-10-01T05:43:13",
+    "last_ts": "2026-10-08T07:26:41"
+  },
+  "turns": 399,
+  "evals": 209,
+  "facts": [
+    {
+      "id": "fact-静默-95460",
+      "layer": "fact",
+      "kind": "静默",
+      "severity": 2,
+      "title": "有 5 轮沉默（1%）",
+      "detail": "分布：{'无标记可抓': 5}。沉默是允许的答案，但**成规模**就说明抓不到用户的话。",
+      "evidence": [
+        {
+          "turn": 1,
+          "input": "我知道这听着挺没出息的……可你别劝我，你一劝我，我就觉得连你也觉得我不该要。"
+        },
+        {
+          "turn": 2,
+          "input": "那我去了啊，杯子在哪来着……算了，我自己找。"
+        },
+        {
+          "turn": 8,
+          "input": "没眼睛你刚才还“盯着”？……行，那我自己咳，你在我兜里别出声。"
+        },
+        {
+          "turn": 2,
+          "input": "嗐，你不用跟我绕这个……我那手不是停，是压根儿没抬起来过。昨晚我妈还问我西红柿炒"
+        },
+        {
+          "turn": 9,
+          "input": "唉，算了，不等他了，我自个儿把冰箱里那袋拎下去，合同回头再说。"
+        }
+      ],
+      "proposal": null
+    },
+    {
+      "id": "fact-闸门拒绝-21107",
+      "layer": "fact",
+      "kind": "闸门拒绝",
+      "severity": 2,
+      "title": "91 处退回｜主因：L0':大脑作答退回（think_failed:<urlopen error [SSL: UNEXP（63 次）",
+      "detail": "退回率 91/399。退回越多，模型越白接；输出越像模板。",
+      "evidence": [
+        {
+          "turn": 1,
+          "reason": "引用了他没说过的话：「能不能接受」",
+          "note": "L0':大脑作答退回（引用了他没说过的话：「能不能接受」）"
+        },
+        {
+          "turn": 3,
+          "reason": "贴标签或诊断：出现「你有」",
+          "note": "L0':大脑作答退回（贴标签或诊断：出现「你有」）"
+        },
+        {
+          "turn": 3,
+          "reason": "不沉默",
+          "note": "选中动作缺槽位 → 退回 REFLECT（不沉默）"
+        },
+        {
+          "turn": 2,
+          "reason": "引用了他没说过的话：「拿以后堵自己」",
+          "note": "L0':大脑作答退回（引用了他没说过的话：「拿以后堵自己」）"
+        },
+        {
+          "turn": 2,
+          "reason": "不沉默",
+          "note": "选中动作缺槽位 → 退回 REFLECT（不沉默）"
+        },
+        {
+          "turn": 1,
+          "reason": "替他判定什么才算重要：出现「不该」",
+          "note": "L0':大脑作答退回（替他判定什么才算重要：出现「不该」）"
+        },
+        {
+          "turn": 1,
+          "reason": "引用了他没说过的话：「它行不行」",
+          "note": "L0':大脑作答退回（引用了他没说过的话：「它行不行」）"
+        },
+        {
+          "turn": 2,
+          "reason": "空输出",
+          "note": "L0':大脑作答退回（空输出）"
+        }
+      ],
+      "proposal": null
+    },
+    {
+      "id": "fact-无标记-16903",
+      "layer": "fact",
+      "kind": "无标记",
+      "severity": 1,
+      "title": "304 轮没抓到任何标记（76%）",
+      "detail": "这些轮次系统只能靠机制状态兜底或沉默。若某些说法反复出现却始终抓不到，那就是**词表缺口**（本项目已复发多次的那一类）。",
+      "evidence": [
+        {
+          "turn": 1,
+          "input": "但你说的是结果……那如果过程特别顺，就是最后差一点点没拿到，你能接受吗？还是说，"
+        },
+        {
+          "turn": 2,
+          "input": "“行吧……那我换个问法。你说，人是得先信了‘将来会好’才能熬过现在，还是说，那句"
+        },
+        {
+          "turn": 4,
+          "input": "……嗯，是，我知道我是故意的。放一块儿的话，那半夜三点我嘟囔那句，跟白天跟同事说"
+        },
+        {
+          "turn": 1,
+          "input": "道理我都懂，可昨天看到同学升职那一下，我胸口还是堵得慌——你说，顺其自然是不是也"
+        },
+        {
+          "turn": 2,
+          "input": "……那这么说，我昨晚翻他朋友圈翻到两点，也不是什么\"允许自己不甘心\"，是那口气早"
+        },
+        {
+          "turn": 3,
+          "input": "那……当时在场那个我，除了堵，还有别的吗？我怕我翻朋友圈的时候根本什么都没觉着，"
+        },
+        {
+          "turn": 4,
+          "input": "……你别把我那句原样丢回来啊，听着像自己跟自己说话。……行，那我就说具体的——我"
+        },
+        {
+          "turn": 1,
+          "input": "可我一想到走那天我妈在厨房那个背影，脚就有点迈不动了。"
+        }
+      ],
+      "proposal": null
+    },
+    {
+      "id": "fact-语料漏判-16156",
+      "layer": "fact",
+      "kind": "语料漏判",
+      "severity": 3,
+      "title": "手写语料里有 4 处漏判",
+      "detail": "期望来自三本书的判据（人写的）。漏判 = 规则层没覆盖到。",
+      "evidence": [
+        {
+          "turn": 1,
+          "input": "我被这件事困住了，控制不了自己。",
+          "want": [
+            "voice_shift"
+          ],
+          "got": []
+        },
+        {
+          "turn": 13,
+          "input": "是我选的，我认。",
+          "want": [
+            "voice_shift"
+          ],
+          "got": []
+        },
+        {
+          "turn": 6,
+          "input": "我已经这样了，改变不了，但至少我可以决定今天怎么过。",
+          "want": [
+            "attitude_clause",
+            "immutable"
+          ],
+          "got": [
+            "immutable"
+          ]
+        },
+        {
+          "turn": 7,
+          "input": "它又来了，那种感觉一上来我就不由自主。",
+          "want": [
+            "voice_shift"
+          ],
+          "got": []
+        }
+      ],
+      "proposal": null
+    },
+    {
+      "id": "fact-死规则-22687",
+      "layer": "fact",
+      "kind": "死规则",
+      "severity": 2,
+      "title": "机制条件表里有 8 条从未触发：WANT_NO_LIKE、DEPLETED、TENSION_PRESENT、TENSION_LOW、ASKED_ALREADY、ACKNOWLEDGE_PRESENT、NOTHING_MORE、STRUCTURE_INVALID ",
+      "detail": "先到先得的条件表里，排在后面的条件可能永远轮不到 —— `NOTHING_MORE` 就是这样一条（实测 68 轮里一次没轮到）。**这是要补的清单，不是「数据不够所以别管」。**",
+      "evidence": [
+        {
+          "condition": "WANT_NO_LIKE"
+        },
+        {
+          "condition": "DEPLETED"
+        },
+        {
+          "condition": "TENSION_PRESENT"
+        },
+        {
+          "condition": "TENSION_LOW"
+        },
+        {
+          "condition": "ASKED_ALREADY"
+        },
+        {
+          "condition": "ACKNOWLEDGE_PRESENT"
+        },
+        {
+          "condition": "NOTHING_MORE"
+        },
+        {
+          "condition": "STRUCTURE_INVALID"
+        }
+      ],
+      "proposal": null
+    },
+    {
+      "id": "fact-反复同动作-97789",
+      "layer": "fact",
+      "kind": "反复同动作",
+      "severity": 1,
+      "title": "有 14 段连续同动作（≥4 次）：REFLECT、UNCLASSIFIED、ASK_DETAIL、META_REPLY",
+      "detail": "同一个动作连着做，越做越没用（[D] 敏化）。性格层的 R1 规则本该在这里介入 —— 若没介入，说明阈值够不到。",
+      "evidence": [
+        {
+          "behavior": "META_REPLY"
+        },
+        {
+          "behavior": "META_REPLY"
+        },
+        {
+          "behavior": "META_REPLY"
+        },
+        {
+          "behavior": "META_REPLY"
+        },
+        {
+          "behavior": "META_REPLY"
+        },
+        {
+          "behavior": "META_REPLY"
+        },
+        {
+          "behavior": "ASK_DETAIL"
+        },
+        {
+          "behavior": "META_REPLY"
+        }
+      ],
+      "proposal": null
+    }
+  ],
+  "opinions": [
+    {
+      "id": "opinion-训练师评价-72566",
+      "layer": "opinion",
+      "kind": "训练师评价",
+      "severity": 2,
+      "title": "训练师指出 38 处问题：mechanical×19、too_little×13、off_topic×3、boundary×2、too_much×1",
+      "detail": "**参与决策**（用户指定）。每条意见都指向了具体轮次与具体那句话，所以可回溯 —— 将来长歪了，能查出是哪条意见导致的。单轮观察不需要样本量：一轮就是一轮。",
+      "evidence": [
+        {
+          "input": "我也知道这么想不对，可你让我放下……我试过，第二天整个人跟丢了魂似的",
+          "output": "那个\"结果\"具体是什么？你说\"没有\"这俩字的时候，指的是它没来，还是指别的什么没了。",
+          "behavior": "META_REPLY",
+          "problem": "too_little",
+          "why": "用户带着强烈情绪并直接问了一个二选一，它只做术语澄清，没接住情绪也没回应那个问题。"
+        },
+        {
+          "input": "话是这么说，可我昨天熬到两点改的那版方案，今早上去还是被一句话打回来",
+          "output": "两点改的，一句话打回。  中间没别的了——这句我不替你补。",
+          "behavior": "META_REPLY",
+          "problem": "too_little",
+          "why": "用户明着问了「这时候怎么个顺其自然法」，它只把用户自己的话折回来一遍就收住，对那个问句没有任何正面接住。"
+        },
+        {
+          "input": "……行吧，那我告诉你：眼睛是涩的，可一躺下脑子里就剩那句“再想想”在",
+          "output": "眼睛涩是一个信号，那句转是另一个；两个同时是真的，谁也没把谁盖掉。",
+          "behavior": "META_REPLY",
+          "problem": "too_little",
+          "why": "它没有回答用户'算困还是不困'的直接提问，只并列了两个信号，该接的判断没接。"
+        },
+        {
+          "input": "唉，我妈前两天还念叨，说邻居家孩子都留在这儿，周末还能回家吃顿饭……",
+          "output": "你妈念叨的是邻居家孩子留在这儿、周末还能回家吃顿饭。你说的是每天走同一条路，这辈子好像已",
+          "behavior": "TURN_IMMUTABLE",
+          "problem": "mechanical",
+          "why": "它只是把我说过的两句话拆开复读一遍，没有接住我话里的矛盾与情绪，像模板式镜映而不是在跟我对话。"
+        },
+        {
+          "input": "话是这么说，可我昨晚又翻来覆去到两点多……你说顺其自然，那到底是啥也",
+          "output": "「顺其自然」这四个字是我上一轮丢出来的，当时没交代是哪一种。  你列的「啥也不管了」和「",
+          "behavior": "META_REPLY",
+          "problem": "too_little",
+          "why": "用户带着“两点多还翻来覆去”的具体困扰来问“顺其自然”指哪一种，它只把两个选项退回，不接住失眠这个点，也没说明自己上一轮"
+        },
+        {
+          "input": "放下啊……行吧。我这鞋上还沾着泥呢，刚才过来的时候踩了个水坑，也没擦",
+          "output": "泥还沾在鞋上，你也没擦。  行吧。",
+          "behavior": "REFLECT",
+          "problem": "mechanical",
+          "why": "它只是把用户的话换词复述一遍，再用“行吧”收尾，像复读模板，没有真正接住“放下”那层意思或推进对话。"
+        },
+        {
+          "input": "收着也好，反正这回我是铁了心了……你别用那种眼神看我，你是没见过他们",
+          "output": "我这边没有眼睛，给不出眼神。昨天那副嘴脸，具体是什么样。",
+          "behavior": "REFLECT",
+          "problem": "mechanical",
+          "why": "用户用“别用那种眼神看我”是情绪化说法，它却按字面纠正自己没眼睛，是最先冒出的一句模板式AI免责话，把关系性的暗指当成事"
+        },
+        {
+          "input": "给他们看？给他们看什么啊……行吧，我承认，我就是不想去明天那个会，现",
+          "output": "离那个会还有几个小时。",
+          "behavior": "REFLECT",
+          "problem": "too_little",
+          "why": "用户承认不想去、方案没动、怕挨问，它只回一句剩余时间，没接住这份焦虑和需要。"
+        }
+      ],
+      "proposal": null
+    }
+  ],
+  "proposals": [
+    {
+      "kind": "coverage",
+      "trace": "ENG",
+      "summary": "复核沉默轮：是不是真的没接到",
+      "detail": "沉默是允许的答案。但成规模时，要分辨是「用户确实没说可观察的东西」还是「我抓不到」。",
+      "evidence": [
+        {
+          "turn": 1,
+          "input": "我知道这听着挺没出息的……可你别劝我，你一劝我，我就觉得连你也觉得我不该要。"
+        },
+        {
+          "turn": 2,
+          "input": "那我去了啊，杯子在哪来着……算了，我自己找。"
+        },
+        {
+          "turn": 8,
+          "input": "没眼睛你刚才还“盯着”？……行，那我自己咳，你在我兜里别出声。"
+        },
+        {
+          "turn": 2,
+          "input": "嗐，你不用跟我绕这个……我那手不是停，是压根儿没抬起来过。昨晚我妈还问我西红柿炒"
+        }
+      ],
+      "pid": "P001",
+      "sid": "coverage:静默轮",
+      "status": "pending",
+      "history_n": 0,
+      "notes": []
+    },
+    {
+      "kind": "gate_review",
+      "trace": "ENG",
+      "summary": "复核闸门主因：91 处退回｜主因：L0':大脑作答退回（think_failed:<urlopen error [SSL: UNEXP（63 次）",
+      "detail": "闸门拒绝对不对要逐个看 —— 有些是模型真的越界（该拒），有些是材料喂错了（该修材料）。**不许为了降低拒绝率而放宽闸门。**",
+      "evidence": [
+        {
+          "turn": 1,
+          "reason": "引用了他没说过的话：「能不能接受」",
+          "note": "L0':大脑作答退回（引用了他没说过的话：「能不能接受」）"
+        },
+        {
+          "turn": 3,
+          "reason": "贴标签或诊断：出现「你有」",
+          "note": "L0':大脑作答退回（贴标签或诊断：出现「你有」）"
+        },
+        {
+          "turn": 3,
+          "reason": "不沉默",
+          "note": "选中动作缺槽位 → 退回 REFLECT（不沉默）"
+        },
+        {
+          "turn": 2,
+          "reason": "引用了他没说过的话：「拿以后堵自己」",
+          "note": "L0':大脑作答退回（引用了他没说过的话：「拿以后堵自己」）"
+        }
+      ],
+      "pid": "P002",
+      "sid": "gate_review:闸门退回",
+      "status": "pending",
+      "history_n": 0,
+      "notes": []
+    },
+    {
+      "kind": "lexicon_gap",
+      "trace": "corpus",
+      "summary": "补词表：让「我被这件事困住了，控制不了自己。」命中 voice_shift",
+      "detail": "期望来自手写语料（人写，源自三本书的判据）。**补什么词仍要人写** —— 自动生成同义词是自证循环。",
+      "evidence": {
+        "turn": 1,
+        "input": "我被这件事困住了，控制不了自己。",
+        "want": [
+          "voice_shift"
+        ],
+        "got": []
+      },
+      "pid": "P003",
+      "sid": "lexicon_gap:我被这件事困住了，控制不了自己。",
+      "status": "pending",
+      "history_n": 0,
+      "notes": []
+    },
+    {
+      "kind": "lexicon_gap",
+      "trace": "corpus",
+      "summary": "补词表：让「是我选的，我认。」命中 voice_shift",
+      "detail": "期望来自手写语料（人写，源自三本书的判据）。**补什么词仍要人写** —— 自动生成同义词是自证循环。",
+      "evidence": {
+        "turn": 13,
+        "input": "是我选的，我认。",
+        "want": [
+          "voice_shift"
+        ],
+        "got": []
+      },
+      "pid": "P004",
+      "sid": "lexicon_gap:是我选的，我认。",
+      "status": "pending",
+      "history_n": 0,
+      "notes": []
+    },
+    {
+      "kind": "lexicon_gap",
+      "trace": "corpus",
+      "summary": "补词表：让「我已经这样了，改变不了，但至少我」命中 attitude_clause、immutable",
+      "detail": "期望来自手写语料（人写，源自三本书的判据）。**补什么词仍要人写** —— 自动生成同义词是自证循环。",
+      "evidence": {
+        "turn": 6,
+        "input": "我已经这样了，改变不了，但至少我可以决定今天怎么过。",
+        "want": [
+          "attitude_clause",
+          "immutable"
+        ],
+        "got": [
+          "immutable"
+        ]
+      },
+      "pid": "P005",
+      "sid": "lexicon_gap#427621b6da8d",
+      "status": "pending",
+      "history_n": 0,
+      "notes": []
+    },
+    {
+      "kind": "lexicon_gap",
+      "trace": "corpus",
+      "summary": "补词表：让「它又来了，那种感觉一上来我就不由」命中 voice_shift",
+      "detail": "期望来自手写语料（人写，源自三本书的判据）。**补什么词仍要人写** —— 自动生成同义词是自证循环。",
+      "evidence": {
+        "turn": 7,
+        "input": "它又来了，那种感觉一上来我就不由自主。",
+        "want": [
+          "voice_shift"
+        ],
+        "got": []
+      },
+      "pid": "P006",
+      "sid": "lexicon_gap:它又来了，那种感觉一上来我就不由自主。",
+      "status": "pending",
+      "history_n": 0,
+      "notes": []
+    },
+    {
+      "kind": "dead_rule",
+      "trace": "ENG",
+      "summary": "机制条件表里有 8 条从未触发：WANT_NO_LIKE、DEPLETED、TENSION_PRESENT、TENSION_LOW、ASKED_ALREADY、ACKNOWLEDGE_PRESENT、NOTHING_MORE、STRUCTURE_INVALID ",
+      "detail": "两条路：调阈值让它可达（要说明依据），或承认它是死的并标出来。**不许为了让指标好看而调阈值。**",
+      "evidence": [
+        {
+          "condition": "WANT_NO_LIKE"
+        },
+        {
+          "condition": "DEPLETED"
+        },
+        {
+          "condition": "TENSION_PRESENT"
+        },
+        {
+          "condition": "TENSION_LOW"
+        },
+        {
+          "condition": "ASKED_ALREADY"
+        },
+        {
+          "condition": "ACKNOWLEDGE_PRESENT"
+        },
+        {
+          "condition": "NOTHING_MORE"
+        },
+        {
+          "condition": "STRUCTURE_INVALID"
+        }
+      ],
+      "pid": "P007",
+      "sid": "dead_rule:机制条件表",
+      "status": "pending",
+      "history_n": 0,
+      "notes": []
+    }
+  ],
+  "current_evidence": {
+    "schema": 1,
+    "latest_training": {
+      "run_id": "1791444177841152500_42128",
+      "last_run": "2026-10-08 15:27:18",
+      "turns_added": 6,
+      "requested_turns": 6,
+      "evals": 6,
+      "failure": null,
+      "training_complete": true,
+      "outcome": "completed",
+      "eval_schema": 8,
+      "gate_perception": true,
+      "gate_observed_in_turn": true,
+      "failure_diagnostic": null,
+      "source_fingerprint": "e9b878859713355eb5209b4768168fde30f4f82f48dd27d9cee7227ccfc276aa",
+      "source_unchanged_during_run": true,
+      "source_matches_current": true,
+      "failure_observed": false,
+      "metadata_is_current_schema": true
+    },
+    "latest_run_evaluations": 6,
+    "has_material": true,
+    "evaluation_schema_counts": {
+      "3": 186,
+      "4": 11,
+      "5": 6,
+      "8": 6
+    },
+    "current_eval_schema": 8,
+    "current_schema_evaluations": 6,
+    "artefacts": [
+      {
+        "kind": "regression",
+        "path": "spec/训练恢复回归_20261008.json",
+        "exists": true,
+        "source_matches": true,
+        "passed_for_current_source": true,
+        "historical_passed": true,
+        "cases": 0,
+        "scope": "engineering_tests",
+        "independent_semantics_verified": false,
+        "development_credit": 0
+      },
+      {
+        "kind": "live_diagnostic",
+        "path": "spec/训练恢复真实诊断_20261008.json",
+        "exists": true,
+        "source_matches": true,
+        "passed_for_current_source": true,
+        "historical_passed": true,
+        "cases": 6,
+        "scope": "one_model_generated_formal_recovery_batch",
+        "independent_semantics_verified": false,
+        "development_credit": 0
+      },
+      {
+        "kind": "relation_foundation",
+        "path": "spec/训练恢复关系基础复验_20261008.json",
+        "exists": true,
+        "source_matches": true,
+        "passed_for_current_source": true,
+        "historical_passed": true,
+        "cases": 3,
+        "scope": "scripted_local_cases",
+        "independent_semantics_verified": false,
+        "development_credit": 0
+      }
+    ],
+    "development_credit": 0,
+    "independent_review_verified": false
+  },
+  "anomaly_scan": {
+    "ok": true,
+    "asked": true,
+    "brief_chars": 3994,
+    "filed": [],
+    "rejected": []
+  }
+}
