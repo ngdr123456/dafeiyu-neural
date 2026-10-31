@@ -967,7 +967,14 @@ class Pipeline:
             text, _tn = self._think_or_fallback(
                 raw, pr, text, mst=None, last=_last, tag="问系统")
             from action_observation import observe
-            action = observe(text, behavior, self._last_response_mode, raw=raw)
+            # ★ 2026-10-31：**元提问这条支路原来漏传 `focus_origin`** ——
+            #   于是它的台账记录里 `focus_origin` 是空串，
+            #   看起来像"第五类焦点"，实际只是没传。
+            #   ⚠️ 它**不影响她说什么**（`text` 在第 967 行就生成了），
+            #      只影响记录的准确性 ⇒ 允许修。
+            action = observe(text, behavior, self._last_response_mode, raw=raw,
+                             focus_quotes=(),
+                             focus_origin=getattr(self, "_focus_origin", "") or "")
             planned_behavior, behavior = behavior, action["actual"]
             _extra = ([_tn] if _tn else []) + ["meta_response=%s" % rid]
             cf = ("元提问被识别为 %s（裁决方式 %s）：它不属于对题面的回答，"
