@@ -191,6 +191,11 @@ def _is_bold(e: dict) -> bool:
     #   ⇒ 理应享受下一轮 `CONFIRMED / REBUFFED` 的反馈结算。
     #   ⚠️ 第一版只看 `thought_level`（只覆盖当轮算子），
     #      于是"她顺着悬念往下说了"这件事**不算探照** —— 那会低估她的主动性。
+    # ★ 2026-10-31（用户裁定）：**兜底轮不算 BOLD 探照。**
+    #   理由：兜底句不是她想出来的（大脑失败了），把它算成"她亮出了拉扯"
+    #   等于把一次系统故障记成一次深度探照。
+    if act.get("actual") == "FALLBACK" or act.get("fallback"):
+        return False
     return (act.get("actual") == "THOUGHT_EXECUTED_STRONG"
             or act.get("thought_level") in ("STRONG", "WEAK")
             or act.get("focus_level") in ("STRONG", "WEAK")

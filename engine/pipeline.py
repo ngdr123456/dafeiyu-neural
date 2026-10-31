@@ -527,6 +527,68 @@ class Pipeline:
             self._idle_gated = "算法没配出可用的跨轮对"
         # ---- P4：词级（保持原样）
 
+    #: ★ 2026-10-31（用户批准的兜底出口方案）
+    #:
+    #: ## 为什么换掉原来的兜底
+    #:   大脑失败时退到的是模板 ``responder.render`` 的输出，
+    #:   而 ``ASK_DETAIL`` 在没有 anchor 时只有一句写死的「发生什么了？」——
+    #:   那是一句**没有对象的探问**：它假装接住了，实际在说「我没在听，你再说一遍」。
+    #:
+    #: ## 硬约束（全部代码保证，不靠提示词）
+    #:   ① **不含问号**（`_fallback_line` 里断言）
+    #:   ② **不复述他的内容**（这些句子与他说的无关）
+    #:   ③ **不对他下指令**（没有「你先」「你别」「你可以」）
+    #:   ④ 每种至少 3 个说法；**6 轮内不重复**
+    #:   ⑤ 「没法确认」在本场已用过 ⇒ 换别的说法
+    #:
+    #: ⚠️ 两句通用的短承接故意做得**极短**：她接不住的时候，
+    #:    少说比多说好 —— 多说是拿空话填场面。
+    FALLBACK_ASK = (
+        "这个我没法确认。",
+        "我这边看不到。",
+        "这我没法替你判断。",
+        "我不敢说我清楚。",
+        "这个我说不准。",
+        "我看不到那一层。",
+    )
+    FALLBACK_OTHER = (
+        "嗯，我听着。",
+        "嗯。",
+        "我在。",
+        "记下了。",
+        "好。",
+        "嗯，我在听。",
+    )
+
+    def _fallback_line(self) -> str:
+        """大脑失败时的出口句。按用户批准的五条硬约束挑选。"""
+        # ① 他最后一句是问句 ⇒ 用"没法确认"一类；否则极短承接
+        _ask = bool(getattr(self, "_he_is_asking", False))
+        pool = list(self.FALLBACK_ASK if _ask else self.FALLBACK_OTHER)
+        # ⑤ 本场已经说过「没法确认」类 ⇒ 换别的说法
+        _used = 0
+        try:
+            for _e in self.ledger.effective_entries:
+                _o = getattr(_e, "output", "") or ""
+                if any(_w in _o for _w in ("没法确认", "不确定", "说不准", "答不上")):
+                    _used += 1
+        except Exception:                                          # noqa: BLE001
+            _used = 0
+        if _used >= 1:
+            pool = [x for x in pool if "没法确认" not in x] or pool
+        # ④ 6 轮内不重复
+        _recent = set(getattr(self, "_fallback_recent", []) or [])
+        cand = [x for x in pool if x not in _recent] or pool
+        # 选第一个可用的（确定性，不用随机 —— 可重放）
+        line = cand[0]
+        # ① 硬断言：不含问号（不靠"我选的句子没问题"，靠代码挡）
+        assert "？" not in line and "?" not in line, "兜底句不许含问号：%r" % line
+        # 记录最近用过的（保留 6 个）
+        _r = list(getattr(self, "_fallback_recent", []) or [])
+        _r.append(line)
+        self._fallback_recent = _r[-6:]
+        return line
+
     def _flush_swallow(self) -> None:
         """把本轮**新增**的吞异常写进 cognition_debug（用户裁定 2026-10-31）。
 
@@ -1483,11 +1545,19 @@ class Pipeline:
             _focus_quotes = tuple(getattr(_idle_o, "quotes", ()) or ())
         elif _focus_origin != "input":
             _focus_quotes = ()
+        # ★ 2026-10-31（用户裁定）：**兜底轮在动作统计里单列 `fallback`**，
+        #   不进 QUESTION / ASK_DETAIL，也不算 BOLD 探照。
+        #   ⚠️ 但他在这轮之后说的话，**仍然照常结算**
+        #      —— 结算发生在下一轮开头，与这一轮的 mode 无关。
+        _was_template = bool(getattr(self, "_brain_failed", False))
         action = observe(ren.output, planned_behavior, response_mode,
                          goal_result=_goal_result, raw=raw,
                          thought_quotes=_quotes_for_observe,
                          focus_quotes=_focus_quotes,
                          focus_origin=_focus_origin)
+        if _was_template:
+            action["actual"] = "FALLBACK"
+            action["fallback"] = True
         ren.behavior = action["actual"]
         mech_note.append("实际动作=" + json.dumps(action, ensure_ascii=False))
         # ★ 2026-10-30：idle 的 sources + 与输出的逐字重合度（只记，不判）
@@ -1950,6 +2020,10 @@ class Pipeline:
                            last: str = "（这是第一次）", tag: str = "") -> tuple[str, str | None]:
         """让大脑想；想不出来（或没过闸门）就用 fallback。返回 (文本, 留痕)。"""
         self._last_response_mode = "template"
+        # ★ 2026-10-31：**区分"兜底"和"本来就是模板"**。
+        #   `thinker is None`（离线/测试）时，模板就是预期回应，
+        #   不是"大脑失败了" ⇒ 不该被标成 FALLBACK。
+        self._brain_failed = False
         if self.thinker is None:
             return fallback, None
         fr = self._build_frame(raw, pr, mst=mst, last=last)
@@ -2016,7 +2090,9 @@ class Pipeline:
                              "retry_log": []})
         except Exception as _exc:                          # noqa: BLE001
             self._idle_error = "fail-classify:%s: %s" % (type(_exc).__name__, _exc)
-        return fallback, "L0':大脑作答退回（%s）" % detail[:160] + "｜尝试=" + json.dumps(getattr(self.thinker, "last_attempts", []), ensure_ascii=False)
+        # ★ 2026-10-31：**换掉传进来的模板兜底**，用 `_fallback_line()`。
+        self._brain_failed = True
+        return self._fallback_line(), "L0':大脑作答退回（%s）" % detail[:160] + "｜尝试=" + json.dumps(getattr(self.thinker, "last_attempts", []), ensure_ascii=False)
     # ------------------------------------------------------------ 内部
 
 
