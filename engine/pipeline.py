@@ -152,6 +152,8 @@ class Pipeline:
         #: ★ 2026-10-31（用户裁定）：被吞掉的异常计数 —— 每次实测必须报，不为 0 标红
         self._swallow_counts = {}
         self._swallow_total = 0
+        # ★ 2026-10-31：已落盘过的那部分（增量落盘用）
+        self._swallow_flushed = {}
         #: ★ 2026-10-30（Stage 3）：本轮唯一生效的焦点来源
         #:   "input" | "unfinished" | "idle" | "lexical"
         self._focus_origin = "lexical"
@@ -525,6 +527,24 @@ class Pipeline:
             self._idle_gated = "算法没配出可用的跨轮对"
         # ---- P4：词级（保持原样）
 
+    def _flush_swallow(self) -> None:
+        """把本轮**新增**的吞异常写进 cognition_debug（用户裁定 2026-10-31）。
+
+        ★ 为什么必须落盘：上一批我加了 _swallow() 却只在进程内累加
+          ⇒ 实测结束进程一退，那个数就没了 ⇒ 报不出来。
+        """
+        c = getattr(self, "_swallow_counts", None) or {}
+        if not c:
+            return
+        prev = getattr(self, "_swallow_flushed", None) or {}
+        delta = {k: v - int(prev.get(k, 0)) for k, v in c.items()}
+        self._swallow_flushed = dict(c)
+        if not any(delta.values()):
+            return
+        self._cog_debug({"kind": "swallow",
+                         "turn": getattr(self, "_turn_seq", 0),
+                         "counts": delta, "total": sum(delta.values())})
+
     def _swallow(self, where: str, exc: BaseException) -> None:
         """记一次**被吞掉的异常**（用户裁定 2026-10-31）。
 
@@ -571,6 +591,9 @@ class Pipeline:
                 #   理由：append-only 文件跨运行累积，没有 run_id 就没法切出本批 ——
                 #   我已经因此误报过一次（把两批累积的 31 当成一批的 idle，实际是 17）。
                 _rec = dict(rec)
+                # ★ 2026-10-31（用户裁定）：每条都带**台账轮次**（不是进程内 _turn_seq）。
+                _rec["turn_id"] = self._turn
+                _rec["ledger_index"] = max(0, len(self.ledger.effective_entries) - 1)
                 try:
                     # ⚠️ 优先用**本轮**的 input_origin（turn 开头就设好了）；
                     #   台账最后一条是上一轮，用它会把 run_id 记错一轮。
@@ -961,6 +984,7 @@ class Pipeline:
                       0.9, False, "NONE", behavior, text, cf, None, None,
                       _extra + pr.notes, mech=(_carried or None), raw_input=raw,
                       action_observation=action)
+            self._flush_swallow()      # ★ 吞异常计数落盘
             return TurnResult(markers=[], band=["—", "—", "—"], direction="—",
                               channel="META", level="—", behavior=behavior,
                               planned_behavior=planned_behavior, action_observation=action,
@@ -1579,6 +1603,7 @@ class Pipeline:
                   raw_input=raw, action_observation=action,
                   cognition=getattr(self, "_cog_record", None))
 
+        self._flush_swallow()      # ★ 吞异常计数落盘
         return TurnResult(markers=pr.markers, band=est.band, direction=est.direction,
                           channel=dec.channel, level=dec.level, behavior=ren.behavior,
                           output=ren.output, relation=pr.relation_hint,
@@ -1843,13 +1868,31 @@ class Pipeline:
         #      那段代码永远抛 NameError 且被外层吞掉（M4 抓到）。
         #   ⇒ 正确位置：`_stance` 组装完之后。
         if getattr(self, "_he_is_asking", False):
-            _stance = ((_stance + "\n") if _stance else "") + (
-                "【硬约束·先接住】他最后一句是在问你。"
-                "你这一轮的**第一句必须是直接回答**；"
-                "如果你确实答不了（比如那件事只有他自己知道），"
-                "就如实说「这个我没法确认」。"
-                "**回答完之后**才可以引他以前的原话；"
-                "不许用引旧话代替回答，也不许第一句就是引文。")
+            # 2026-10-31（用户裁定）：不再给固定句式，只给原则。
+            #   上一版写死了「就如实说『这个我没法确认』」，结果 11 轮里 7 轮
+            #   开头就是那一句 —— 成了口头禅。口头禅的问题不是不礼貌，
+            #   是它把「我没看到」变成了万能挡箭牌。
+            _used = 0
+            try:
+                for _e in self.ledger.effective_entries:
+                    _o = getattr(_e, "output", "") or ""
+                    if any(_w in _o for _w in ("没法确认", "不确定", "说不准", "答不上")):
+                        _used += 1
+            except Exception:                                      # noqa: BLE001
+                _used = 0
+            _extra = ("【硬约束·先接住】他最后一句是在问你。"
+                      "你这一轮**第一句就必须先回应他问的那件事**。怎么回应，看它属于哪一种：\n"
+                      "· 他问的是**他自己心里的事、你看不到的事实**（「我是不是…」「你说我…」）："
+                      "如实说你看不到 —— 但**每次换一种说法**，别用同一句；"
+                      "并且**接一句你能从他原话里看到的东西**，否则就只是推掉。\n"
+                      "· 他问的是**「你怎么看 / 算不算 / 是不是」**："
+                      "给出**你自己的看法**，一句话，带理由，理由必须来自他的原话。"
+                      "**允许你不同意他**，不要一味附和。\n"
+                      "· 引他以前的原话只能放在**回应之后**；引号内必须是他原话的逐字片段。")
+            if _used >= 1:
+                _extra += ("\n【这一条你已经用过】这场对话里你已经说过 %d 次"
+                           "「没法确认」这类话了。**这一轮不许再用**。" % _used)
+            _stance = ((_stance + "\n") if _stance else "") + _extra
         # ★ 2026-10-29（C4）：把跨轮思考算子层产出的观察送进简报。
         #
         #   来源是 `self._pending_thought`（由 `turn()` 在认知层跑完后挂上，
