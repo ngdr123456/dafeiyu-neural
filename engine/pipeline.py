@@ -149,6 +149,9 @@ class Pipeline:
         self._idle_last_turn = None
         #: ⚠️ 已废弃：从未被设成 True（死代码），保留仅为兼容旧测试
         self._idle_prev_turn = False
+        #: ★ 2026-10-31（用户裁定）：被吞掉的异常计数 —— 每次实测必须报，不为 0 标红
+        self._swallow_counts = {}
+        self._swallow_total = 0
         #: ★ 2026-10-30（Stage 3）：本轮唯一生效的焦点来源
         #:   "input" | "unfinished" | "idle" | "lexical"
         self._focus_origin = "lexical"
@@ -262,7 +265,8 @@ class Pipeline:
                     for _src in _seen_srcs:
                         try:
                             self._cog_seen.append((int(_src["turn"]), int(_src["start"]), int(_src["end"])))
-                        except (KeyError, TypeError, ValueError):
+                        except (KeyError, TypeError, ValueError) as _exc:
+                            self._swallow("line269", _exc)
                             pass
             except AttributeError:
                 raise
@@ -521,6 +525,28 @@ class Pipeline:
             self._idle_gated = "算法没配出可用的跨轮对"
         # ---- P4：词级（保持原样）
 
+    def _swallow(self, where: str, exc: BaseException) -> None:
+        """记一次**被吞掉的异常**（用户裁定 2026-10-31）。
+
+        ★ 为什么必须有它：
+          代码里有一批 `except ...: pass` / `except ...: 只留个备注` 的位置。
+          它们让主线在子功能失败时继续走 —— 那是对的 ——
+          但**一次都不计数，就永远不知道"这一轮到底有几个东西坏了"**。
+
+        ★ 计数怎么用：每次实测结束报 `_swallow_counts`；
+          不为 0 就在汇报里标红并列出位置。
+        """
+        try:
+            c = getattr(self, "_swallow_counts", None)
+            if c is None:
+                c = {}
+                self._swallow_counts = c
+            key = "%s:%s" % (where, type(exc).__name__)
+            c[key] = c.get(key, 0) + 1
+            self._swallow_total = getattr(self, "_swallow_total", 0) + 1
+        except Exception:                                          # noqa: BLE001
+            pass                                   # 计数自己坏了也不许影响主线
+
     def _cog_debug(self, rec: dict) -> None:
         """把一条认知层调试记录**追加**到 `state/train/cognition_debug.jsonl`。
 
@@ -717,7 +743,8 @@ class Pipeline:
             for _src in (_th.sources or []):
                 try:
                     self._cog_seen.append((int(_src["turn"]), int(_src["start"]), int(_src["end"])))
-                except (KeyError, TypeError, ValueError):
+                except (KeyError, TypeError, ValueError) as _exc:
+                    self._swallow("line746", _exc)
                     pass
             # ★ 痕迹落盘（append-only，独立于台账）
             if self._idle_log:
@@ -1746,7 +1773,8 @@ class Pipeline:
                 for _s in (getattr(_t, "sources", ()) or ()):
                     try:
                         _need.add(int(_s["turn"]))
-                    except (KeyError, TypeError, ValueError):
+                    except (KeyError, TypeError, ValueError) as _exc:
+                        self._swallow("line1775", _exc)
                         pass
             _have = {s["ledger_index"] - 1 for s in sources}
             for _i in sorted(_need - _have):
