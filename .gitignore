@@ -7,7 +7,25 @@
 #   · 不提交 API 密钥或任何敏感文件。
 
 # ── 状态与运行产物（不可重建，但也不该进代码历史）
-state/
+# ── 运行数据：一律排除（只追加、不重建，用备份与日志管理）
+#   ⚠️ 必须逐个排除**目录**，因为 `state/*.json` 只盖住顶层，
+#      嵌套的 state/train/、state/review/、state/state/ 盖不住 ——
+#      第一版就是这样会把 5 个运行数据文件误提交（是"提交前打印清单"抓到的）。
+state/train/
+state/review/
+state/state/
+state/development_legacy_20261006/
+state/**/*.jsonl
+state/**/*.json.bak
+state/*.jsonl
+state/*.json
+state/*.bak
+state/*.lock
+
+# ★ 2026-10-31：**只把代码文件纳入版本管理**。
+#   state/ledger.py 是源码，且它在 source_hashes 的 71 个监控文件里；
+#   之前整个 state/ 被忽略，导致它没有版本历史（这次才发现它是被 git 漏掉的）。
+!state/ledger.py
 _backup/
 
 # ── 构建产物与大文件
