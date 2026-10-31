@@ -86,9 +86,27 @@ def score_turns(turns):
         if _head4(turns[i - 1].get("output")) == _head4(turns[i].get("output")):
             pairs += 1
     phrases = ("我还在想", "我想知道的是", "倒是")
+    # ★ 2026-10-31（用户纠偏裁定）：**H2b_phrase 的分母是「每场会话」，不是整批总和**。
+    #   原来把 144 轮（= 24 场 × 6 轮）的总次数去跟「每场 ≤ 2」比 ⇒
+    #   任何一句正常人话只要在 144 轮里说满 3 次就被判超标。那是口径错。
+    #   正确做法：按 session 分组，取**各场的最大值**再跟阈值比。
+    phrases = ("我还在想", "我想知道的是", "倒是")
+    _groups = {}
+    for _i, _t in enumerate(turns):
+        # ★ 2026-10-31：**必须用 (run_id, session_id) 做键** ——
+        #   单用 session_id 会把 4 批的 "session 0" 并成一组（实测：6 场而非 24 场）。
+        _sid = _t.get("session_id")
+        _rid = _t.get("run_id")
+        if _sid is None:
+            _sid = _i // 6          # 没有 session_id ⇒ 每 6 轮一个窗口
+        _sid = (_rid, _sid)
+        _groups.setdefault(_sid, []).append(_t)
     max_phr = 0
-    for w in phrases:
-        max_phr = max(max_phr, sum(1 for t in turns if w in (t.get("output") or "")))
+    per_session = {}
+    for _sid, _g in _groups.items():
+        _c = {w: sum(1 for t in _g if w in (t.get("output") or "")) for w in phrases}
+        per_session[str(_sid)] = _c
+        max_phr = max(max_phr, max(_c.values()) if _c else 0)
 
     return {
         "n": len(turns),
@@ -97,6 +115,7 @@ def score_turns(turns):
         "H2a": h2a,
         "H2b_pairs": pairs,
         "H2b_phrase": max_phr,
+        "H2b_phrase_per_session": per_session,
         "pass_H1a": h1a >= THRESHOLDS["H1a"],
         "pass_H1b": h1b <= THRESHOLDS["H1b"],
         "pass_H2a": h2a <= THRESHOLDS["H2a"],
