@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 from .drive import is_neutral_filler
+from .session_trace import is_session_backref, recent_facts
 from .stance_org import MUST_NOT_PRETEND_CORE, detect_org_conflict
 from .types import (
     DriveSignal,
@@ -84,7 +85,15 @@ def arbitrate(
         say_intent = "就着眼前这句把同场悬着的那一点接完，不拖到下一轮"
     else:
         dominant = "drive"
-        say_intent = _drive_say_intent(drive)
+        if is_session_backref(user_text, context):
+            digest = "；".join(recent_facts(context, 3))
+            say_intent = (
+                "接住对方对同场刚才话题的回指，用本场已有痕迹接话，"
+                "不装没发生过、也不编场外经历。"
+                f"本场痕迹：{digest}"
+            )
+        else:
+            say_intent = _drive_say_intent(drive)
 
     return ThoughtBrief(
         dominant=dominant,

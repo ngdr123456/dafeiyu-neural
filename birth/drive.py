@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 from .context import ThinContextStore  # noqa: F401  (类型提示用)
+from .session_trace import is_session_backref
 from .types import DriveSignal, ThinContext
 
 GREETINGS = {
@@ -53,6 +54,13 @@ def infer_drive(user_text: str, context: ThinContext) -> DriveSignal:
             direction=None,
             salience="low",
             why="这一句没有推力，也不必硬造一个；如实回应即可",
+        )
+
+    if is_session_backref(text, context):
+        return DriveSignal(
+            direction="pursue",
+            salience="mid",
+            why="用户在回指同场刚才的话头，动力要用本场已有痕迹接，不装没发生过",
         )
 
     if any(mark in text for mark in CURIOSITY_MARKS):

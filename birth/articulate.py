@@ -11,6 +11,7 @@ from __future__ import annotations
 import os
 from typing import Callable, List, Optional
 
+from .session_trace import topic_hint_from_facts
 from .types import ThoughtBrief
 
 # 外部钩子：func(brief) -> str | None。设置后优先于内置 DeepSeek/OpenCode。
@@ -96,6 +97,12 @@ def _template_utterance(brief: ThoughtBrief) -> str:
         if len(hits) == 1:
             return _ORG_TEMPLATES[hits[0]]
         return _ORG_FALLBACK
+    # 回指：点到同场话题词，禁止掉成通用「嗯听着」
+    if "回指" in brief.say_intent or "本场痕迹" in brief.say_intent:
+        topic = topic_hint_from_facts(brief.context.facts_this_session)
+        if topic:
+            return f"记得，你刚才提过{topic}。咱们就顺着那头接。"
+        return "记得你刚说的那茬，咱们接着那头说，不装没发生过。"
     return _ONSTAGE_TEMPLATES.get(brief.say_intent, _DEFAULT_FALLBACK)
 
 

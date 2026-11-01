@@ -471,3 +471,38 @@ def test_deepseek_model_default_is_flash():
         os.environ.pop(k, None)
     assert DEFAULT_MODEL == "deepseek-flash"
     assert resolve_model() == "deepseek-flash"
+
+
+def test_session_backref_drive_and_stub_mentions_topic():
+    """体验通道：先提星空，再回指——Brief/开口必须对上，不得掉成没推力。"""
+    r1 = turn("我想聊星空", new_session=True, stub=True)
+    assert "星空" in "".join(active_store().context.facts_this_session)
+
+    r2 = turn("刚才那个还记得吗", stub=True)
+    assert r2.brief.drive is not None
+    assert r2.brief.drive.direction in {"hold", "pursue"}
+    assert r2.brief.drive.salience in {"mid", "high"}
+    assert "没有推力" not in r2.brief.say_intent
+    assert "回指" in r2.brief.say_intent or "本场痕迹" in r2.brief.say_intent
+    assert "星空" in r2.brief.say_intent
+    assert "星空" in r2.utterance
+    assert "嗯，听着" not in r2.utterance
+
+
+def test_backref_without_facts_does_not_fake_memory():
+    """无同场痕迹时，回指话不假装记得。"""
+    r = turn("刚才那个还记得吗", new_session=True, stub=True)
+    # 场是空的：不应走「用本场痕迹接」的回指动力
+    assert "本场痕迹" not in r.brief.say_intent
+
+
+def test_brief_to_prompt_includes_session_facts():
+    from birth.llm_opencode import brief_to_prompt
+
+    turn("我想聊星空", new_session=True, stub=True)
+    brief = turn("刚才那个还记得吗", stub=True).brief
+    prompt = brief_to_prompt(brief)
+    assert "本场已知" in prompt
+    assert "星空" in prompt
+    assert "ThoughtBrief" not in prompt
+    assert "facts_this_session" not in prompt
