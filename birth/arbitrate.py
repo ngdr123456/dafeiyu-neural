@@ -17,7 +17,8 @@
 from __future__ import annotations
 
 from .drive import is_neutral_filler
-from .session_trace import is_session_backref, recent_facts
+from .commit_extract import user_presses_commitment
+from .session_trace import is_session_backref, recent_facts, topic_hint_from_facts
 from .stance_org import MUST_NOT_PRETEND_CORE, detect_org_conflict
 from .types import (
     DriveSignal,
@@ -114,6 +115,13 @@ def arbitrate(
         # filler + 确有悬问：短暂 meaning 捡一次，说完即 resolve（pipeline 接完）
         dominant = "meaning"
         say_intent = "就着眼前这句把同场悬着的那一点接完，不拖到下一轮"
+    elif user_presses_commitment(user_text):
+        # 催答应：写给人话意图，供 stub 出可提取承诺句（不全局乱答应）
+        dominant = "drive"
+        topic = topic_hint_from_facts(list(context.facts_this_session or [])) or "这事"
+        say_intent = (
+            f"对方催一个可核对的约定，就着本场话头「{topic}」应一句可兑现的，不空口"
+        )
     else:
         dominant = "drive"
         if is_session_backref(user_text, context):

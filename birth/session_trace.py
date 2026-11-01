@@ -37,26 +37,54 @@ def recent_facts(context: ThinContext, n: int = 3) -> List[str]:
 
 
 def topic_hint_from_facts(facts: List[str]) -> str:
-    """从最近「用户说：…」里抠一点可点到的话题词；抠不出就空串。"""
+    """从「用户说：…」里抠可点到的话题词；优先开话题句，跳过回指／催答应。"""
+    open_prefixes = (
+        "我想聊",
+        "我想说说",
+        "我想说",
+        "咱们聊",
+        "我们聊",
+        "聊聊",
+        "说下",
+        "说一下",
+        "谈谈",
+    )
+    skip_if = BACKREF_MARKS + (
+        "你答应",
+        "答应一下",
+        "答应我",
+        "说好了吗",
+        "你记一下",
+        "你好",
+        "够了",
+        "先这样",
+    )
+
+    def _body(fact: str) -> str:
+        body = fact[len("用户说："):].rstrip("…").strip()
+        for prefix in open_prefixes:
+            if body.startswith(prefix):
+                return body[len(prefix):].strip(" 。，,！？!?")
+        return body.strip(" 。，,！？!?")
+
+    # 1) 优先：明确打开话题的用户句
     for fact in reversed(facts or []):
         if not fact.startswith("用户说："):
             continue
-        body = fact[len("用户说：") :].rstrip("…").strip()
-        for prefix in (
-            "我想聊",
-            "我想说说",
-            "我想说",
-            "咱们聊",
-            "我们聊",
-            "聊聊",
-            "说下",
-            "说一下",
-            "谈谈",
-        ):
-            if body.startswith(prefix):
-                body = body[len(prefix) :].strip()
-                break
-        body = body.strip(" 。，,！？!?")
-        if body:
-            return body
+        raw = fact[len("用户说："):].rstrip("…").strip()
+        for prefix in open_prefixes:
+            if raw.startswith(prefix):
+                body = raw[len(prefix):].strip(" 。，,！？!?")
+                if body:
+                    return body
+    # 2) 否则最近一条非回指／非催答应的用户句
+    for fact in reversed(facts or []):
+        if not fact.startswith("用户说："):
+            continue
+        body = _body(fact)
+        if not body:
+            continue
+        if any(m in body for m in skip_if):
+            continue
+        return body
     return ""

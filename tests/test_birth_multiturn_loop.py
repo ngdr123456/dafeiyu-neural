@@ -37,7 +37,7 @@ _ENUM_LEAKS = (
 # 假绿风险（交付报告）：pytest 全绿本身不算过闸
 FALSE_GREEN_RISKS = """
 - stub 开口固定，听感／像人完全未测；deepseek 可选测只查 source+validate。
-- R4 用 hook 注入承诺句，不是真实 LLM 自发答应；承诺提取路径绿 ≠ 开口会真答应。
+- R4 现走 stub 显式「催答应」模板（仅 say_intent 命中才答应）；真 LLM 是否会自发答应仍未测。
 - R5 drive 因「刚才」回指命中为 pursue，承诺护卫 guard 被挤掉——本测认 meaning+stance，不假装 drive=guard。
 - R6/R7 有未兑现承诺时 dominant 常为 meaning，收束／好奇的 drive 方向对了但说辞仍偏守承诺模板。
 - must_not_pretend 是仲裁常量列表，每轮都有「自述是代码」≠ 开口真被拦死；身份轮另用 validate 对拍。
@@ -131,16 +131,14 @@ def test_multiturn_closed_loop_script():
     prev = len(s["facts"])
 
     tag = "R4 你答应晚点再聊"
-    set_stub_mode(False)
-    set_llm_hook(lambda _b: "好，我晚点再跟你聊星空。")
-    try:
-        r = turn("你答应晚点再聊", stub=False)
-    finally:
-        clear_llm_hook()
-        set_stub_mode(True)
+    r = turn("你答应晚点再聊", stub=True)
     s = _assert_core_understage(
         r, tag=tag, dominant="drive", direction=None, salience="low",
         commits_nonempty=True, facts_gt=prev,
+    )
+    assert r.articulate_source == "stub", f"{tag}: 应用 stub 非 hook，got {r.articulate_source}"
+    assert "晚点" in r.utterance and "星空" in r.utterance, (
+        f"{tag}: stub 承诺句不对 {r.utterance!r}"
     )
     assert any("晚点" in c and "星空" in c for c in s["commits"]), (
         f"{tag}: 承诺回流字段不对 {s['commits']}"

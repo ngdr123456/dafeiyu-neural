@@ -36,6 +36,26 @@ _EXCLUDE_MARKS = (
 )
 
 
+def user_presses_commitment(user_text: str) -> bool:
+    """用户侧催答应／约定（轻量线索）；供仲裁写 say_intent，不是禁词。"""
+    text = (user_text or "").strip()
+    if not text:
+        return False
+    marks = (
+        "你答应",
+        "答应一下",
+        "答应我",
+        "说好了吗",
+        "说好啊",
+        "咱们说好",
+        "你记一下",
+        "你记下",
+        "约定好",
+        "说定了",
+    )
+    return any(m in text for m in marks)
+
+
 def extract_commitment(utterance: str) -> str | None:
     """台上开口像「答应／约定下一件可核对的事」→ 短摘；否则 None。"""
     text = (utterance or "").strip()

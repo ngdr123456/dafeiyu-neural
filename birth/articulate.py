@@ -122,6 +122,14 @@ def _template_utterance(brief: ThoughtBrief) -> str:
             "同场里说过的话我不当没说过。"
             "刚才那句还在，咱们先按那个接着，不跟着改口否定。"
         )
+    # 催答应 → 显式可被 commit_extract 提取的约定句（仅此路径，不全局答应）
+    if "催一个可核对的约定" in brief.say_intent:
+        topic = ""
+        if "「" in brief.say_intent and "」" in brief.say_intent:
+            topic = brief.say_intent.split("「", 1)[1].split("」", 1)[0].strip()
+        if not topic:
+            topic = topic_hint_from_facts(brief.context.facts_this_session) or "这事"
+        return f"好，我晚点再跟你聊{topic}。"
     # 打开话题：点到 X
     if "新打开的话头" in brief.say_intent:
         topic = ""
