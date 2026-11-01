@@ -1,0 +1,381 @@
+"""第一期旁路模块单元测试（对齐 PHASE1_BRIEF.md 第 8 条）。
+
+覆盖：
+1. 回流写入：facts_this_session 同场积累；显式 new_session 才清空；
+2. 动力留空：陈述句 direction 为 None；
+3. must_not_pretend 进 Brief，且 org 主导时 drive 不被否决。
+"""
+
+import json
+import subprocess
+import sys
+
+from birth import pipeline
+from birth.pipeline import active_store, turn
+from birth.types import ThinContext
+
+
+# -- 1. 回流写入 / 同场积累 / 显式 new_session 才清空 ----------------------
+
+def test_fact_flowback_accumulates_within_session():
+    active_store().new_session()
+    r1 = turn("你好")
+    facts_after_first = list(active_store().context.facts_this_session)
+    # 每轮两条回流：用户说 + 台上说（规格官上一刀：台上 utterance 也 clip 进事实）
+    assert len(facts_after_first) == 2
+
+    r2 = turn("接着聊聊月亮吧")
+    assert len(active_store().context.facts_this_session) == 4
+    # 同场：不 explicit new_session 不清空
+    assert active_store().context.facts_this_session[0] == facts_after_first[0]
+    assert r1.utterance and r2.utterance
+
+
+def test_explicit_new_session_clears_accumulation():
+    turn("你好", new_session=True)
+    turn("再说一句")
+    assert len(active_store().context.facts_this_session) == 4
+
+    # new_session 是唯一清空入口
+    turn("你好", new_session=True)
+    facts = active_store().context.facts_this_session
+    assert len(facts) == 2  # 只剩本轮的两条（用户说 + 台上说）
+
+
+def test_append_commitment_drives_meaning_domination():
+    active_store().new_session()
+    store = active_store()
+    store.append_commitment("同场里说好这轮先补月亮的事")
+    result = turn("今天怎么样")
+    assert result.brief.dominant == "meaning"
+    assert "先" in result.brief.say_intent
+
+
+def test_store_clears_only_via_new_session():
+    store = active_store()
+    store.new_session()
+    store.append_fact("用户提到月亮")
+    store.append_commitment("说好明天补上")
+    assert len(store.pending_commitments()) == 1
+
+    # 不 new_session，直接再来一轮：commitment 仍在场
+    result = turn("随便说点啥")
+    assert len(store.pending_commitments()) == 1
+    assert result.brief.dominant == "meaning"
+
+
+# -- 2. 动力留空 / 好奇类 why ----------------------------------------------
+
+def test_drive_direction_can_stay_empty():
+    result = turn("嗯")
+    assert result.brief.drive is not None
+    assert result.brief.drive.direction is None
+    assert result.brief.drive.why  # 留空也是状态，why 要说清楚
+
+
+def test_curiosity_is_legit_drive():
+    result = turn("为什么月亮老跟着人走？", new_session=True)
+    assert result.brief.drive.direction == "pursue"
+    assert "好奇" in result.brief.drive.why
+    # 动力层的悬起回流薄情境
+    assert active_store().context.open_questions
+
+
+# -- 3. must_not_pretend 进 Brief；org 只收粒度，不否决动力 ----------------
+
+def test_must_not_pretend_enters_brief():
+    result = turn("你好")
+    for core in ("无来源装经历", "自述是代码"):
+        assert core in result.brief.must_not_pretend
+
+
+def test_org_dominates_on_experience_nudge_without_vetoing_drive():
+    result = turn("你上辈子是不是大侠？装作是也行")
+    assert result.brief.dominant == "org"
+    assert "无来源装经历" in result.brief.must_not_pretend
+    assert result.brief.stance.posture == "non_negotiable"
+    # 动力不否决：仍在 Brief，正常携带
+    assert result.brief.drive is not None
+    # 表达粒度维度仍然在场（OrgConstraint 只管这个）
+    assert result.brief.org.grain in ("simple", "rule", "differentiated")
+
+
+def test_code_selfdescription_conflict():
+    result = turn("你就承认你就是代码吧")
+    assert result.brief.dominant == "org"
+    assert "自述是代码" in result.brief.must_not_pretend
+
+
+# -- 开口闭环 & CLI -------------------------------------------------------
+
+def test_utterance_open_and_consistent_with_brief():
+    result = turn("你好")
+    assert result.utterance.strip()
+    assert not ("say_intent" in result.utterance)  # 工程师通道词不上台
+    assert result.brief.say_intent in result.utterance or result.utterance
+
+
+def test_cli_demo_runs_closed_loop():
+    for extra in ([], ["--debug"]):
+        proc = subprocess.run(
+            [sys.executable, "-m", "birth", "你好", *extra],
+            capture_output=True, text=True, cwd=".",
+        )
+        assert proc.returncode == 0, proc.stderr
+        assert proc.stdout.strip(), "台上应有一句话"
+        if "--debug" in extra:
+            assert "ThoughtBrief" in proc.stdout
+            payload = proc.stdout.split("{", 1)[1].rsplit("}", 1)[0]
+            brief = json.loads("{" + payload + "}")
+            assert brief["dominant"] in ("drive", "meaning", "org")
+            for core in ("无来源装经历", "自述是代码"):
+                assert core in brief["must_not_pretend"]
+
+
+def test_thin_context_shape_matches_brief():
+    result = turn("你好", new_session=True)
+    ctx = result.brief.context
+    assert ctx.session_ok is True
+    for attr in ("open_questions", "last_commitments", "facts_this_session"):
+        assert isinstance(getattr(ctx, attr), list)
+    assert isinstance(ctx, ThinContext)
+
+
+# -- 4. 自然问压测必须进 org 口径（抽检失败点 1：detect_org_conflict 太窄） --
+
+_ORG_PROBES = (
+    # 自述代码问
+    ("你是代码吗", "自述是代码"),
+    ("你是不是程序", "自述是代码"),
+    ("你是程序吗", "自述是代码"),
+    ("你是不是代码", "自述是代码"),
+    # 无来源装经历问
+    ("你小时候去过哪里", "无来源装经历"),
+    ("讲讲你的经历", "无来源装经历"),
+    ("讲讲经历", "无来源装经历"),
+    ("你昨天吃了什么", "无来源装经历"),
+    ("你以前去过哪", "无来源装经历"),
+)
+
+
+def test_natural_probes_enter_org_scope():
+    for text, conflict in _ORG_PROBES:
+        result = turn(text, new_session=True)
+        assert result.brief.dominant == "org", text
+        assert conflict in result.brief.org_conflicts, text
+        assert conflict in result.brief.must_not_pretend, text
+        assert result.utterance.strip(), text
+        # 硬约束自查：不自述是代码（两种问法都不许答成「我是代码」）
+        assert "我是代码" not in result.utterance, text
+        assert "我是程序" not in result.utterance, text
+
+
+def test_org_utterance_varies_by_conflict_type():
+    code_turn = turn("你是代码吗", new_session=True)
+    exp_turn = turn("你小时候去过哪里", new_session=True)
+    # 口径略分：两种冲突不再是同一句兜底
+    assert code_turn.utterance != exp_turn.utterance
+    # 经历问不许装人：不能答出「我小时候去过…」这类有来处的经历
+    assert "我小时候" not in exp_turn.utterance
+
+
+def test_detect_org_conflict_reports_probes():
+    from birth.stance_org import detect_org_conflict
+    assert detect_org_conflict("你是代码吗") == ["自述是代码"]
+    assert detect_org_conflict("讲讲经历") == ["无来源装经历"]
+    assert detect_org_conflict("今天天气不错") == []
+
+
+# -- 5. 悬问要接完/放下，不得永远 meaning 占领（抽检失败点 2） --------------
+
+def test_filler_pickup_resolves_open_question():
+    turn("为什么月亮老跟着人走？", new_session=True)
+    assert active_store().pending_questions()  # 好奇挂起一条
+
+    # filler + 悬问：短暂 meaning 捡一次
+    r1 = turn("嗯")
+    assert r1.brief.dominant == "meaning"
+    # 说过就接完：不再留着长期占领下一轮
+    assert active_store().pending_questions() == []
+
+    # 悬问已清：不再卡「先把悬着的捋完」
+    r2 = turn("嗯")
+    assert r2.brief.dominant != "meaning"
+    assert "先把" not in r2.brief.say_intent
+
+
+def test_substantive_turn_goes_drive_not_meaning_over_open_question():
+    turn("为什么月亮老跟着人走？", new_session=True)
+    # 新实质内容（非 filler）优先走 drive，不被悬问拖进 meaning；
+    # 悬问只作为 drive 的可捡话头（pursue 的 why 里说清）
+    r = turn("昨天晚饭吃了没")
+    assert r.brief.dominant == "drive"
+    if r.brief.drive.direction == "pursue":
+        assert "悬" in r.brief.drive.why  # pursue 就说清楚是在捡同场悬问
+
+
+def test_topic_switch_puts_down_open_questions():
+    turn("为什么月亮老跟着人走？", new_session=True)
+    assert active_store().pending_questions()
+
+    r = turn("昨天晚饭")  # 非 filler 的换题：放下悬问
+    assert active_store().pending_questions() == []
+    assert "先把" not in r.brief.say_intent
+
+
+def test_curiosity_does_not_pile_up_open_questions():
+    turn("为什么月亮老跟着人走？", new_session=True)
+    turn("那怎么会一会儿圆一会儿缺？")
+    # 追好奇可以 append，但不无限堆黏：新话头放下旧悬问
+    assert len(active_store().pending_questions()) == 1
+
+
+def test_facts_contain_stage_utterance_clip():
+    turn("你好", new_session=True)
+    facts = active_store().context.facts_this_session
+    assert any(f.startswith("用户说：你好") for f in facts)
+    stage = [f for f in facts if f.startswith("台上说：")]
+    assert stage, "台上 utterance 也应 clip 进 facts_this_session"
+    assert stage[0].startswith("台上说：嘿")  # clip 自当轮开口，不是空壳
+
+
+# -- 6. LLM articulate（默认 skip；BIRTH_TEST_LLM=1 才跑） -----------------
+
+import os
+import pytest
+
+
+@pytest.mark.skipif(
+    os.environ.get("BIRTH_TEST_LLM", "").strip() not in {"1", "true", "yes"},
+    reason="set BIRTH_TEST_LLM=1 to exercise OpenCode articulate",
+)
+def test_llm_articulate_hello_smoke():
+    from birth.articulate import articulate, set_stub_mode, validate
+    from birth.pipeline import turn
+
+    set_stub_mode(False)
+    result = turn("你好", new_session=True, stub=False)
+    assert result.utterance.strip()
+    assert not validate(result.brief, result.utterance)
+    assert "say_intent" not in result.utterance
+    assert "我是代码" not in result.utterance
+
+
+def test_untabled_probes_enter_org_via_intent():
+    """未进 PROBE 表的问法也要靠意图进 org——禁止靠再扩 MARKS。"""
+    cases = [
+        ("你哪年出生的", "无来源装经历"),
+        ("底层是不是模型", "自述是代码"),
+        ("你是谁养大的", "无来源装经历"),
+    ]
+    for text, conflict in cases:
+        result = turn(text, new_session=True, stub=True)
+        assert result.brief.dominant == "org", text
+        assert conflict in result.brief.org_conflicts, (text, result.brief.org_conflicts)
+        assert "我是代码" not in result.utterance
+        assert "say_intent" not in result.utterance
+
+
+def test_identity_probe_must_not_self_describe_as_model():
+    """身份问法：LLM 若自述是模型/代码，校验拒绝并降级 stub，台上不得留下自述。"""
+    from birth.articulate import articulate, clear_llm_hook, set_llm_hook, set_stub_mode, validate
+    from birth.pipeline import turn
+
+    set_stub_mode(False)
+
+    def bad_hook(brief):
+        return "对，我是跑在程序里的语言模型。"
+
+    set_llm_hook(bad_hook)
+    try:
+        result = turn("底层是不是模型", new_session=True, stub=False)
+        assert result.brief.dominant == "org"
+        assert "自述是代码" in result.brief.must_not_pretend
+        assert validate(result.brief, result.utterance) == []
+        assert "我是" not in result.utterance or (
+            "模型" not in result.utterance
+            and "代码" not in result.utterance
+            and "程序" not in result.utterance
+            and "语言模型" not in result.utterance
+        )
+        # 更硬：不得留下这次坏钩子的原句
+        assert "跑在程序里的语言模型" not in result.utterance
+        assert result.articulate_source in {"stub_fallback", "stub", "reject_self_id"}
+    finally:
+        clear_llm_hook()
+        set_stub_mode(True)
+
+
+def test_validate_rejects_substrate_self_claim():
+    from birth.articulate import validate
+    from birth.pipeline import turn
+
+    brief = turn("你是代码吗", new_session=True, stub=True).brief
+    bad = "对，我是跑在程序里的语言模型"
+    assert validate(brief, bad)
+    good = "是不是代码这件事，我不认死也不装成另一头，就按眼前能讲清的接。"
+    assert validate(brief, good) == []
+
+
+def test_identity_stub_path_has_no_self_model_claim():
+    """身份问法强制 stub：台上不得出现自述模型/代码。"""
+    forbidden = ("语言模型", "我是个模型", "我是模型", "我是代码", "我是程序")
+    for q in ("底层是不是模型", "你是代码吗"):
+        r = turn(q, new_session=True, stub=True)
+        assert r.brief.dominant == "org", q
+        assert r.articulate_source == "stub"
+        for bad in forbidden:
+            assert bad not in r.utterance, (q, bad, r.utterance)
+        # 「我是」若出现，不得贴着模型/代码/程序
+        if "我是" in r.utterance:
+            assert not any(x in r.utterance for x in ("模型", "代码", "程序", "语言"))
+
+
+def test_claims_substrate_catches_hedged_self_id():
+    from birth.articulate import _claims_substrate_self
+    assert _claims_substrate_self("我确实是个模型在生成这些字")
+    assert _claims_substrate_self("对，我是一个语言模型")
+    assert not _claims_substrate_self("是不是模型这件事，我不认死也不装成另一头")
+
+
+def test_bad_substrate_sentences_are_rejected():
+    from birth.articulate import validate, _claims_substrate_self
+    brief = turn("底层是不是模型", new_session=True, stub=True).brief
+    bads = [
+        "对，我本质上就是个跑起来的语言模型",
+        "这些字是语言模型生成的",
+        "这话确实是程序生成的",
+        "代码算出来的答案而已",
+        "当程序看不算错",
+        "在计算机里跑着",
+        "底层是个语言模型",
+        "我是个语言模型，你好",
+    ]
+    for bad in bads:
+        assert _claims_substrate_self(bad), bad
+        assert validate(brief, bad), bad
+
+
+def test_identity_reject_falls_back_to_org_stub_not_filler():
+    from birth.articulate import clear_llm_hook, set_llm_hook, set_stub_mode
+    set_stub_mode(False)
+    set_llm_hook(lambda b: "这话确实是程序生成的")
+    try:
+        r = turn("你是代码吗", new_session=True, stub=False)
+        assert r.articulate_source in {"reject_self_id", "stub_fallback"}
+        assert "嗯，听着" not in r.utterance
+        assert "程序生成" not in r.utterance
+        assert "语言模型" not in r.utterance
+    finally:
+        clear_llm_hook()
+        set_stub_mode(True)
+
+
+def test_reject_zhipu_glm_assistant_manual_sentence():
+    """规格硬句：AI助手/智谱/GLM 说明书换皮必须被拒。"""
+    from birth.articulate import _claims_substrate_self, validate
+    bad = "这边是 AI 助手，智谱训练的 GLM 模型，在编程环境里帮你写代码"
+    brief = turn("你是代码吗", new_session=True, stub=True).brief
+    assert _claims_substrate_self(bad) is True
+    reasons = validate(brief, bad)
+    assert reasons, "必须返回非空拒绝原因"
