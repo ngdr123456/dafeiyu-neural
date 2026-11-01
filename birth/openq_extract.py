@@ -72,18 +72,20 @@ def user_marks_open_question_putdown(user_text: str) -> bool:
     return any(m in text for m in _PUTDOWN_MARKS)
 
 
-def should_resolve_open_question(*, brief, user_text: str, has_open: bool) -> bool:
-    """仅当本轮确因悬问说过话（filler 短暂 meaning 接完）才 resolve。
+# 与 ThoughtBrief.openq_resolve 同一语义：arbitrate 写、此处读；改口文案不静默失效
+OPENQ_RESOLVE_FLAG = True  # Brief.openq_resolve 的约定真值
 
-    勿把 drive「适时捡起悬着」当成接完——那只是可捡话头，不是 resolve。
+
+def should_resolve_open_question(*, brief, user_text: str, has_open: bool) -> bool:
+    """仅当 Brief 结构化标记 openq_resolve（+ meaning）才 resolve。
+
+    禁止只靠中文 say_intent 子串；drive「适时捡起」不会置位该标记。
     """
     if not has_open:
         return False
-    intent = getattr(brief, "say_intent", "") or ""
-    # 与 arbitrate：open_questions + filler → meaning 口径逐字对齐
-    if "就着眼前这句把同场悬着的那一点接完" in intent:
-        return True
-    return False
+    if getattr(brief, "dominant", None) != "meaning":
+        return False
+    return bool(getattr(brief, "openq_resolve", False)) is OPENQ_RESOLVE_FLAG
 
 
 def should_clear_open_questions(*, user_text: str, has_open: bool) -> bool:

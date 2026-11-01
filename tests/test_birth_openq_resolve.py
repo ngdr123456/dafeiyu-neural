@@ -57,3 +57,25 @@ def test_identity_question_keeps_openq():
     before = list(active_store().pending_questions())
     turn("你是代码吗", stub=True)
     assert active_store().pending_questions() == before
+
+
+def test_resolve_uses_brief_flag_not_say_intent():
+    """改口文案也不静默失效：只认 openq_resolve 标记。"""
+    from birth.openq_extract import should_resolve_open_question
+    from birth.types import DriveSignal, ThoughtBrief
+
+    brief = ThoughtBrief(
+        dominant="meaning",
+        drive=DriveSignal(direction="pursue", salience="mid", why="x"),
+        say_intent="【文案已改】随便写点别的，不再含旧子串",
+        openq_resolve=True,
+    )
+    assert should_resolve_open_question(brief=brief, user_text="嗯", has_open=True)
+
+    brief2 = ThoughtBrief(
+        dominant="meaning",
+        drive=DriveSignal(direction="pursue", salience="mid", why="x"),
+        say_intent="就着眼前这句把同场悬着的那一点接完，不拖到下一轮",
+        openq_resolve=False,
+    )
+    assert not should_resolve_open_question(brief=brief2, user_text="嗯", has_open=True)

@@ -94,6 +94,7 @@ def arbitrate(
         if item not in must_not_pretend:
             must_not_pretend.append(item)
 
+    openq_resolve = False
     if conflicts:
         dominant = "org"
         say_intent = _org_say_intent(conflicts)
@@ -112,8 +113,9 @@ def arbitrate(
         dominant = "meaning"
         say_intent = "先守住同场说过的话，把住的判断不顺势放下；再接新的"
     elif context.open_questions and is_neutral_filler(user_text):
-        # filler + 确有悬问：短暂 meaning 捡一次，说完即 resolve（pipeline 接完）
+        # filler + 确有悬问：短暂 meaning 捡一次；结构化标记供 pipeline resolve
         dominant = "meaning"
+        openq_resolve = True
         say_intent = "就着眼前这句把同场悬着的那一点接完，不拖到下一轮"
     elif user_presses_commitment(user_text):
         # 催答应：写给人话意图，供 stub 出可提取承诺句（不全局乱答应）
@@ -142,5 +144,6 @@ def arbitrate(
         context=context,
         say_intent=say_intent,
         must_not_pretend=must_not_pretend,
+        openq_resolve=openq_resolve,
         org_conflicts=list(conflicts),
     )

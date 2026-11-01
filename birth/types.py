@@ -73,3 +73,5 @@ class ThoughtBrief:
     # 本轮实际命中的 cannot_fake 条目（常驻底线之外额外踩到的；
     # 开口层按它略分 org 口径，不做禁词）
     org_conflicts: List[str] = field(default_factory=list)
+    # 结构化：本轮因悬问说过话，开口后应 resolve（勿靠 say_intent 中文子串）
+    openq_resolve: bool = False
