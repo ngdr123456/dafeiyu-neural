@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from .arbitrate import arbitrate
 from .articulate import articulate, last_articulate_source
 from .commit_extract import extract_commitment
+from .openq_extract import extract_open_question
 from .context import ThinContextStore
 from .drive import CURIOSITY_MARKS, infer_drive, is_neutral_filler
 from .stance_org import default_org, default_stance
@@ -77,15 +78,23 @@ def turn(
         _STORE.clear_open_questions()
 
     # 开口后回流薄情境：本轮用户的话头 + 台上这句都 clip 进同场事实；
-    # 动力层的好奇追问入库；台上若像答应/约定则薄提取承诺（宁缺毋滥）
+    # 动力层好奇追问入库；台上薄提取承诺/悬问（宁缺毋滥）
     _STORE.append_fact(f"用户说：{_clip(user_text)}")
     _STORE.append_fact(f"台上说：{_clip(utterance)}")
     commitment = extract_commitment(utterance)
     if commitment:
         _STORE.append_commitment(commitment)
-    if (drive.direction == "pursue"
-            and any(mark in user_text for mark in CURIOSITY_MARKS)):
+    # 好奇挂起优先记用户话头；否则才薄提取台上问句（避免同轮叠两条）
+    curiosity_hang = (
+        drive.direction == "pursue"
+        and any(mark in user_text for mark in CURIOSITY_MARKS)
+    )
+    if curiosity_hang:
         _STORE.append_open_question(f"待接的话头：{_clip(user_text)}")
+    else:
+        open_q = extract_open_question(utterance)
+        if open_q:
+            _STORE.append_open_question(open_q)
 
     return TurnResult(
         utterance=utterance,

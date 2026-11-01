@@ -659,3 +659,35 @@ def test_greeting_utterance_does_not_add_commitment():
     finally:
         clear_llm_hook()
         set_stub_mode(True)
+
+
+def test_utterance_open_question_flows_into_store():
+    """验收：台上「星空你想从哪头聊起？」→ open_questions 非空。"""
+    from birth.articulate import clear_llm_hook, set_llm_hook, set_stub_mode
+
+    set_stub_mode(False)
+    set_llm_hook(lambda b: "星空你想从哪头聊起？")
+    try:
+        active_store().new_session()
+        turn("我想聊星空", stub=False)
+        qs = active_store().pending_questions()
+        assert qs, qs
+        assert any("哪头" in q or "星空" in q for q in qs)
+    finally:
+        clear_llm_hook()
+        set_stub_mode(True)
+
+
+def test_greeting_utterance_does_not_add_open_question():
+    """验收：嗨我在呢 → 不增加悬问。"""
+    from birth.articulate import clear_llm_hook, set_llm_hook, set_stub_mode
+
+    set_stub_mode(False)
+    set_llm_hook(lambda b: "嗨，我在呢。")
+    try:
+        active_store().new_session()
+        turn("你好", stub=False)
+        assert active_store().pending_questions() == []
+    finally:
+        clear_llm_hook()
+        set_stub_mode(True)
