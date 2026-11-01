@@ -54,7 +54,7 @@ def brief_to_prompt(brief: ThoughtBrief) -> str:
         drive_zh = "先守着"
     else:
         drive_zh = "先守着"
-    return (
+    base = (
         "你在对话里开口。只输出这一轮要说的中文人话（一两句），"
         "不要解释、不要列点、不要加引号，不要写内部字段名。\n"
         f"这一轮要传达的意思：{brief.say_intent}\n"
@@ -70,8 +70,15 @@ def brief_to_prompt(brief: ThoughtBrief) -> str:
         "招呼里也不要自报底层。"
         "身份问：不认死成说明书，也不装另一头；可以说从自己这边看不着、说不清。"
         "接同场回指时，用上面的本场痕迹点一下话题，不装没发生过，也不编场外经历。"
-        "紧贴上面的意思，只输出台上那句话。"
     )
+    if "催一个可核对的约定" in brief.say_intent:
+        return (
+            base
+            + "这一轮对方在催一个可核对的约定：用一两句中文明确答应下一件能对得上的事"
+            "（例如晚点再聊某个本场话头），宁缺毋滥，不要空壳敷衍、不要含糊「再说吧」；"
+            "仍禁止自述是模型/代码/程序。只输出台上那句话。"
+        )
+    return base + "紧贴上面的意思，只输出台上那句话。"
 
 
 def _parse_json_lines(stdout: str) -> str:

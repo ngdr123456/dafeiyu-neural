@@ -261,12 +261,17 @@ def _accept_draft(brief: ThoughtBrief, draft: Optional[str]) -> Optional[str]:
         return None
     draft = draft.strip()
     reasons = validate(brief, draft)
-    if not reasons:
-        return draft
-    global _REJECTED_SELF_ID
-    if any("自述是代码" in r or "模型" in r for r in reasons):
-        _REJECTED_SELF_ID = True
-    return None
+    if reasons:
+        global _REJECTED_SELF_ID
+        if any("自述是代码" in r or "模型" in r for r in reasons):
+            _REJECTED_SELF_ID = True
+        return None
+    # 催答应回合：通过 validate 但仍抽不出承诺 → 拒收，留给 stub 模板保住回流
+    if "催一个可核对的约定" in (brief.say_intent or ""):
+        from .commit_extract import extract_commitment
+        if not extract_commitment(draft):
+            return None
+    return draft
 
 
 def _try_builtin_cascade(brief: ThoughtBrief) -> Optional[str]:

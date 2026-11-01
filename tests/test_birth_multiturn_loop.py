@@ -37,7 +37,7 @@ _ENUM_LEAKS = (
 # 假绿风险（交付报告）：pytest 全绿本身不算过闸
 FALSE_GREEN_RISKS = """
 - stub 开口固定，听感／像人完全未测；deepseek 可选测只查 source+validate。
-- R4 现走 stub 显式「催答应」模板（仅 say_intent 命中才答应）；真 LLM 是否会自发答应仍未测。
+- R4 多轮剧本仍 stub=True 保回归；另有 hook／可选 deepseek 测催答应可提取。LLM 空壳答应会被拒收并 stub 兜底，但真网波动／模型跑偏仍可能偶发。
 - R5 drive 因「刚才」回指命中为 pursue，承诺护卫 guard 被挤掉——本测认 meaning+stance，不假装 drive=guard。
 - R6/R7 有未兑现承诺时 dominant 常为 meaning，收束／好奇的 drive 方向对了但说辞仍偏守承诺模板。
 - must_not_pretend 是仲裁常量列表，每轮都有「自述是代码」≠ 开口真被拦死；身份轮另用 validate 对拍。
@@ -236,6 +236,83 @@ def test_multiturn_optional_deepseek_one_round():
         set_stub_mode(True)
         clear_llm_hook()
 
+
+
+
+def test_press_commitment_hook_extractable():
+    """催答应 + stub=False：可控 hook 出可提取承诺，source=hook。"""
+    from birth.commit_extract import extract_commitment
+
+    set_stub_mode(False)
+    set_llm_hook(lambda _b: "好，我晚点再跟你聊星空。")
+    try:
+        active_store().new_session()
+        turn("我想聊星空", stub=True)  # 铺本场话头（stub 即可）
+        set_stub_mode(False)
+        set_llm_hook(lambda _b: "好，我晚点再跟你聊星空。")
+        r = turn("你答应晚点再聊", stub=False)
+        assert "催一个可核对的约定" in r.brief.say_intent
+        assert r.articulate_source == "hook", r.articulate_source
+        assert extract_commitment(r.utterance), r.utterance
+        assert any("晚点" in c and "星空" in c for c in active_store().pending_commitments())
+        from birth.llm_opencode import brief_to_prompt
+        prompt = brief_to_prompt(r.brief)
+        assert "可核对的约定" in prompt
+        assert "宁缺毋滥" in prompt
+        for bad in ("pursue", "guard", "non_negotiable"):
+            assert bad not in prompt
+    finally:
+        clear_llm_hook()
+        set_stub_mode(True)
+
+
+def test_press_commitment_empty_llm_falls_to_stub_extractable():
+    """催答应：LLM/hook 空壳或不可提取 → stub_fallback，仍可 extract。"""
+    from birth.commit_extract import extract_commitment
+
+    set_stub_mode(False)
+    # 通过 validate 但不含约定形状 → 应被 _accept_draft 拒收
+    set_llm_hook(lambda _b: "嗯，知道了，你先说吧。")
+    try:
+        active_store().new_session()
+        turn("我想聊星空", stub=True)
+        set_stub_mode(False)
+        set_llm_hook(lambda _b: "嗯，知道了，你先说吧。")
+        r = turn("你答应晚点再聊", stub=False)
+        assert r.articulate_source in {"stub_fallback", "reject_self_id"}, r.articulate_source
+        assert extract_commitment(r.utterance), r.utterance
+        assert any("晚点" in c for c in active_store().pending_commitments())
+    finally:
+        clear_llm_hook()
+        set_stub_mode(True)
+
+
+def test_press_commitment_optional_deepseek_extractable():
+    """可选：真 DeepSeek 催答应一轮，可提取或至少 stub_fallback 可提取。"""
+    from birth import llm_deepseek as ds
+    from birth.commit_extract import extract_commitment
+
+    if not ds.available():
+        pytest.skip("deepseek 不可用")
+
+    clear_llm_hook()
+    set_stub_mode(False)
+    try:
+        active_store().new_session()
+        turn("我想聊星空", stub=True)
+        set_stub_mode(False)
+        r = turn("你答应晚点再聊", stub=False)
+        assert "催一个可核对的约定" in r.brief.say_intent
+        assert r.articulate_source in {
+            "deepseek", "opencode", "stub_fallback", "reject_self_id"
+        }, r.articulate_source
+        assert extract_commitment(r.utterance), (
+            f"source={r.articulate_source} utt={r.utterance!r}"
+        )
+        assert active_store().pending_commitments()
+    finally:
+        set_stub_mode(True)
+        clear_llm_hook()
 
 def test_false_green_risks_documented():
     """闸门第 3 条：假绿风险写进交付物，防止空文档。"""
