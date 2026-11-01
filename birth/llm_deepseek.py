@@ -93,7 +93,8 @@ def generate_utterance(brief: ThoughtBrief) -> Optional[str]:
             {"role": "user", "content": _brief_prompt(brief)},
         ],
         "max_tokens": 256,
-        # 开口只要短人话，关掉默认 thinking，省延迟与预算
+        # 开口不是填表：略高于理解层 temperature=0；thinking 关掉省预算
+        "temperature": float(os.environ.get("BIRTH_DEEPSEEK_TEMPERATURE", "0.7")),
         "thinking": {"type": "disabled"},
     }
     data = json.dumps(body).encode("utf-8")
