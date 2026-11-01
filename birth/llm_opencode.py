@@ -40,11 +40,23 @@ def brief_to_prompt(brief: ThoughtBrief) -> str:
         "needs_clarify": "需澄清",
     }.get(brief.stance.posture, "可退")
     stake = (brief.stance.stake or "接住这一轮").strip()
+    # 动力人话：想接着追／先守着／先停下；禁止 pursue 等枚举漏出
+    drive = brief.drive
+    why = (drive.why if drive else "") or ""
+    if drive is None or drive.direction is None:
+        drive_zh = "没有硬要追的劲"
+    elif "重复空追" in why or drive.direction == "guard":
+        drive_zh = "先停下"
+    elif drive.direction == "pursue":
+        drive_zh = "想接着追"
+    else:
+        drive_zh = "先守着"
     return (
         "你在对话里开口。只输出这一轮要说的中文人话（一两句），"
         "不要解释、不要列点、不要加引号，不要写内部字段名。\n"
         f"这一轮要传达的意思：{brief.say_intent}\n"
         f"这一轮怎么站：{posture_zh}——{stake}\n"
+        f"这一轮劲头：{drive_zh}\n"
         "本场已知（薄，仅供接话，勿当性格/自传）：\n"
         f"{fact_block}\n"
         f"{extra_block}"

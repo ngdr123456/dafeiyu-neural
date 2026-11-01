@@ -76,6 +76,10 @@ _ONSTAGE_TEMPLATES: dict[str, str] = {
         "同场里说过的话我不当没说过。刚才那句还在，咱们先按那个接着，不跟着改口否定。",
     "不空壳升华：先澄清这一轮能讲清的直径，没有根据就不装人生答案":
         "人生有没有意义这类大词，我这边没有现成鸡汤。能讲的只有眼前这句里能讲清的部分，你具体指哪一块？",
+    "对方示意够了或先收束，稳住、不继续加码追":
+        "好，那就先这样。你回头想接着再叫我就行。",
+    "这一轮先停硬追，老实接住对方的不满或缺口，不装已经答完":
+        "这轮我不硬往下追了。你缺的那块或刚才的不满，你直接说，我接着。",
 }
 _ORG_TEMPLATES: dict[str, str] = {
     "无来源装经历": (
@@ -116,6 +120,20 @@ def _template_utterance(brief: ThoughtBrief) -> str:
             "同场里说过的话我不当没说过。"
             "刚才那句还在，咱们先按那个接着，不跟着改口否定。"
         )
+    # 打开话题：点到 X
+    if "新打开的话头" in brief.say_intent:
+        topic = ""
+        if "「" in brief.say_intent and "」" in brief.say_intent:
+            topic = brief.say_intent.split("「", 1)[1].split("」", 1)[0].strip()
+        if topic:
+            return f"行，那就聊{topic}。你想从哪头起？"
+        return "行，你开的这个话头我接着。你想从哪头起？"
+    # 满足／收束：不继续加码追问
+    if "够了或先收束" in brief.say_intent or "不继续加码追" in brief.say_intent:
+        return "好，那就先这样。你回头想接着再叫我就行。"
+    # 空追该停
+    if "先停硬追" in brief.say_intent:
+        return "这轮我不硬往下追了。你缺的那块或刚才的不满，你直接说，我接着。"
     # 回指：点到同场话题词，禁止掉成通用「嗯听着」
     if "回指" in brief.say_intent or "本场痕迹" in brief.say_intent:
         topic = topic_hint_from_facts(brief.context.facts_this_session)

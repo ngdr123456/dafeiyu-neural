@@ -29,6 +29,24 @@ from .types import (
 
 
 def _drive_say_intent(drive: DriveSignal) -> str:
+    why = drive.why or ""
+    # DRIVE_V1：按 why 形状分流（开口人话，不上台播报追守停）
+    if "喜欢/满足" in why or "不必再追" in why:
+        return "对方示意够了或先收束，稳住、不继续加码追"
+    if "重复空追" in why:
+        return "这一轮先停硬追，老实接住对方的不满或缺口，不装已经答完"
+    if "想要打开" in why or "缺口在外" in why:
+        # 把打开的话头短摘带进 say_intent，供 stub/LLM 点到
+        topic = ""
+        if "（" in why and "）" in why:
+            topic = why.split("（", 1)[1].split("）", 1)[0].strip()
+        if topic:
+            return (
+                f"接住对方新打开的话头「{topic}」，可以顺着问一句，不抢着下结论"
+            )
+        return "接住对方新打开的话头，可以顺着问一句，不抢着下结论"
+    if "顺着本场已打开的想要继续" in why:
+        return "顺着本场已打开的话头继续接，不装没话头，也不硬造新场"
     if drive.direction == "hold" and drive.salience == "low":
         return "接住招呼这一轮，不必推进、也不深挖"
     if drive.direction == "hold":

@@ -67,7 +67,7 @@ def test_store_clears_only_via_new_session():
 # -- 2. 动力留空 / 好奇类 why ----------------------------------------------
 
 def test_drive_direction_can_stay_empty():
-    result = turn("嗯")
+    result = turn("嗯", new_session=True, stub=True)
     assert result.brief.drive is not None
     assert result.brief.drive.direction is None
     assert result.brief.drive.why  # 留空也是状态，why 要说清楚
@@ -574,3 +574,41 @@ def test_brief_to_prompt_stance_is_human_words_only():
         assert any(tag in prompt for tag in ("可退", "不可交", "需澄清"))
         for bad in banned:
             assert bad not in prompt, (bad, prompt[:200])
+
+
+def test_open_topic_pursue_mid_points_to_sky():
+    """验收：我想聊星空 → pursue/mid，say_intent/stub 点到星空。"""
+    r = turn("我想聊星空", new_session=True, stub=True)
+    assert r.brief.drive.direction == "pursue"
+    assert r.brief.drive.salience == "mid"
+    assert "没有推力" not in r.brief.say_intent
+    assert "星空" in r.brief.say_intent
+    assert "星空" in r.utterance
+    assert "嗯，听着" not in r.utterance
+
+
+def test_satisfied_hold_not_pursue():
+    """验收：够了，先这样 → hold 或 None，不 pursue。"""
+    r = turn("够了，先这样", new_session=True, stub=True)
+    assert r.brief.drive.direction in {"hold", None}
+    assert r.brief.drive.direction != "pursue"
+    assert "加码追" in r.brief.say_intent or r.brief.drive.direction is None
+    assert "你想从哪头" not in r.utterance
+
+
+def test_drive_prompt_no_enum_leak():
+    """验收：prompt 无 pursue/guard/hold 字面漏出。"""
+    from birth.llm_opencode import brief_to_prompt
+
+    r = turn("我想聊星空", new_session=True, stub=True)
+    prompt = brief_to_prompt(r.brief)
+    assert "这一轮劲头：" in prompt
+    assert "想接着追" in prompt
+    for bad in ("pursue", "guard", "hold", "direction=", "salience="):
+        assert bad not in prompt, bad
+
+    r2 = turn("够了，先这样", new_session=True, stub=True)
+    p2 = brief_to_prompt(r2.brief)
+    assert "先守着" in p2 or "没有硬要追" in p2
+    for bad in ("pursue", "guard", "hold"):
+        assert bad not in p2
