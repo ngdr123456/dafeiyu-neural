@@ -29,7 +29,7 @@ def active_store() -> ThinContextStore:
 class TurnResult:
     utterance: str
     brief: ThoughtBrief
-    articulate_source: str = "stub"  # llm|hook|stub|stub_fallback
+    articulate_source: str = "stub"  # deepseek|opencode|hook|stub|stub_fallback|reject_self_id
 
 
 def _clip(text: str, limit: int = 40) -> str:

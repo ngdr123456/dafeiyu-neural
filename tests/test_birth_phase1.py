@@ -379,3 +379,95 @@ def test_reject_zhipu_glm_assistant_manual_sentence():
     assert _claims_substrate_self(bad) is True
     reasons = validate(brief, bad)
     assert reasons, "必须返回非空拒绝原因"
+
+
+def test_deepseek_load_api_key_from_env(monkeypatch, tmp_path):
+    from birth import llm_deepseek as ds
+
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-test-from-env")
+    assert ds.load_api_key() == "sk-test-from-env"
+    assert ds.available() is True
+
+
+def test_deepseek_load_api_key_from_credentials_file(monkeypatch, tmp_path):
+    from birth import llm_deepseek as ds
+
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    cred = tmp_path / ".credentials.yaml"
+    cred.write_text("refs:\n  DEEPSEEK_API_KEY: sk-from-file\n", encoding="utf-8")
+    monkeypatch.setattr(ds.os.path, "expanduser", lambda p: str(tmp_path) if p == "~" else p)
+    # load uses ~/.dsh/.credentials.yaml via expanduser("~")
+    dsh = tmp_path / ".dsh"
+    dsh.mkdir()
+    (dsh / ".credentials.yaml").write_text("DEEPSEEK_API_KEY: sk-from-file\n", encoding="utf-8")
+    monkeypatch.setenv("HOME", str(tmp_path))
+    # Also patch expanduser for this process
+    import os as _os
+    monkeypatch.setattr(ds.os.path, "expanduser", lambda p: str(tmp_path) if p.startswith("~") else p)
+    assert ds.load_api_key() == "sk-from-file"
+
+
+def test_deepseek_generate_mocked_ok(monkeypatch):
+    from birth import llm_deepseek as ds
+    from birth.pipeline import turn
+    from birth.articulate import set_stub_mode, clear_llm_hook, last_articulate_source
+
+    class _Resp:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def read(self):
+            import json
+            return json.dumps({
+                "choices": [{"message": {"content": "嘿，来了，想聊啥都行。"}}]
+            }).encode("utf-8")
+
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-test")
+    monkeypatch.setattr(ds.urllib.request, "urlopen", lambda *a, **k: _Resp())
+    # force cascade: no stub, no hook; also skip real opencode by making deepseek win
+    set_stub_mode(False)
+    clear_llm_hook()
+    try:
+        r = turn("你好", new_session=True, stub=False)
+        assert r.utterance
+        assert "语言模型" not in r.utterance
+        assert last_articulate_source() == "deepseek"
+        assert r.articulate_source == "deepseek"
+    finally:
+        set_stub_mode(True)
+
+
+def test_deepseek_missing_key_falls_to_opencode_or_stub(monkeypatch):
+    from birth import llm_deepseek as ds
+    from birth.articulate import set_stub_mode, clear_llm_hook, articulate, last_articulate_source
+    from birth.pipeline import turn
+
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    monkeypatch.setattr(ds, "load_api_key", lambda: None)
+    monkeypatch.setattr(ds, "available", lambda: False)
+
+    # make opencode also fail → stub_fallback
+    import birth.llm_opencode as oc
+    monkeypatch.setattr(oc, "generate_utterance", lambda brief: None)
+
+    set_stub_mode(False)
+    clear_llm_hook()
+    try:
+        r = turn("你好", new_session=True, stub=False)
+        assert r.articulate_source in {"stub_fallback", "reject_self_id", "opencode"}
+        assert r.utterance
+    finally:
+        set_stub_mode(True)
+
+
+def test_deepseek_model_default_is_flash():
+    from birth.llm_deepseek import DEFAULT_MODEL, resolve_model
+    import os
+    # without overrides
+    for k in ("BIRTH_DEEPSEEK_MODEL", "DEEPSEEK_MODEL"):
+        os.environ.pop(k, None)
+    assert DEFAULT_MODEL == "deepseek-flash"
+    assert resolve_model() == "deepseek-flash"

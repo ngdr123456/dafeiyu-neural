@@ -17,7 +17,7 @@ DEFAULT_MODEL = os.environ.get("BIRTH_OPENCODE_MODEL", "opencode/deepseek-v4.1-f
 DEFAULT_TIMEOUT_S = float(os.environ.get("BIRTH_OPENCODE_TIMEOUT", "90"))
 
 
-def _brief_prompt(brief: ThoughtBrief) -> str:
+def brief_to_prompt(brief: ThoughtBrief) -> str:
     """只留 say_intent + 不可装作的人话约束。"""
     must_not = "、".join(brief.must_not_pretend) or "无"
     return (
@@ -59,7 +59,7 @@ def generate_utterance(brief: ThoughtBrief) -> Optional[str]:
     if not binary:
         return None
 
-    prompt = _brief_prompt(brief)
+    prompt = brief_to_prompt(brief)
     cmd = [
         binary,
         "run",

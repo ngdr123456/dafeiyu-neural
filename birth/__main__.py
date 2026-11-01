@@ -1,7 +1,7 @@
 """CLI demo：一期旁路闭环在命令行上跑一句。
 
 用法：
-    python -m birth "你好"              # 默认走 OpenCode 免费模型开口
+    python -m birth "你好"              # 默认 DeepSeek API，失败再 OpenCode
     python -m birth "你好" --stub       # 强制模板 stub
     python -m birth "你好" --debug      # 额外打印台下 Brief（工程师通道）
 """
@@ -23,7 +23,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("user_text", nargs="?", default="你好", help="用户这一轮说的话（默认「你好」）")
     parser.add_argument("--debug", action="store_true", help="打印台下 Brief（工程师通道）")
-    parser.add_argument("--stub", action="store_true", help="强制模板开口，不调 OpenCode")
+    parser.add_argument("--stub", action="store_true", help="强制模板开口，不调 DeepSeek/OpenCode")
     parser.add_argument("--new-session", action="store_true", help="显式开新场，清空同场积累")
     return parser
 
@@ -44,12 +44,16 @@ def main(argv: list[str] | None = None) -> int:
     if args.debug:
         print()
         src = result.articulate_source
-        if src == "stub_fallback":
-            print("[debug] 开口来源：stub_fallback（LLM 失败，已回退模板——不当默默绿灯）")
-        elif src == "reject_self_id":
-            print("[debug] 开口来源：reject_self_id（自述模型/代码被拒，已回退模板）")
-        else:
-            print(f"[debug] 开口来源：{src}")
+        labels = {
+            "deepseek": "deepseek（Mark DeepSeek API）",
+            "opencode": "opencode（免费兜底）",
+            "hook": "hook",
+            "stub": "stub（强制模板）",
+            "stub_fallback": "stub_fallback（LLM 失败，已回退模板——不当默默绿灯）",
+            "reject_self_id": "reject_self_id（自述模型/代码被拒，已回退模板）",
+            "llm": "llm",
+        }
+        print(f"[debug] 开口来源：{labels.get(src, src)}")
         print("[debug] 台下 ThoughtBrief（工程师通道）")
         print(json.dumps(asdict(result.brief), ensure_ascii=False, indent=2))
     return 0

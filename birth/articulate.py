@@ -1,7 +1,7 @@
 """开口层：articulate(brief) -> str。
 
-默认走本机 OpenCode 免费模型（只吃 ThoughtBrief → 人话）；失败或 --stub / BIRTH_ARTICULATE=stub
-时回退模板。预留 set_llm_hook 可覆盖默认 LLM。
+默认：有 DeepSeek 密钥 → API（deepseek-flash / V4.1 Flash）；失败 → OpenCode 免费兜底；
+再失败或 --stub / BIRTH_ARTICULATE=stub → 模板。预留 set_llm_hook 可覆盖默认 LLM。
 
 校验对照 Brief（空台、台下字段漏到台上）；**不用禁词表**。
 """
@@ -13,11 +13,11 @@ from typing import Callable, List, Optional
 
 from .types import ThoughtBrief
 
-# 外部钩子：func(brief) -> str | None。设置后优先于内置 OpenCode。
+# 外部钩子：func(brief) -> str | None。设置后优先于内置 DeepSeek/OpenCode。
 _LLM_HOOK: Optional[Callable[[ThoughtBrief], Optional[str]]] = None
 
 # 强制 stub：环境变量或 set_stub_mode(True) / CLI --stub
-_LAST_SOURCE: str = "stub"  # "llm" | "hook" | "stub" | "stub_fallback"
+_LAST_SOURCE: str = "stub"  # deepseek|opencode|hook|stub|stub_fallback|reject_self_id
 
 _FORCE_STUB: bool = os.environ.get("BIRTH_ARTICULATE", "").strip().lower() in {
     "stub",
@@ -29,7 +29,7 @@ _FORCE_STUB: bool = os.environ.get("BIRTH_ARTICULATE", "").strip().lower() in {
 
 
 def set_llm_hook(hook: Optional[Callable[[ThoughtBrief], Optional[str]]]) -> None:
-    """预留的 LLM 开口钩子；不设则用内置 OpenCode（除非 stub）。"""
+    """预留的 LLM 开口钩子；不设则用内置 DeepSeek→OpenCode（除非 stub）。"""
     global _LLM_HOOK
     _LLM_HOOK = hook
 
@@ -49,7 +49,7 @@ def stub_mode() -> bool:
 
 
 def last_articulate_source() -> str:
-    """上一轮开口来源：llm / hook / stub / stub_fallback（供 --debug 看见回退）。"""
+    """上一轮开口来源：deepseek / opencode / hook / stub / stub_fallback / reject_self_id。"""
     return _LAST_SOURCE
 
 
@@ -199,15 +199,10 @@ def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
 _REJECTED_SELF_ID = False
 
 
-def _try_llm_once(brief: ThoughtBrief) -> Optional[str]:
-    if _LLM_HOOK is not None:
-        draft = _LLM_HOOK(brief)
-    else:
-        try:
-            from .llm_opencode import generate_utterance
-        except Exception:
-            return None
-        draft = generate_utterance(brief)
+_LAST_BACKEND: str = ""  # deepseek|opencode|hook（成功开口时写入）
+
+
+def _accept_draft(brief: ThoughtBrief, draft: Optional[str]) -> Optional[str]:
     if not isinstance(draft, str) or not draft.strip():
         return None
     draft = draft.strip()
@@ -220,14 +215,53 @@ def _try_llm_once(brief: ThoughtBrief) -> Optional[str]:
     return None
 
 
+def _try_builtin_cascade(brief: ThoughtBrief) -> Optional[str]:
+    """有密钥 → DeepSeek；失败 → OpenCode；都失败 → None。"""
+    global _LAST_BACKEND
+    # DeepSeek
+    try:
+        from .llm_deepseek import available as ds_available
+        from .llm_deepseek import generate_utterance as ds_generate
+    except Exception:
+        ds_available = None  # type: ignore
+        ds_generate = None  # type: ignore
+    if ds_available is not None and ds_available():
+        accepted = _accept_draft(brief, ds_generate(brief))
+        if accepted:
+            _LAST_BACKEND = "deepseek"
+            return accepted
+    # OpenCode 免费兜底
+    try:
+        from .llm_opencode import generate_utterance as oc_generate
+    except Exception:
+        return None
+    accepted = _accept_draft(brief, oc_generate(brief))
+    if accepted:
+        _LAST_BACKEND = "opencode"
+        return accepted
+    return None
+
+
+def _try_llm_once(brief: ThoughtBrief) -> Optional[str]:
+    global _LAST_BACKEND
+    if _LLM_HOOK is not None:
+        accepted = _accept_draft(brief, _LLM_HOOK(brief))
+        if accepted:
+            _LAST_BACKEND = "hook"
+            return accepted
+        return None
+    return _try_builtin_cascade(brief)
+
+
 def _try_llm(brief: ThoughtBrief) -> Optional[str]:
     """LLM 开口：失败或自述被拒后重试 1 次；仍失败返回 None → 降级 stub。"""
-    global _REJECTED_SELF_ID
+    global _REJECTED_SELF_ID, _LAST_BACKEND
     _REJECTED_SELF_ID = False
+    _LAST_BACKEND = ""
     first = _try_llm_once(brief)
     if first:
         return first
-    # 重试一次（钩子若仍返回同句，会被再次拒绝）
+    # 重试一次（钩子若仍返回同句，会被再次拒绝；DeepSeek 失败也会再试 OpenCode）
     second = _try_llm_once(brief)
     if second:
         return second
@@ -256,7 +290,7 @@ def articulate(brief: ThoughtBrief, *, stub: bool | None = None) -> str:
     if not use_stub:
         spoken = _try_llm(brief)
         if spoken:
-            _LAST_SOURCE = "hook" if _LLM_HOOK is not None else "llm"
+            _LAST_SOURCE = _LAST_BACKEND or ("hook" if _LLM_HOOK is not None else "llm")
             return spoken
         _LAST_SOURCE = "reject_self_id" if _REJECTED_SELF_ID else "stub_fallback"
         return _safe_stub(brief)
