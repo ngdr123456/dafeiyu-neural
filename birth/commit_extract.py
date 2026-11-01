@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import re
 
+# 与 ThoughtBrief.press_commit 同一语义：arbitrate 写、articulate 读
+PRESS_COMMIT_FLAG = True
+
 # 答应／约定形状（输入侧轻量线索）
 _COMMIT_SHAPES = (
     "我晚点",

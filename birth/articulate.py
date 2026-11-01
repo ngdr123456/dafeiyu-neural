@@ -122,8 +122,8 @@ def _template_utterance(brief: ThoughtBrief) -> str:
             "同场里说过的话我不当没说过。"
             "刚才那句还在，咱们先按那个接着，不跟着改口否定。"
         )
-    # 催答应 → 显式可被 commit_extract 提取的约定句（仅此路径，不全局答应）
-    if "催一个可核对的约定" in brief.say_intent:
+    # 催答应 → 显式可被 commit_extract 提取的约定句（读 press_commit，不全局答应）
+    if getattr(brief, "press_commit", False):
         topic = ""
         if "「" in brief.say_intent and "」" in brief.say_intent:
             topic = brief.say_intent.split("「", 1)[1].split("」", 1)[0].strip()
@@ -266,11 +266,10 @@ def _accept_draft(brief: ThoughtBrief, draft: Optional[str]) -> Optional[str]:
         if any("自述是代码" in r or "模型" in r for r in reasons):
             _REJECTED_SELF_ID = True
         return None
-    # 闭合约束（推进+规格／煤球拍板）：仅当 say_intent 已命中
-    # 「催一个可核对的约定」才用 extract 拒收；禁止扩词表、禁止当通用堵嘴。
-    # 本刀不扩 commit_extract 词表。
-    if "催一个可核对的约定" in (brief.say_intent or ""):
-        from .commit_extract import extract_commitment
+    # 闭合约束：仅当 Brief.press_commit（与 PRESS_COMMIT_FLAG 同义）才用 extract 拒收；
+    # 禁止只靠 say_intent 中文子串；禁止扩词表、禁止当通用堵嘴；不扩 commit_extract 词表。
+    from .commit_extract import PRESS_COMMIT_FLAG, extract_commitment
+    if bool(getattr(brief, "press_commit", False)) is PRESS_COMMIT_FLAG:
         if not extract_commitment(draft):
             return None
     return draft

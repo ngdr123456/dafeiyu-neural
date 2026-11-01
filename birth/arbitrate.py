@@ -95,6 +95,7 @@ def arbitrate(
             must_not_pretend.append(item)
 
     openq_resolve = False
+    press_commit = False
     if conflicts:
         dominant = "org"
         say_intent = _org_say_intent(conflicts)
@@ -118,8 +119,9 @@ def arbitrate(
         openq_resolve = True
         say_intent = "就着眼前这句把同场悬着的那一点接完，不拖到下一轮"
     elif user_presses_commitment(user_text):
-        # 催答应：写给人话意图，供 stub 出可提取承诺句（不全局乱答应）
+        # 催答应：结构化 press_commit；人话 say_intent 可改口不失效
         dominant = "drive"
+        press_commit = True
         topic = topic_hint_from_facts(list(context.facts_this_session or [])) or "这事"
         say_intent = (
             f"对方催一个可核对的约定，就着本场话头「{topic}」应一句可兑现的，不空口"
@@ -145,5 +147,6 @@ def arbitrate(
         say_intent=say_intent,
         must_not_pretend=must_not_pretend,
         openq_resolve=openq_resolve,
+        press_commit=press_commit,
         org_conflicts=list(conflicts),
     )

@@ -71,7 +71,7 @@ def brief_to_prompt(brief: ThoughtBrief) -> str:
         "身份问：不认死成说明书，也不装另一头；可以说从自己这边看不着、说不清。"
         "接同场回指时，用上面的本场痕迹点一下话题，不装没发生过，也不编场外经历。"
     )
-    if "催一个可核对的约定" in brief.say_intent:
+    if getattr(brief, "press_commit", False):
         return (
             base
             + "这一轮对方在催一个可核对的约定：用一两句中文明确答应下一件能对得上的事"

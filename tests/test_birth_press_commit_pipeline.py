@@ -4,7 +4,7 @@
 articulate(真 LLM 通道／hook) → extract_commitment → ThinContext 回流；
 失败／不可提取 → stub_fallback 模板仍可提取。
 
-约束：extract 拒收仅当 say_intent 命中「催一个可核对的约定」；不扩 commit_extract 词表、不当通用堵嘴。
+约束：extract 拒收仅当 Brief.press_commit；禁止只靠 say_intent 中文子串；不扩词表、不当通用堵嘴。
 """
 
 from __future__ import annotations
@@ -45,7 +45,8 @@ def test_press_marks_and_arbitrate_say_intent():
     assert user_presses_commitment("你答应晚点再聊")
     assert not user_presses_commitment("你好")
     brief = _brief_after_sky()
-    assert "催一个可核对的约定" in brief.say_intent
+    assert brief.press_commit is True
+    assert "催一个可核对的约定" in brief.say_intent  # 人话仍可有，但不作为闸
     assert "星空" in brief.say_intent
 
 
@@ -113,3 +114,30 @@ def test_optional_deepseek_press_pipeline():
     finally:
         set_stub_mode(True)
         clear_llm_hook()
+
+
+def test_press_reject_uses_flag_not_say_intent():
+    """改口文案仍拒空壳；无 press_commit 即使旧子串也不拒收。"""
+    from birth.articulate import _accept_draft
+    from birth.types import DriveSignal, ThoughtBrief, ThinContext
+
+    empty = "嗯，知道了，你先说吧。"
+    brief_flag = ThoughtBrief(
+        dominant="drive",
+        drive=DriveSignal(direction=None, salience="low", why="x"),
+        say_intent="【文案已改】对方要你应一句，别提旧子串",
+        press_commit=True,
+        context=ThinContext(),
+    )
+    assert _accept_draft(brief_flag, empty) is None
+    assert _accept_draft(brief_flag, "好，我晚点再跟你聊星空。") is not None
+
+    brief_substr_only = ThoughtBrief(
+        dominant="drive",
+        drive=DriveSignal(direction=None, salience="low", why="x"),
+        say_intent="对方催一个可核对的约定，就着本场话头「星空」应一句可兑现的，不空口",
+        press_commit=False,
+        context=ThinContext(),
+    )
+    # 无标记：空壳不应被「催答应拒收」打掉（仍可通过 validate）
+    assert _accept_draft(brief_substr_only, empty) == empty
