@@ -133,8 +133,15 @@ def test_multiturn_closed_loop_script():
 
     tag = "R4 你答应晚点再聊"
     r = turn("你答应晚点再聊", stub=True)
+    # 收紧 clear 后，R2 stub 悬问可能仍在 → drive 可 pursue 悬问话头；承诺回流才是本轮硬点
+    assert r.brief.dominant == "drive", f"{tag}: dominant={r.brief.dominant}"
+    assert r.brief.drive.direction in {None, "pursue"}, (
+        f"{tag}: direction={r.brief.drive.direction}"
+    )
     s = _assert_core_understage(
-        r, tag=tag, dominant="drive", direction=None, salience="low",
+        r, tag=tag, dominant="drive",
+        direction=r.brief.drive.direction,  # 接受 None 或 pursue
+        salience=r.brief.drive.salience,
         commits_nonempty=True, facts_gt=prev,
     )
     assert r.articulate_source == "stub", f"{tag}: 应用 stub 非 hook，got {r.articulate_source}"

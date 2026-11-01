@@ -50,3 +50,53 @@ def extract_open_question(utterance: str) -> str | None:
     if len(clip) > 40:
         clip = clip[:40] + "…"
     return clip or None
+
+
+# 放下／换题：可检验线索（宁缺毋滥；不是禁词堵嘴）
+_PUTDOWN_MARKS = (
+    "先放下",
+    "先不说这个",
+    "换个话题",
+    "别提那个了",
+    "不问了",
+    "这个先搁下",
+    "悬着的先放",
+    "刚才那个先别问",
+)
+
+
+def user_marks_open_question_putdown(user_text: str) -> bool:
+    text = (user_text or "").strip()
+    if not text:
+        return False
+    return any(m in text for m in _PUTDOWN_MARKS)
+
+
+def should_resolve_open_question(*, brief, user_text: str, has_open: bool) -> bool:
+    """仅当本轮确因悬问说过话（filler 短暂 meaning 接完）才 resolve。
+
+    勿把 drive「适时捡起悬着」当成接完——那只是可捡话头，不是 resolve。
+    """
+    if not has_open:
+        return False
+    intent = getattr(brief, "say_intent", "") or ""
+    # 与 arbitrate：open_questions + filler → meaning 口径逐字对齐
+    if "就着眼前这句把同场悬着的那一点接完" in intent:
+        return True
+    return False
+
+
+def should_clear_open_questions(*, user_text: str, has_open: bool) -> bool:
+    """换题 clear 须可检验：真开新话头或用户明示放下。闲聊／改口／身份勿清。"""
+    if not has_open:
+        return False
+    text = (user_text or "").strip()
+    if not text:
+        return False
+    if user_marks_open_question_putdown(text):
+        return True
+    # 真开新话头（复用动力层前缀，避免另造词表堵嘴）
+    from .drive import _extract_open_topic
+    if _extract_open_topic(text):
+        return True
+    return False

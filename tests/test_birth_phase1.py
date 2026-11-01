@@ -218,8 +218,9 @@ def test_topic_switch_puts_down_open_questions():
     turn("为什么月亮老跟着人走？", new_session=True)
     assert active_store().pending_questions()
 
-    r = turn("昨天晚饭")  # 非 filler 的换题：放下悬问
-    assert active_store().pending_questions() == []
+    r = turn("我想聊昨天晚饭")  # 可检验的真开新话头：放下旧悬问
+    # 开题 stub 可能写入新「哪头」悬问；旧月亮好奇不得残留
+    assert not any("月亮" in q or "为什么" in q for q in active_store().pending_questions())
     assert "先把" not in r.brief.say_intent
 
 

@@ -12,9 +12,13 @@ from dataclasses import dataclass
 from .arbitrate import arbitrate
 from .articulate import articulate, last_articulate_source
 from .commit_extract import extract_commitment, should_resolve_commitment
-from .openq_extract import extract_open_question
+from .openq_extract import (
+    extract_open_question,
+    should_clear_open_questions,
+    should_resolve_open_question,
+)
 from .context import ThinContextStore
-from .drive import CURIOSITY_MARKS, infer_drive, is_neutral_filler
+from .drive import CURIOSITY_MARKS, infer_drive
 from .stance_org import default_org, default_stance
 from .types import ThoughtBrief
 
@@ -63,18 +67,16 @@ def turn(
 
     utterance = articulate(brief, stub=stub)
 
-    # 悬问的收放（先于新回流写入，用的是本轮开始时的快照）：
-    # - 本轮因悬问说过话（filler 且确有悬问 → meaning 短暂捡一次）→ 接完第一条；
-    # - 本轮是新实质内容（非 filler）→ 旧悬问放下，眼前的话头优先；
-    # - 非 filler 且本轮正好把悬问捡起来了（drive pursue 顺着悬问）→ 同样放下。
-    spoke_for_open_question = (
-        brief.dominant == "meaning"
-        and not context.last_commitments
-        and bool(context.open_questions)
-    )
-    if spoke_for_open_question:
+    # 悬问收放（可检验；对齐承诺宁缺——拿不准不清）：
+    # - resolve：仅本轮确因悬问说过话（say_intent 含悬着接完）；
+    # - clear：真开新话头／用户明示放下；闲聊／改口否定／身份问勿误清。
+    if should_resolve_open_question(
+        brief=brief, user_text=user_text, has_open=bool(context.open_questions)
+    ):
         _STORE.resolve_open_question()
-    elif not is_neutral_filler(user_text) and context.open_questions:
+    elif should_clear_open_questions(
+        user_text=user_text, has_open=bool(context.open_questions)
+    ):
         _STORE.clear_open_questions()
 
     # 承诺兑现／放下（对齐悬问 resolve；宁缺毋滥，拿不准不清）
@@ -97,6 +99,9 @@ def turn(
         and any(mark in user_text for mark in CURIOSITY_MARKS)
     )
     if curiosity_hang:
+        # 新好奇挂起替换旧悬问（可检验的「新话头」，避免只进不出堆黏）
+        if _STORE.pending_questions():
+            _STORE.clear_open_questions()
         _STORE.append_open_question(f"待接的话头：{_clip(user_text)}")
     else:
         open_q = extract_open_question(utterance)
