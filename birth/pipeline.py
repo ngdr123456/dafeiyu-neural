@@ -2,8 +2,7 @@
 
 - 旧 engine/ 旧管线不改动、不 import；
 - 同场状态放在模块级 ThinContextStore，只有 turn(..., new_session=True) 清空；
-- 开口后事实/悬起回流 ThinContext（承诺的回流由说话层显式调用 append_commitment，
-  第一期不在 pipeline 里自动猜承诺）。
+- 开口后事实/悬起/薄承诺回流 ThinContext（extract_commitment 宁缺毋滥）。
 """
 
 from __future__ import annotations
@@ -12,6 +11,7 @@ from dataclasses import dataclass
 
 from .arbitrate import arbitrate
 from .articulate import articulate, last_articulate_source
+from .commit_extract import extract_commitment
 from .context import ThinContextStore
 from .drive import CURIOSITY_MARKS, infer_drive, is_neutral_filler
 from .stance_org import default_org, default_stance
@@ -77,9 +77,12 @@ def turn(
         _STORE.clear_open_questions()
 
     # 开口后回流薄情境：本轮用户的话头 + 台上这句都 clip 进同场事实；
-    # 动力层的好奇追问入库（承诺只能显式回写）
+    # 动力层的好奇追问入库；台上若像答应/约定则薄提取承诺（宁缺毋滥）
     _STORE.append_fact(f"用户说：{_clip(user_text)}")
     _STORE.append_fact(f"台上说：{_clip(utterance)}")
+    commitment = extract_commitment(utterance)
+    if commitment:
+        _STORE.append_commitment(commitment)
     if (drive.direction == "pursue"
             and any(mark in user_text for mark in CURIOSITY_MARKS)):
         _STORE.append_open_question(f"待接的话头：{_clip(user_text)}")

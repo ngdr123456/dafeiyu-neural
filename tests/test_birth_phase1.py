@@ -625,3 +625,37 @@ def test_commitment_drive_is_guard():
     assert "要护" in r.brief.drive.why or "没兑现" in r.brief.drive.why
     # say_intent 守住口径
     assert "守" in r.brief.say_intent or "把住" in r.brief.say_intent
+
+
+def test_utterance_commitment_flows_into_store():
+    """验收：台上「我晚点再跟你聊星空」→ commitments 含短摘。"""
+    from birth.articulate import clear_llm_hook, set_llm_hook, set_stub_mode
+
+    set_stub_mode(False)
+    set_llm_hook(lambda b: "我晚点再跟你聊星空")
+    try:
+        active_store().new_session()
+        before = list(active_store().pending_commitments())
+        turn("随便", stub=False)
+        after = active_store().pending_commitments()
+        assert len(after) == len(before) + 1
+        assert any("晚点" in c and "星空" in c for c in after)
+        facts = active_store().context.facts_this_session
+        assert any("星空" in f for f in facts)
+    finally:
+        clear_llm_hook()
+        set_stub_mode(True)
+
+
+def test_greeting_utterance_does_not_add_commitment():
+    """验收：嗨我在呢 → commitments 不增加。"""
+    from birth.articulate import clear_llm_hook, set_llm_hook, set_stub_mode
+
+    set_stub_mode(False)
+    set_llm_hook(lambda b: "嗨，我在呢")
+    try:
+        turn("你好", new_session=True, stub=False)
+        assert active_store().pending_commitments() == []
+    finally:
+        clear_llm_hook()
+        set_stub_mode(True)
