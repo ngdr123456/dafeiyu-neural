@@ -45,10 +45,13 @@ def brief_to_prompt(brief: ThoughtBrief) -> str:
     why = (drive.why if drive else "") or ""
     if drive is None or drive.direction is None:
         drive_zh = "没有硬要追的劲"
-    elif "重复空追" in why or drive.direction == "guard":
+    elif "重复空追" in why:
         drive_zh = "先停下"
     elif drive.direction == "pursue":
         drive_zh = "想接着追"
+    elif drive.direction == "guard":
+        # 守承诺／把住 → 先守着；勿把枚举字面写进 prompt
+        drive_zh = "先守着"
     else:
         drive_zh = "先守着"
     return (

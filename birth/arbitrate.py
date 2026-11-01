@@ -56,6 +56,8 @@ def _drive_say_intent(drive: DriveSignal) -> str:
     if drive.direction == "pursue":
         return "适时捡起同场悬着的那一点，别晾着"
     if drive.direction == "guard":
+        if "没兑现" in why or "已有要护" in why:
+            return "先守住同场说过的话，把住的判断不顺势放下"
         return "想顺势，随得动，但把住的判断不顺势放下"
     return "这一轮没有推力，如实接话、不硬造事"
 
@@ -107,7 +109,7 @@ def arbitrate(
         say_intent = "不空壳升华：先澄清这一轮能讲清的直径，没有根据就不装人生答案"
     elif context.last_commitments:
         dominant = "meaning"
-        say_intent = "先把同场没兑现的话接上，再接新的"
+        say_intent = "先守住同场说过的话，把住的判断不顺势放下；再接新的"
     elif context.open_questions and is_neutral_filler(user_text):
         # filler + 确有悬问：短暂 meaning 捡一次，说完即 resolve（pipeline 接完）
         dominant = "meaning"

@@ -612,3 +612,16 @@ def test_drive_prompt_no_enum_leak():
     assert "先守着" in p2 or "没有硬要追" in p2
     for bad in ("pursue", "guard", "hold"):
         assert bad not in p2
+
+
+def test_commitment_drive_is_guard():
+    """规格订正：同场 commitment → direction=guard/mid，不是 hold。"""
+    store = active_store()
+    store.new_session()
+    store.append_commitment("同场里说好这轮先补月亮的事")
+    r = turn("今天怎么样", stub=True)
+    assert r.brief.drive.direction == "guard"
+    assert r.brief.drive.salience == "mid"
+    assert "要护" in r.brief.drive.why or "没兑现" in r.brief.drive.why
+    # say_intent 守住口径
+    assert "守" in r.brief.say_intent or "把住" in r.brief.say_intent

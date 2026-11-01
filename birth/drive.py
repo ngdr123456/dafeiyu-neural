@@ -164,13 +164,13 @@ def infer_drive(user_text: str, context: ThinContext) -> DriveSignal:
             why="用户在回指同场刚才的话头，动力要用本场已有痕迹接，不装没发生过",
         )
 
-    # 6) 同场承诺：已有要护
+    # 6) 同场承诺：已有要护 → guard（hold 留给满足收束／空追该停）
     if context.last_commitments:
         first = context.last_commitments[0]
         return DriveSignal(
-            direction="hold",
+            direction="guard",
             salience="mid",
-            why=f"同场有没兑现的话（{first}），这轮不能当没说过",
+            why=f"同场有没兑现的话（{first}），已有要护，这轮不能当没说过",
         )
 
     # 7) 悬问 + filler：可 pursue；纯 filler 留空
