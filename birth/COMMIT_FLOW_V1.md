@@ -18,3 +18,17 @@
 - 「嗨，我在呢」→ commitments 不增加
 - 已有承诺 +「那刚才说的不算」回归仍 non_negotiable/meaning
 - pytest 全绿；commit 勿 push
+
+
+## 兑现／放下（resolve）
+出处：《活出生命的意义》外补——出口的承诺是态度上可守的对象；**接完可放下**，否则同场承诺只进不出，意义/动力会被旧承诺长期占着。
+
+API（对齐悬问）：
+- `resolve_commitment()`：弹第一条
+- `clear_commitments()`：整场放下（慎用）
+
+pipeline 接线（宁缺毋滥；**勿**禁词堵嘴、勿扩成通用嘴闸）：
+- 用户明确「兑现了／补过了／你说过了…」类轻量线索 → resolve
+- 或本轮台上开口把 pending 可核对后续接上（含内容词 + 接着聊／补上…）→ resolve
+- 拿不准 → **不清**
+- 本刀**不**扩 `extract_commitment` 写入词表

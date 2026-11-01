@@ -3,8 +3,8 @@
 设计要点（对齐 PHASE1_BRIEF.md 第 2 条）：
 - 不做每句改性格，也不顶置长期性格记忆；只存本轮/同场要用的东西。
 - 唯一的清空入口是 :meth:`ThinContextStore.new_session`，其余只积累；
-  唯一的两个例外是悬问的收放：resolve_open_question（接完一条）与
-  clear_open_questions（用户换题时放下），只动 open_questions，不动事实/承诺。
+  例外：悬问 resolve_open_question／clear_open_questions；承诺
+  resolve_commitment／clear_commitments（兑现或明确放下时，只动承诺列表）。
 - 回流入口：append_fact / append_commitment；append_open_question 供动力层挂悬而未决。
 """
 
@@ -70,6 +70,19 @@ class ThinContextStore:
     def clear_open_questions(self) -> None:
         """放下同场所有悬问（用户换题、开了新话头时用）。"""
         self._context.open_questions.clear()
+
+    def resolve_commitment(self) -> str | None:
+        """兑现／接完第一条承诺：弹出并返回它；没有则 None。
+
+        对齐 resolve_open_question；态度上可守的对象，接完可放下。
+        """
+        if self._context.last_commitments:
+            return self._context.last_commitments.pop(0)
+        return None
+
+    def clear_commitments(self) -> None:
+        """放下同场所有承诺（仅明确整场放下时用；宁缺毋滥）。"""
+        self._context.last_commitments.clear()
 
     # -- 只读视图 ----------------------------------------------
 

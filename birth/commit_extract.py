@@ -85,3 +85,85 @@ def extract_commitment(utterance: str) -> str | None:
     if len(clip) > 40:
         clip = clip[:40] + "…"
     return clip or None
+
+
+# 兑现／放下：用户侧轻量线索（宁缺毋滥；不是禁词堵嘴，未命中就不清）
+_FULFILL_USER_MARKS = (
+    "兑现了",
+    "补过了",
+    "你补了",
+    "已经补了",
+    "你说过了",
+    "说过了",
+    "那件事补完",
+    "算你兑现",
+    "这句兑现了",
+)
+
+# 台上像把 pending 可核对后续接上的轻量形状
+_DELIVER_UTTER_MARKS = (
+    "接着聊",
+    "补上",
+    "补一下",
+    "说到这",
+    "就聊",
+    "先把这事说完",
+    "把前面那句接上",
+)
+
+
+def user_marks_commitment_done(user_text: str) -> bool:
+    """用户明确示意那件约定已补／已兑现。"""
+    text = (user_text or "").strip()
+    if not text:
+        return False
+    return any(m in text for m in _FULFILL_USER_MARKS)
+
+
+def utterance_covers_pending_commitment(utterance: str, commitment: str) -> bool:
+    """台上开口是否把 pending 承诺的可核对后续接上（宁缺毋滥）。
+
+    要求：承诺短摘里能抠到一点内容词，且开口含该词 + 接上形状；
+    拿不准（抠不出内容）→ False，不清。
+    """
+    utt = (utterance or "").strip()
+    pending = (commitment or "").strip()
+    if not utt or not pending or len(pending) < 4:
+        return False
+    if not any(m in utt for m in _DELIVER_UTTER_MARKS):
+        return False
+    # 从承诺里去掉约定壳，抠一点内容
+    body = pending
+    for shape in _COMMIT_SHAPES:
+        body = body.replace(shape, " ")
+    for noise in ("好，", "。", "，", "、", "…", "跟你", "再"):
+        body = body.replace(noise, " ")
+    tokens = [w for w in body.split() if len(w) >= 2]
+    if not tokens:
+        # 无空格中文：取连续 2+ 字片段中最长的非壳残留
+        compact = "".join(ch for ch in pending if ch not in "好，。、… ")
+        for shape in sorted(_COMMIT_SHAPES, key=len, reverse=True):
+            compact = compact.replace(shape, "")
+        tokens = [compact[i:i+2] for i in range(0, max(0, len(compact) - 1)) if compact[i:i+2].strip()]
+        tokens = [t for t in tokens if t and t not in ("跟你", "再聊", "晚点")]
+    # 至少有一个内容词出现在开口里
+    for tok in tokens:
+        if len(tok) >= 2 and tok in utt:
+            return True
+    return False
+
+
+def should_resolve_commitment(
+    *,
+    user_text: str,
+    utterance: str,
+    pending_first: str | None,
+) -> bool:
+    """可检验才 resolve；拿不准返回 False（不清）。不扩成通用嘴闸。"""
+    if not pending_first:
+        return False
+    if user_marks_commitment_done(user_text):
+        return True
+    if utterance_covers_pending_commitment(utterance, pending_first):
+        return True
+    return False

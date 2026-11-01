@@ -11,7 +11,7 @@ from dataclasses import dataclass
 
 from .arbitrate import arbitrate
 from .articulate import articulate, last_articulate_source
-from .commit_extract import extract_commitment
+from .commit_extract import extract_commitment, should_resolve_commitment
 from .openq_extract import extract_open_question
 from .context import ThinContextStore
 from .drive import CURIOSITY_MARKS, infer_drive, is_neutral_filler
@@ -76,6 +76,13 @@ def turn(
         _STORE.resolve_open_question()
     elif not is_neutral_filler(user_text) and context.open_questions:
         _STORE.clear_open_questions()
+
+    # 承诺兑现／放下（对齐悬问 resolve；宁缺毋滥，拿不准不清）
+    pending0 = context.last_commitments[0] if context.last_commitments else None
+    if should_resolve_commitment(
+        user_text=user_text, utterance=utterance, pending_first=pending0
+    ):
+        _STORE.resolve_commitment()
 
     # 开口后回流薄情境：本轮用户的话头 + 台上这句都 clip 进同场事实；
     # 动力层好奇追问入库；台上薄提取承诺/悬问（宁缺毋滥）
