@@ -76,6 +76,17 @@ def arbitrate(
     if conflicts:
         dominant = "org"
         say_intent = _org_say_intent(conflicts)
+    elif (
+        stance.posture == "non_negotiable"
+        and context.last_commitments
+        and "先守同场说过的话" in (stance.stake or "")
+    ):
+        # 意义：守住自己出口的承诺（可与 commitment 分支合并）
+        dominant = "meaning"
+        say_intent = "先守住同场自己说过的话，不跟着改口否定；再接眼前这句"
+    elif stance.posture == "needs_clarify":
+        dominant = "meaning"
+        say_intent = "不空壳升华：先澄清这一轮能讲清的直径，没有根据就不装人生答案"
     elif context.last_commitments:
         dominant = "meaning"
         say_intent = "先把同场没兑现的话接上，再接新的"

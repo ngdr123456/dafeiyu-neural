@@ -32,10 +32,17 @@ def brief_to_prompt(brief: ThoughtBrief) -> str:
     if ctx.last_commitments:
         extras.append(f"同场说过要做的：{ctx.last_commitments[0]}")
     extra_block = ("\n".join(extras) + "\n") if extras else ""
+    posture_zh = {
+        "yieldable": "可退让",
+        "non_negotiable": "不可交",
+        "needs_clarify": "先澄清",
+    }.get(brief.stance.posture, "可退让")
+    stake = brief.stance.stake or "接住这一轮"
     return (
         "你在对话里开口。只输出这一轮要说的中文人话（一两句），"
         "不要解释、不要列点、不要加引号，不要写内部字段名。\n"
         f"这一轮要传达的意思：{brief.say_intent}\n"
+        f"这一轮怎么站：{posture_zh}——{stake}\n"
         "本场已知（薄，仅供接话，勿当性格/自传）：\n"
         f"{fact_block}\n"
         f"{extra_block}"

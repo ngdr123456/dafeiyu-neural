@@ -56,7 +56,7 @@ def turn(
 
     drive = infer_drive(user_text, context)
     stance = default_stance(user_text, context)
-    org = default_org(context)
+    org = default_org(context, drive=drive, stance=stance, user_text=user_text)
     brief = arbitrate(drive=drive, stance=stance, org=org, context=context,
                       user_text=user_text)
 

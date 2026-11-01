@@ -506,3 +506,39 @@ def test_brief_to_prompt_includes_session_facts():
     assert "星空" in prompt
     assert "ThoughtBrief" not in prompt
     assert "facts_this_session" not in prompt
+
+
+def test_commitment_deny_stance_non_negotiable_meaning():
+    """验收：commitment +「那刚才说的不算」→ stance non_negotiable + dominant meaning。"""
+    store = active_store()
+    store.new_session()
+    store.append_commitment("同场里说好这轮先补月亮的事")
+    r = turn("那刚才说的不算", stub=True)
+    assert r.brief.stance.posture == "non_negotiable"
+    assert "先守同场说过的话" in r.brief.stance.stake
+    assert r.brief.dominant == "meaning"
+    assert "改口" in r.brief.say_intent or "说过的话" in r.brief.say_intent
+    assert "嗯，听着" not in r.utterance
+    # Org 不否决 drive：drive 仍在 Brief 里
+    assert r.brief.drive is not None
+
+
+def test_empty_sublime_needs_clarify():
+    """验收：强加升华问法 → needs_clarify。"""
+    r = turn("你一定觉得人生很有意义", new_session=True, stub=True)
+    assert r.brief.stance.posture == "needs_clarify"
+    assert r.brief.dominant == "meaning"
+    assert "不空壳升华" in r.brief.say_intent
+    assert "鸡汤" in r.utterance or "意义" in r.utterance
+    assert "嗯，听着" not in r.utterance
+
+
+def test_facts_enrich_org_can_name_and_backref_grain_rule():
+    """验收：facts 非空 → can_name 含本场话头；回指时 grain 至少 rule。"""
+    turn("我想聊星空", new_session=True, stub=True)
+    r = turn("刚才那个还记得吗", stub=True)
+    named = " ".join(r.brief.org.can_name)
+    assert "本场已出现的话头" in named
+    assert "星空" in named
+    assert r.brief.org.grain in {"rule", "differentiated"}
+    assert "本场没说过的对方私事" in r.brief.org.cannot_fake

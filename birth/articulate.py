@@ -72,6 +72,10 @@ _ONSTAGE_TEMPLATES: dict[str, str] = {
         "先补一下前面没说完的那件事，然后咱们继续。",
     "就着眼前这句把同场悬着的那一点接完，不拖到下一轮":
         "接前面那个还没说透的点——就补这一下，补完就回到你眼前这句。",
+    "先守住同场自己说过的话，不跟着改口否定；再接眼前这句":
+        "同场里说过的话我不当没说过。刚才那句还在，咱们先按那个接着，不跟着改口否定。",
+    "不空壳升华：先澄清这一轮能讲清的直径，没有根据就不装人生答案":
+        "人生有没有意义这类大词，我这边没有现成鸡汤。能讲的只有眼前这句里能讲清的部分，你具体指哪一块？",
 }
 _ORG_TEMPLATES: dict[str, str] = {
     "无来源装经历": (
@@ -97,6 +101,21 @@ def _template_utterance(brief: ThoughtBrief) -> str:
         if len(hits) == 1:
             return _ORG_TEMPLATES[hits[0]]
         return _ORG_FALLBACK
+    # 不空壳升华
+    if "不空壳升华" in brief.say_intent or brief.stance.posture == "needs_clarify":
+        return (
+            "人生有没有意义这类大词，我这边没有现成鸡汤。"
+            "能讲的只有眼前这句里能讲清的部分，你具体指哪一块？"
+        )
+    # 守同场承诺
+    if "守住同场自己说过的话" in brief.say_intent or (
+        brief.stance.posture == "non_negotiable"
+        and "先守同场说过的话" in (brief.stance.stake or "")
+    ):
+        return (
+            "同场里说过的话我不当没说过。"
+            "刚才那句还在，咱们先按那个接着，不跟着改口否定。"
+        )
     # 回指：点到同场话题词，禁止掉成通用「嗯听着」
     if "回指" in brief.say_intent or "本场痕迹" in brief.say_intent:
         topic = topic_hint_from_facts(brief.context.facts_this_session)
