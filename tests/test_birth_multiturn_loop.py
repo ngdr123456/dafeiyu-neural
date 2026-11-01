@@ -36,6 +36,7 @@ _ENUM_LEAKS = (
 
 # 假绿风险（交付报告）：pytest 全绿本身不算过闸
 FALSE_GREEN_RISKS = """
+- `_accept_draft` 用 extract 拒收**仅当** say_intent 命中「催一个可核对的约定」；禁止扩词表、禁止当通用堵嘴。本刀不扩 commit_extract 词表。
 - stub 开口固定，听感／像人完全未测；deepseek 可选测只查 source+validate。
 - R4 多轮剧本仍 stub=True 保回归；另有 hook／可选 deepseek 测催答应可提取。LLM 空壳答应会被拒收并 stub 兜底，但真网波动／模型跑偏仍可能偶发。
 - R5 drive 因「刚才」回指命中为 pursue，承诺护卫 guard 被挤掉——本测认 meaning+stance，不假装 drive=guard。

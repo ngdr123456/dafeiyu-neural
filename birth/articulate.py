@@ -266,7 +266,9 @@ def _accept_draft(brief: ThoughtBrief, draft: Optional[str]) -> Optional[str]:
         if any("自述是代码" in r or "模型" in r for r in reasons):
             _REJECTED_SELF_ID = True
         return None
-    # 催答应回合：通过 validate 但仍抽不出承诺 → 拒收，留给 stub 模板保住回流
+    # 闭合约束（推进+规格／煤球拍板）：仅当 say_intent 已命中
+    # 「催一个可核对的约定」才用 extract 拒收；禁止扩词表、禁止当通用堵嘴。
+    # 本刀不扩 commit_extract 词表。
     if "催一个可核对的约定" in (brief.say_intent or ""):
         from .commit_extract import extract_commitment
         if not extract_commitment(draft):

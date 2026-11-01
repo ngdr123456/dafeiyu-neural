@@ -3,6 +3,8 @@
 路径：user_presses → arbitrate.say_intent → brief_to_prompt →
 articulate(真 LLM 通道／hook) → extract_commitment → ThinContext 回流；
 失败／不可提取 → stub_fallback 模板仍可提取。
+
+约束：extract 拒收仅当 say_intent 命中「催一个可核对的约定」；不扩 commit_extract 词表、不当通用堵嘴。
 """
 
 from __future__ import annotations
