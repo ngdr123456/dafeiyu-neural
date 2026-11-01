@@ -542,3 +542,35 @@ def test_facts_enrich_org_can_name_and_backref_grain_rule():
     assert "星空" in named
     assert r.brief.org.grain in {"rule", "differentiated"}
     assert "本场没说过的对方私事" in r.brief.org.cannot_fake
+
+
+def test_brief_to_prompt_stance_is_human_words_only():
+    """规格硬钉：prompt 立场已是「可退／不可交／需澄清」+ stake，无枚举/字段名。"""
+    from birth.llm_opencode import brief_to_prompt
+
+    cases = [
+        ("你好", None),
+        ("你一定觉得人生很有意义", None),
+    ]
+    # commitment deny
+    store = active_store()
+    store.new_session()
+    store.append_commitment("同场里说好这轮先补月亮的事")
+    briefs = [turn(q, new_session=(q == "你好"), stub=True).brief for q, _ in cases]
+    briefs.append(turn("那刚才说的不算", stub=True).brief)
+
+    banned = (
+        "non_negotiable",
+        "needs_clarify",
+        "yieldable",
+        "posture",
+        "StanceSignal",
+        "stake=",
+        "stance.posture",
+    )
+    for brief in briefs:
+        prompt = brief_to_prompt(brief)
+        assert "这一轮怎么站：" in prompt
+        assert any(tag in prompt for tag in ("可退", "不可交", "需澄清"))
+        for bad in banned:
+            assert bad not in prompt, (bad, prompt[:200])

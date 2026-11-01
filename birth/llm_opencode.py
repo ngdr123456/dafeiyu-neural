@@ -32,12 +32,14 @@ def brief_to_prompt(brief: ThoughtBrief) -> str:
     if ctx.last_commitments:
         extras.append(f"同场说过要做的：{ctx.last_commitments[0]}")
     extra_block = ("\n".join(extras) + "\n") if extras else ""
+    # 规格硬钉：prompt 里只要人话「可退／不可交／需澄清」+ stake；
+    # 禁止把 non_negotiable 等枚举或 posture/stake 字段名写进 prompt。
     posture_zh = {
-        "yieldable": "可退让",
+        "yieldable": "可退",
         "non_negotiable": "不可交",
-        "needs_clarify": "先澄清",
-    }.get(brief.stance.posture, "可退让")
-    stake = brief.stance.stake or "接住这一轮"
+        "needs_clarify": "需澄清",
+    }.get(brief.stance.posture, "可退")
+    stake = (brief.stance.stake or "接住这一轮").strip()
     return (
         "你在对话里开口。只输出这一轮要说的中文人话（一两句），"
         "不要解释、不要列点、不要加引号，不要写内部字段名。\n"
