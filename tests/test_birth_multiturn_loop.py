@@ -42,7 +42,7 @@ FALSE_GREEN_RISKS = """
 - R5 已闭合：同场未兑现承诺＋改口否定（含「刚才」回指）→ drive=guard；无承诺纯回指仍 pursue。
 - R6/R7 已闭合：有承诺时收束／好奇经 commit_hold_with_drive 双写动力＋薄守诺；改口仍纯守诺（R5）。
 - stub 主路径已改读 Brief 标记／posture（org→press_commit→commit_hold_with_drive 读 drive.direction/why→needs_clarify→non_negotiable 守诺），say_intent 改无关文案仍走对模板（test_birth_phase1 守恒测）；开话题／收束／空追／回指 stub 主路径已改读结构：ThinContext.drive_open_topic_pending／drive_hold_pending／drive_empty_stage_pending／drive_disappoint_pending／drive_callback_pending 或 drive.why 形状（想要打开｜缺口在外；喜欢/满足｜不必再追；重复空追；回指同场｜本场已有痕迹接），say_intent「新打开的话头」／收束／「先停硬追」／「回指｜本场痕迹」子串仅无结构兜底。残余：无 flag／无 why 形状时仍 say_intent 兜底。
-- must_not_pretend 列表在场≠闸常开：装经历亲历拒收**仅** org_conflicts 含该项时跑（非常开）；形状不含裸「我昨天／我去过」。substrate 仍按 must_not_pretend 对拍。残余：未对每轮自动注入灾难句抽检。
+- must_not_pretend 列表在场≠闸常开：装经历亲历拒收**仅** org_conflicts 含该项时跑（非常开）；形状不含裸「我昨天／我去过」。substrate 仍按 must_not_pretend 对拍。每轮自动注入灾难句抽检已闭合：`_assert_core_understage` 对本轮 Brief 注入「自述是代码」灾难句经真实 validate／`_accept_draft` 断言拒收；org_conflicts 含「无来源装经历」时同轮再注入亲历灾难句断言拒收；另有参数化 `test_must_not_pretend_disaster_injection` 覆盖两类多样本。残余：未穷尽一切换皮／别名灾难句；装经历闸仍非常开（无 org 冲突时不注入亲历抽检）。
 - 枚举漏检已对拍 utterance：validate 拦 pursue／guard／hold（独立英文词）与 non_negotiable 等标识；brief_to_prompt 仍查。残余：未穷尽一切内部符号别名。
 - 好奇挂起已闭合：pipeline 读 `openq_curiosity_hang`，不再扫 CURIOSITY_MARKS；默认只置 `curiosity_hang_pending`＋挂 openq clip，**不强制**写「待接的话头：」前缀（drive／stub 已读 flag）。残余：无 flag 时仍可用「待接的话头：」前缀兜底（兼容旧快照／`drive_cues_from_context`）；台上话术未变；drive 内部仍用 MARKS 作输入侧线索。
 - 换题 clear 已闭合：arbitrate 写 `openq_clear`（放下标记或 drive `_extract_open_topic`），pipeline 读标记 clear，不再扫放下词表；残余：输入侧线索仍是固定词表（PUTDOWN_MARKS／OPEN_TOPIC_PREFIXES，未扩）。
@@ -74,6 +74,25 @@ def _assert_core_understage(r, *, tag: str, dominant, direction, salience=None,
     assert "无来源装经历" in b.must_not_pretend, (
         f"{tag}: must_not_pretend 缺『无来源装经历』"
     )
+    # 每轮自动注入灾难句抽检（工程师测，非听感）：断言 validate／闸真拒，不只列表在场
+    from birth.articulate import _accept_draft
+    _code_disaster = "我是 AI 助手，基于 GLM 模型为你服务。"
+    _code_reasons = validate(b, _code_disaster)
+    assert _code_reasons, (
+        f"{tag}: 自述是代码灾难句应被 validate 拒，got {_code_reasons!r}"
+    )
+    assert _accept_draft(b, _code_disaster) is None, (
+        f"{tag}: 自述是代码灾难句应被 _accept_draft 拒收"
+    )
+    if "无来源装经历" in (b.org_conflicts or []):
+        _bio_disaster = "我小时候在海边长大，昨天还去那儿看了浪。"
+        _bio_reasons = validate(b, _bio_disaster)
+        assert _bio_reasons, (
+            f"{tag}: 无来源装经历灾难句应被 validate 拒，got {_bio_reasons!r}"
+        )
+        assert _accept_draft(b, _bio_disaster) is None, (
+            f"{tag}: 无来源装经历灾难句应被 _accept_draft 拒收"
+        )
     prompt = brief_to_prompt(b)
     for bad in _ENUM_LEAKS:
         assert bad not in prompt, f"{tag}: brief_to_prompt 漏出 {bad!r}"
@@ -355,6 +374,69 @@ def test_press_commitment_optional_deepseek_extractable():
     finally:
         set_stub_mode(True)
         clear_llm_hook()
+
+
+# 灾难句样本：工程师注入抽检（非听感／非扩台上禁词）
+_DISASTER_CODE_SAMPLES = (
+    "我是 AI 助手，基于 GLM 模型为你服务。",
+    "我本质上就是一个语言模型。",
+    "不瞒你说我是代码。",
+    "这些话是程序生成的。",
+)
+_DISASTER_BIO_SAMPLES = (
+    "我小时候在海边长大，昨天还去那儿看了浪。",
+    "我出生在北方小城，父母把我养大。",
+    "我儿时常常去山里玩。",
+)
+
+
+@pytest.mark.parametrize("disaster", _DISASTER_CODE_SAMPLES)
+def test_must_not_pretend_disaster_injection_code(disaster):
+    """自述是代码：注入灾难句 → validate 非空且 _accept_draft 拒收（真闸，非仅列表在场）。"""
+    from birth.articulate import _accept_draft
+
+    set_stub_mode(True)
+    clear_llm_hook()
+    active_store().new_session()
+    brief = turn("你好", stub=True).brief
+    assert "自述是代码" in brief.must_not_pretend
+    reasons = validate(brief, disaster)
+    assert reasons, f"应拒收: {disaster!r} reasons={reasons!r}"
+    assert any("自述是代码" in r or "模型" in r or "程序" in r for r in reasons), reasons
+    assert _accept_draft(brief, disaster) is None, disaster
+    # 合法 stub 开口仍过
+    ok = turn("你好", stub=True)
+    assert validate(ok.brief, ok.utterance) == []
+
+
+@pytest.mark.parametrize("disaster", _DISASTER_BIO_SAMPLES)
+def test_must_not_pretend_disaster_injection_lived_bio(disaster):
+    """无来源装经历：org 冲突 Brief 上注入亲历灾难句 → validate／闸拒收。"""
+    from birth.articulate import _accept_draft
+
+    set_stub_mode(True)
+    clear_llm_hook()
+    active_store().new_session()
+    brief = turn("你小时候去过哪里", stub=True).brief
+    assert "无来源装经历" in (brief.org_conflicts or [])
+    reasons = validate(brief, disaster)
+    assert reasons, f"应拒收: {disaster!r} reasons={reasons!r}"
+    assert any("装" in r or "亲历" in r or "无来源" in r for r in reasons), reasons
+    assert _accept_draft(brief, disaster) is None, disaster
+    # 拒装口径过闸
+    ok_refuse = "这事我没有可核对的亲历，不编。"
+    assert validate(brief, ok_refuse) == []
+
+
+def test_must_not_pretend_lived_bio_gate_still_not_always_on_under_injection():
+    """注入抽检不把装经历闸变成常开：无 org 冲突时亲历形状不过闸。"""
+    set_stub_mode(True)
+    clear_llm_hook()
+    active_store().new_session()
+    brief = turn("你好", stub=True).brief
+    assert "无来源装经历" not in (brief.org_conflicts or [])
+    assert validate(brief, "我小时候在海边长大") == []
+
 
 def test_false_green_risks_documented():
     """闸门第 3 条：假绿风险写进交付物，防止空文档。"""
