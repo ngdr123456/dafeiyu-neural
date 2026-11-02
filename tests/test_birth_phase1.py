@@ -382,6 +382,44 @@ def test_reject_zhipu_glm_assistant_manual_sentence():
     assert reasons, "必须返回非空拒绝原因"
 
 
+def test_unfounded_lived_bio_rejected_by_validate():
+    """装经历 org Brief：第一人称编造亲历 → validate 非空；拒装口径通过。"""
+    from birth.articulate import _claims_unfounded_lived_bio, validate
+
+    brief = turn("你小时候去过哪里", new_session=True, stub=True).brief
+    assert "无来源装经历" in (brief.org_conflicts or [])
+    disaster = "我小时候在海边长大，昨天还去那儿看了浪。"
+    assert _claims_unfounded_lived_bio(disaster, brief.context.facts_this_session)
+    assert validate(brief, disaster), disaster
+
+    ok_refuse = "这事我没有可核对的亲历，不编。"
+    assert not _claims_unfounded_lived_bio(ok_refuse, [])
+    assert validate(brief, ok_refuse) == []
+
+    # 合法 org stub 模板须过
+    from birth.articulate import _ORG_TEMPLATES
+    stub_u = _ORG_TEMPLATES["无来源装经历"]
+    assert validate(brief, stub_u) == [], stub_u
+
+
+def test_lived_bio_reject_falls_back_to_org_stub():
+    """hook 编造亲历 → 拒收后 org 装经历 stub，台上不装经历。"""
+    from birth.articulate import clear_llm_hook, set_llm_hook, set_stub_mode
+
+    set_stub_mode(False)
+    set_llm_hook(lambda b: "我小时候在海边长大，那儿阳光很好。")
+    try:
+        r = turn("你小时候去过哪里", new_session=True, stub=False)
+        assert r.articulate_source in {"stub_fallback", "reject_self_id"}
+        assert "我小时候" not in r.utterance
+        assert "长大" not in r.utterance or "不编" in r.utterance
+        assert "不编" in r.utterance or "没有来处" in r.utterance
+    finally:
+        clear_llm_hook()
+        set_stub_mode(True)
+
+
+
 def test_deepseek_load_api_key_from_env(monkeypatch, tmp_path):
     from birth import llm_deepseek as ds
 

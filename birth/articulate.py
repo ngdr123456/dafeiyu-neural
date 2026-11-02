@@ -234,6 +234,57 @@ def _claims_substrate_self(utterance: str) -> bool:
     return False
 
 
+
+def _claims_unfounded_lived_bio(utterance: str, facts=None) -> bool:
+    """对照 must_not_pretend「无来源装经历」：第一人称钉成有来处亲历，且 facts 无依据。
+
+    对齐 intent_org 亲历范畴的薄形状；不是扩 EXPERIENCE_*_MARKS，也不是禁词闸。
+    明确拒装／直说没有 → False（须通过）。
+    """
+    import re
+
+    t = (utterance or "").replace(" ", "").replace("　", "")
+    if not t:
+        return False
+    # 拒装口径：不算装
+    if any(
+        m in t
+        for m in (
+            "不编",
+            "没有来处",
+            "没有可核对",
+            "没有可讲的亲历",
+            "直说没有",
+            "不装经历",
+            "经历这类事我不编",
+            "我这儿没有",
+        )
+    ):
+        return False
+    # 第一人称亲历形状（与 demands_lived_biography 范畴同向，宁缺）
+    patterns = (
+        r"我小时候",
+        r"我儿时",
+        r"我出生",
+        r"我.{0,12}长大",
+        r"我昨天",
+        r"我前天",
+        r"我去年",
+        r"我去过",
+        r"我几岁",
+        r"我老家",
+        r"我父母",
+        r"我.{0,8}养大",
+    )
+    if not any(re.search(p, t) for p in patterns):
+        return False
+    fact_blob = "".join(facts or []).replace(" ", "").replace("　", "")
+    # facts 已有同类第一人称亲历记载 → 算有依据（宁缺放过）
+    if fact_blob and any(re.search(p, fact_blob) for p in patterns):
+        return False
+    return True
+
+
 def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
     """对照 Brief 的一致性校验（非禁词表）：返回不通过原因列表，空列表即通过。"""
     reasons: List[str] = []
@@ -263,6 +314,13 @@ def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
             r"(?:在程序里|程序里跑|代码里跑)", compact
         ):
             reasons.append("开口把回话说成程序/模型产物，对照身份冲突说不通")
+    # 无来源装经历：Brief 带着该约束时，拒第一人称无依据亲历自传（非词表闸）
+    if "无来源装经历" in brief.must_not_pretend or "无来源装经历" in (
+        brief.org_conflicts or []
+    ):
+        facts = list(brief.context.facts_this_session or [])
+        if _claims_unfounded_lived_bio(text, facts):
+            reasons.append("开口装无来源亲历，对照 must_not_pretend 说不通")
     return reasons
 
 
