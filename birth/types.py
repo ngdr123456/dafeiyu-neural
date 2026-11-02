@@ -75,6 +75,8 @@ class ThinContext:
     drive_empty_stage_pending: bool = False
     # 结构化：本轮话题延续 pursue（pipeline／上游写；drive 非 S3 主路径读；勿主靠话题词扫 facts）
     drive_topic_continue_pending: bool = False
+    # 结构化：本轮回指 pursue（pipeline／上游写；drive／stub 主路径读；勿主靠 BACKREF_MARKS／why 文案）
+    drive_callback_pending: bool = False
 
 
 @dataclass

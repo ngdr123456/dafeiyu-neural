@@ -115,7 +115,7 @@ def _template_utterance(brief: ThoughtBrief) -> str:
        （打开：drive_open_topic_pending／想要打开｜缺口在外；
         收束：drive_hold_pending／喜欢/满足｜不必再追；
         空追：drive_empty_stage_pending／drive_disappoint_pending／重复空追；
-        回指：why「回指同场｜本场已有痕迹接」+ facts）；
+        回指：drive_callback_pending／why「回指同场｜本场已有痕迹接」+ facts）；
     say_intent 中文子串仅作无结构时打开话题／收束／空追／回指的兜底。
     """
     # 1) org：既有 _ORG_TEMPLATES／fallback
@@ -196,9 +196,10 @@ def _template_utterance(brief: ThoughtBrief) -> str:
         or (drive is not None and "重复空追" in why)
     ):
         return "这轮我不硬往下追了。你缺的那块或刚才的不满，你直接说，我接着。"
-    # 6d) 回指：drive.why「回指同场｜本场已有痕迹接」；话题取自 facts（无单独 ThinContext flag）
-    if drive is not None and (
-        "回指同场" in why or "本场已有痕迹接" in why
+    # 6d) 回指：主路径先读 drive_callback_pending；why「回指同场｜本场已有痕迹接」+ facts 仅兜底
+    if getattr(brief.context, "drive_callback_pending", False) or (
+        drive is not None
+        and ("回指同场" in why or "本场已有痕迹接" in why)
     ):
         topic = topic_hint_from_facts(brief.context.facts_this_session)
         if topic:
@@ -220,7 +221,7 @@ def _template_utterance(brief: ThoughtBrief) -> str:
     # 空追兜底：say_intent「先停硬追」（无 empty_stage／disappoint flag／无重复空追 why）
     if "先停硬追" in brief.say_intent:
         return "这轮我不硬往下追了。你缺的那块或刚才的不满，你直接说，我接着。"
-    # 回指兜底：say_intent「回指｜本场痕迹」（无 drive.why 回指形状时）
+    # 回指兜底：say_intent「回指｜本场痕迹」（无 drive_callback_pending／无 drive.why 回指形状时）
     if "回指" in brief.say_intent or "本场痕迹" in brief.say_intent:
         topic = topic_hint_from_facts(brief.context.facts_this_session)
         if topic:

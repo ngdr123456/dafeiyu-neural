@@ -1081,3 +1081,25 @@ def test_backref_say_intent_fallback_without_marker():
     )
     out = _template_utterance(brief)
     assert "月亮" in out and "记得" in out, out
+
+
+def test_tampered_say_intent_backref_via_callback_flag():
+    """drive_callback_pending=True；无 why 回指形状／无 say_intent「回指｜本场痕迹」→ 仍回指。"""
+    from birth.articulate import _template_utterance
+    from birth.types import DriveSignal
+
+    brief = _tampered_brief(
+        drive=DriveSignal(direction="pursue", salience="mid", why="x"),
+        context=ThinContext(
+            drive_callback_pending=True,
+            facts_this_session=["用户说：我想聊星空"],
+        ),
+    )
+    assert "回指" not in brief.say_intent
+    assert "本场痕迹" not in brief.say_intent
+    assert "回指同场" not in (brief.drive.why or "")
+    assert "本场已有痕迹接" not in (brief.drive.why or "")
+    out = _template_utterance(brief)
+    assert "星空" in out, out
+    assert "记得" in out, out
+

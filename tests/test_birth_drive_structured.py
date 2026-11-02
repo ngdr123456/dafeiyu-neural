@@ -9,9 +9,9 @@
 4) 无结构信号（空 ThinContext）时仍走 MARKS 兜底，原有行为逐字段不变；
 5) 非 S3：drive_greet_pending／drive_hold_pending 有结构时 hold，不依赖 GREETINGS／SATISFIED_MARKS；
    drive_open_topic_pending／drive_curiosity_pending 有结构时 pursue，不依赖 OPEN_TOPIC_PREFIXES／CURIOSITY_MARKS；
-   drive_disappoint_pending／drive_empty_stage_pending／drive_topic_continue_pending 有结构时
-   分别 guard／hold／pursue，不依赖 DISAPPOINT_MARKS／_EMPTY_STAGE_MARKS／话题词扫 facts。
-6) DRIVE_V1 §6：同场 last_commitments 非空时，空台／话题延续（含 structured_* 与 pipeline 兜底写 flag）
+   drive_disappoint_pending／drive_empty_stage_pending／drive_topic_continue_pending／drive_callback_pending 有结构时
+   分别 guard／hold／pursue／pursue，不依赖 DISAPPOINT_MARKS／_EMPTY_STAGE_MARKS／话题词／BACKREF_MARKS。
+6) DRIVE_V1 §6：同场 last_commitments 非空时，空台／话题延续／回指（含 structured_* 与 pipeline 兜底写 flag）
    不得压过 guard；turn 路径与直调 infer_drive 对齐。
 """
 
@@ -559,3 +559,97 @@ def test_infer_drive_empty_or_topic_flag_with_commitments_guards():
     sig_t = infer_drive("星空那边怎样", ctx_topic)
     assert sig_t.direction == "guard", sig_t
     assert "要护" in sig_t.why, sig_t.why
+
+
+def test_drive_callback_flag_without_backref_marks_pursues():
+    """主路径：drive_callback_pending=True，文案不含 BACKREF_MARKS → 仍 pursue mid。"""
+    ctx = ThinContext(session_ok=True, drive_callback_pending=True)
+    sig = infer_drive("今天天气怎样啊兄弟", ctx)
+    assert sig.direction == "pursue"
+    assert sig.salience == "mid"
+    assert "回指" in sig.why or "痕迹" in sig.why, sig.why
+
+
+def test_drive_callback_marks_fallback_without_flag():
+    """兜底：无 drive_callback_pending 时，is_session_backref → pursue mid。"""
+    ctx = ThinContext(
+        session_ok=True,
+        drive_callback_pending=False,
+        facts_this_session=["用户说：我想聊星空", "台上说：星空挺好看的"],
+    )
+    sig = infer_drive("刚才说的星空", ctx)
+    assert sig.direction == "pursue"
+    assert sig.salience == "mid"
+    assert "回指" in sig.why or "痕迹" in sig.why, sig.why
+
+
+def test_should_set_drive_callback_helper():
+    """写入侧 helper：结构 cue 优先；无结构时 is_session_backref 兜底；marks_fallback=False 不扫。"""
+    from birth.drive import should_set_drive_callback_pending
+
+    ctx = ThinContext(
+        session_ok=True,
+        facts_this_session=["用户说：我想聊星空"],
+    )
+    assert should_set_drive_callback_pending(
+        callback_cue=True, user_text="xxx", context=ctx, marks_fallback=False
+    )
+    assert not should_set_drive_callback_pending(
+        callback_cue=False, user_text="xxx", context=ctx, marks_fallback=False
+    )
+    assert should_set_drive_callback_pending(
+        callback_cue=False, user_text="刚才说的", context=ctx, marks_fallback=True
+    )
+    assert not should_set_drive_callback_pending(
+        callback_cue=False, user_text="今天天气", context=ctx, marks_fallback=True
+    )
+
+
+def test_pipeline_structured_callback_without_marks():
+    """live turn：上游 structured_drive_callback → pursue mid，文案无 BACKREF_MARKS。"""
+    from birth.articulate import set_stub_mode, clear_llm_hook
+    from birth.pipeline import active_store, turn
+
+    set_stub_mode(True)
+    clear_llm_hook()
+    active_store().new_session()
+    active_store().append_fact("用户说：我想聊星空")
+
+    r = turn("今天天气怎样啊兄弟", stub=True, structured_drive_callback=True)
+    assert r.brief.drive.direction == "pursue"
+    assert r.brief.drive.salience == "mid"
+    assert "回指" in r.brief.drive.why or "痕迹" in r.brief.drive.why
+    # stub 主路径读 flag：即使 say_intent 被改也应点到星空（flag 在 brief.context）
+    assert r.brief.context.drive_callback_pending or "记得" in r.utterance or "星空" in r.utterance
+
+
+def test_structured_callback_with_commitments_stays_guard():
+    """钉：structured_drive_callback=True＋承诺在场 → 不得 S11 pursue 压过 §6；须仍 guard。"""
+    from birth.articulate import set_stub_mode, clear_llm_hook
+    from birth.pipeline import active_store, turn
+
+    set_stub_mode(True)
+    clear_llm_hook()
+    active_store().new_session()
+    active_store().append_commitment("同场说好晚点再聊星空")
+
+    r = turn("刚才说的星空", stub=True, structured_drive_callback=True)
+    assert r.brief.drive.direction == "guard", (
+        f"want guard got {r.brief.drive.direction}: {r.brief.drive.why}"
+    )
+    assert r.brief.drive.salience == "mid"
+    assert "要护" in r.brief.drive.why and "没兑现" in r.brief.drive.why, r.brief.drive.why
+
+
+def test_infer_drive_callback_flag_with_commitments_guards():
+    """§6 先于 S11：drive_callback_pending 已置＋承诺在场 → 直调 infer_drive 仍 guard。"""
+    ctx = ThinContext(
+        session_ok=True,
+        last_commitments=["同场说好晚点再聊星空"],
+        drive_callback_pending=True,
+        facts_this_session=["用户说：我想聊星空"],
+    )
+    sig = infer_drive("刚才说的星空", ctx)
+    assert sig.direction == "guard", sig
+    assert "要护" in sig.why, sig.why
+

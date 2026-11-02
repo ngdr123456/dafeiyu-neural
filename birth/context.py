@@ -41,6 +41,7 @@ class ThinContextStore:
             drive_disappoint_pending=ctx.drive_disappoint_pending,
             drive_empty_stage_pending=ctx.drive_empty_stage_pending,
             drive_topic_continue_pending=ctx.drive_topic_continue_pending,
+            drive_callback_pending=ctx.drive_callback_pending,
         )
 
     def new_session(self) -> None:
@@ -139,6 +140,15 @@ class ThinContextStore:
         new_session／回合末清 False，防漏到下一轮。
         """
         self._context.drive_topic_continue_pending = pending
+
+    def set_drive_callback_pending(self, pending: bool) -> None:
+        """pipeline 显式标记本轮回指 pursue（上游结构化／写入侧）。
+
+        drive／stub 主路径读该布尔；is_session_backref／BACKREF_MARKS 仅无 flag 时兜底。
+        new_session／回合末清 False，防漏到下一轮。
+        有 last_commitments 时写入侧不置（对齐 §6，勿压过 guard）。
+        """
+        self._context.drive_callback_pending = pending
 
     def resolve_open_question(self) -> str | None:
         """接完第一条悬问：弹出并返回它；没有悬问时返回 None。

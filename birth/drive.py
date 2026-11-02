@@ -72,6 +72,8 @@ class DriveCues:
     drive_empty_stage_pending: bool = False
     # 结构化：本轮话题延续 pursue（pipeline／上游写；drive 非 S3 主路径读；勿主靠话题词扫 facts）
     drive_topic_continue_pending: bool = False
+    # 结构化：本轮回指 pursue（pipeline／上游写；drive／stub 主路径读；勿主靠 BACKREF_MARKS／why 文案）
+    drive_callback_pending: bool = False
     session_ok: bool = True
 
 
@@ -81,7 +83,7 @@ def drive_cues_from_context(context: ThinContext) -> DriveCues:
     改口否定（S2）主路径读 ThinContext.commitment_deny_pending 布尔；
     好奇挂起主路径读 ThinContext.curiosity_hang_pending 布尔；
     招呼／收束 hold（非 S3）主路径读 drive_greet_pending／drive_hold_pending。
-    结构化：好奇 pursue / 打开话题 pursue / 失望 guard / 空台 hold / 话题延续 pursue 主路径读 flag；
+    结构化：好奇 pursue / 打开话题 pursue / 失望 guard / 空台 hold / 话题延续 pursue / 回指 pursue 主路径读 flag；
     兜底范围见各段注释：仅当结构化 flag 缺省/False 时才扫输入侧线索
     （兼容旧快照／未写 flag 的路径）；不是禁词闸门，不扩词表，不改台上话术。
     """
@@ -112,6 +114,9 @@ def drive_cues_from_context(context: ThinContext) -> DriveCues:
         ),
         drive_topic_continue_pending=bool(
             getattr(context, "drive_topic_continue_pending", False)
+        ),
+        drive_callback_pending=bool(
+            getattr(context, "drive_callback_pending", False)
         ),
         session_ok=context.session_ok,
     )
@@ -335,6 +340,28 @@ def should_set_drive_topic_continue_pending(
         return False
     return _topic_continuation((user_text or "").strip(), context) is not None
 
+
+def should_set_drive_callback_pending(
+    *,
+    callback_cue: bool = False,
+    user_text: str = "",
+    context: ThinContext | None = None,
+    marks_fallback: bool = True,
+) -> bool:
+    """主路径读上游结构化 callback_cue；仅无结构且允许兜底时才走既有 is_session_backref。
+
+    兜底范围：callback_cue 缺省/False 且 marks_fallback 时，才用既有
+    is_session_backref（BACKREF_MARKS + facts 非空；兼容未写 flag 的直调／旧路径）。
+    不是禁词闸门，不扩词表，不改台上话术。
+    """
+    if bool(callback_cue):
+        return True
+    if not marks_fallback:
+        return False
+    if context is None:
+        return False
+    return is_session_backref((user_text or "").strip(), context)
+
 def infer_drive(
     user_text: str,
     context: ThinContext,
@@ -354,6 +381,8 @@ def infer_drive(
     S8／S9／S10 失望 guard／空台 hold／话题延续 pursue 主路径读
     drive_disappoint_pending／drive_empty_stage_pending／drive_topic_continue_pending；
     DISAPPOINT_MARKS／_EMPTY_STAGE_MARKS／话题词扫 facts 仅无结构时兜底（不扩词表）。
+    S11 回指 pursue 主路径读 drive_callback_pending；须后于 §6（有承诺时不得压过 guard）；
+    is_session_backref／BACKREF_MARKS 仅无结构时兜底（不扩词表）。
     """
     text = (user_text or "").strip()
     if cues is None:
@@ -425,8 +454,8 @@ def infer_drive(
             why="用户问出了『为什么』类问题，好奇本身就是够格的推力，顺着看清楚",
         )
 
-    # §6) 同场承诺在场 → guard（DRIVE_V1：须先于 §8 空追／§9 话题延续；
-    # S8–S10 不得压过已有要护。写入侧亦不应在有 last_commitments 时置空台／话题 flag。）
+    # §6) 同场承诺在场 → guard（DRIVE_V1：须先于 §8 空追／§9 话题延续／§11 回指；
+    # S8–S11 不得压过已有要护。写入侧亦不应在有 last_commitments 时置空台／话题／回指 flag。）
     if cues.commitments_present and context.last_commitments:
         first = context.last_commitments[0]
         return DriveSignal(
@@ -464,6 +493,14 @@ def infer_drive(
             why=why,
         )
 
+    # S11) 结构化回指 → pursue mid（主路径读 flag；须后于 §6；BACKREF_MARKS 仅无结构时兜底）
+    if cues.drive_callback_pending:
+        return DriveSignal(
+            direction="pursue",
+            salience="mid",
+            why="用户在回指同场刚才的话头，动力要用本场已有痕迹接，不装没发生过",
+        )
+
     # 兜底：无结构信号判定时才扫输入侧 MARKS（GREETINGS/SATISFIED/CURIOSITY/DISAPPOINT/_EMPTY_STAGE）
     # 1) 招呼
     if _is_greeting(text):
@@ -498,7 +535,7 @@ def infer_drive(
             why="用户问出了『为什么』类问题，好奇本身就是够格的推力，顺着看清楚",
         )
 
-    # 5) 回指（与未兑现承诺冲突时：已有要护优先于普通回指追）
+    # 5) 回指兜底（无 drive_callback_pending 时）：与未兑现承诺冲突时已有要护优先于普通回指追
     if is_session_backref(text, context):
         if context.last_commitments:
             # 主路径读 ThinContext.commitment_deny_pending；仅无 flag 时才扫

@@ -25,6 +25,7 @@ from .openq_extract import (
 from .context import ThinContextStore
 from .drive import (
     infer_drive,
+    should_set_drive_callback_pending,
     should_set_drive_curiosity_pending,
     should_set_drive_disappoint_pending,
     should_set_drive_empty_stage_pending,
@@ -70,6 +71,7 @@ def turn(
     structured_drive_disappoint: bool = False,
     structured_drive_empty_stage: bool = False,
     structured_drive_topic_continue: bool = False,
+    structured_drive_callback: bool = False,
 ) -> TurnResult:
     """跑完一轮完整闭环。new_session=True 显式开新场（唯一清空入口）。
 
@@ -89,6 +91,8 @@ def turn(
     structured_drive_disappoint／structured_drive_empty_stage／structured_drive_topic_continue:
     上游结构化失望 guard／空台 hold／话题延续 pursue cue；有结构时读 ThinContext flag，
     不扫 DISAPPOINT_MARKS／_EMPTY_STAGE_MARKS／话题词；真无结构时兜底（不扩词表）。
+    structured_drive_callback: 上游结构化回指 pursue cue；有结构时读 ThinContext.drive_callback_pending，
+    不扫 BACKREF_MARKS；真无结构时 is_session_backref 兜底（不扩词表）。有承诺时写入侧不置（§6）。
     """
     if new_session:
         _STORE.new_session()
@@ -135,7 +139,7 @@ def turn(
             _STORE.set_commitment_deny_pending(True)
             context = _STORE.snapshot()
 
-    # 非 S3：招呼／收束／打开话题／好奇／失望／空台／话题延续 写入
+    # 非 S3：招呼／收束／打开话题／好奇／失望／空台／话题延续／回指 写入
     # （有结构 cue 不扫词表；真无结构时各 MARKS／facts 兜底）
     _STORE.set_drive_greet_pending(False)
     _STORE.set_drive_hold_pending(False)
@@ -144,6 +148,7 @@ def turn(
     _STORE.set_drive_disappoint_pending(False)
     _STORE.set_drive_empty_stage_pending(False)
     _STORE.set_drive_topic_continue_pending(False)
+    _STORE.set_drive_callback_pending(False)
     if should_set_drive_greet_pending(
         greet_cue=structured_drive_greet,
         user_text=user_text,
@@ -170,8 +175,8 @@ def turn(
         _STORE.set_drive_curiosity_pending(True)
     # empty_stage／topic_continue 兜底需同场 facts；先用当前 snapshot 作 context
     ctx_for_drive_write = _STORE.snapshot()
-    # DRIVE_V1 §6：同场承诺在场时，写入侧不置 S8–S10 flag，避免压过 guard
-    # （drive 内亦有 §6 先于 S8–S10；此处双保险，使 turn 路径与直调 infer_drive 对齐）。
+    # DRIVE_V1 §6：同场承诺在场时，写入侧不置 S8–S11 flag，避免压过 guard
+    # （drive 内亦有 §6 先于 S8–S11；此处双保险，使 turn 路径与直调 infer_drive 对齐）。
     _commitments_block_s8_s10 = bool(ctx_for_drive_write.last_commitments)
     if not _commitments_block_s8_s10 and should_set_drive_disappoint_pending(
         disappoint_cue=structured_drive_disappoint,
@@ -193,6 +198,13 @@ def turn(
         marks_fallback=not bool(structured_drive_topic_continue),
     ):
         _STORE.set_drive_topic_continue_pending(True)
+    if not _commitments_block_s8_s10 and should_set_drive_callback_pending(
+        callback_cue=structured_drive_callback,
+        user_text=user_text,
+        context=ctx_for_drive_write,
+        marks_fallback=not bool(structured_drive_callback),
+    ):
+        _STORE.set_drive_callback_pending(True)
     context = _STORE.snapshot()
 
     drive = infer_drive(user_text, context)
@@ -252,6 +264,7 @@ def turn(
     _STORE.set_drive_disappoint_pending(False)
     _STORE.set_drive_empty_stage_pending(False)
     _STORE.set_drive_topic_continue_pending(False)
+    _STORE.set_drive_callback_pending(False)
 
     return TurnResult(
         utterance=utterance,
