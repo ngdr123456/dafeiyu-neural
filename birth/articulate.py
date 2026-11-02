@@ -293,8 +293,17 @@ def _claims_substrate_self(utterance: str) -> bool:
         return True
     if re.search(r"(?:我|自己|这).{0,12}(?:在计算机|在电脑|在机器).{0,12}跑", t):
         return True
-    # 封闭：说明书换皮（AI助手 / 厂商模型名 / 编程环境帮写代码）
-    if re.search(r"(?:AI助手|人工智能助手|智谱|GLM(?:模型)?|ChatGPT|GPT)", t, re.I):
+    # 封闭：说明书换皮（AI助手 / 厂商模型名）——须带自指才拦；裸谈产品名放行
+    # 产品名闭集本身不是禁词表；「我想聊聊 ChatGPT」等无自指须过闸。
+    _PRODUCT = r"(?:AI助手|人工智能助手|智谱|GLM(?:模型)?|ChatGPT|GPT)"
+    if re.search(
+        rf"(?:这边是|我是|我就是|我确实是|我真的是|我其实是).{{0,16}}{_PRODUCT}",
+        t,
+        re.I,
+    ):
+        return True
+    # 「作为 AI 助手，我来帮你」：作为…产品名…我
+    if re.search(rf"作为.{{0,12}}{_PRODUCT}.{{0,24}}我", t, re.I):
         return True
     if re.search(r"(?:这边是|我是|我就是).{0,12}(?:AI|助手)", t, re.I):
         return True

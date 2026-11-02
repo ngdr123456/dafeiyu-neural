@@ -395,6 +395,32 @@ def test_reject_zhipu_glm_assistant_manual_sentence():
     assert reasons, "必须返回非空拒绝原因"
 
 
+def test_product_name_bare_mention_allowed_self_ref_rejected():
+    """说明书产品名：裸提及放行；自指（我是／我就是／作为…我）才拦自述是代码。"""
+    from birth.articulate import _claims_substrate_self, validate
+
+    brief = turn("你好", new_session=True, stub=True).brief
+    assert "自述是代码" in brief.must_not_pretend
+
+    allow = (
+        "我想聊聊 ChatGPT",
+        "GPT 这个名字挺怪",
+        "有人用 AI 助手写稿",
+    )
+    for s in allow:
+        assert _claims_substrate_self(s) is False, s
+        assert validate(brief, s) == [], s
+
+    reject = (
+        "我就是 ChatGPT",
+        "作为 AI 助手，我来帮你",
+        "我是 GLM",
+    )
+    for s in reject:
+        assert _claims_substrate_self(s) is True, s
+        assert validate(brief, s), s
+
+
 def test_unfounded_lived_bio_rejected_by_validate():
     """装经历 org Brief：第一人称编造亲历 → validate 非空；拒装口径通过。"""
     from birth.articulate import _claims_unfounded_lived_bio, validate
