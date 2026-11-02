@@ -20,5 +20,5 @@
 与承诺 resolve 对称：**宁缺毋滥**，拿不准不清。勿禁词堵嘴。
 
 - **resolve**：读 Brief 结构化字段 `openq_resolve`（arbitrate 在 filler+悬问 路径置 True；与 `OPENQ_RESOLVE_FLAG` 同义）。**禁止**只靠 say_intent 中文子串；改口文案不静默失效
-- **clear**：仅可检验的换题——真开新话头（`我想聊…` 等）或用户明示放下（`先搁下／换个话题…`）；**闲聊／改口否定／身份问勿误清**
+- **clear**：读 Brief 结构化字段 `openq_clear`（arbitrate 在同场悬问＋用户明示放下（`先搁下／换个话题…`）或真开新话头（`我想聊…` 等，复用 drive `_extract_open_topic`）时置 True，与 `OPENQ_CLEAR_FLAG` 同义）。**禁止** pipeline 再扫放下词表；**闲聊／改口否定／身份问勿误清**
 - **好奇新挂起**：读 Brief.`openq_curiosity_hang`（arbitrate 对齐 drive 好奇 pursue/high 置位）；新「待接的话头」写入前 `clear` 旧悬问（替换，防堆黏）。**禁止** pipeline 再扫 `CURIOSITY_MARKS` 中文词表

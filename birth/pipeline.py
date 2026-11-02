@@ -69,13 +69,13 @@ def turn(
 
     # 悬问收放（可检验；对齐承诺宁缺——拿不准不清）：
     # - resolve：读 Brief.openq_resolve（禁止 say_intent 中文子串）；
-    # - clear：真开新话头／用户明示放下；闲聊／改口否定／身份问勿误清。
+    # - clear：读 Brief.openq_clear（arbitrate 已判放下／换题）；pipeline 不再扫放下词表。
     if should_resolve_open_question(
         brief=brief, user_text=user_text, has_open=bool(context.open_questions)
     ):
         _STORE.resolve_open_question()
     elif should_clear_open_questions(
-        user_text=user_text, has_open=bool(context.open_questions)
+        brief=brief, has_open=bool(context.open_questions)
     ):
         _STORE.clear_open_questions()
 

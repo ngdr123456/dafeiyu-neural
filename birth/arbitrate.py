@@ -16,12 +16,13 @@
 
 from __future__ import annotations
 
-from .drive import is_neutral_filler
+from .drive import _extract_open_topic, is_neutral_filler
 from .commit_extract import (
     _pending_topic_tokens,
     user_marks_commitment_done,
     user_presses_commitment,
 )
+from .openq_extract import user_marks_open_question_putdown
 from .session_trace import is_session_backref, recent_facts, topic_hint_from_facts
 from .stance_org import MUST_NOT_PRETEND_CORE, detect_org_conflict
 from .types import (
@@ -105,6 +106,14 @@ def arbitrate(
         and drive.salience == "high"
         and "好奇" in (drive.why or "")
     )
+    openq_clear = False
+    # 换题 clear：同场确有悬问 + 用户明示放下或真开新话头（复用既有线索，勿扩词表）；
+    # arb 只写标记，pipeline 开口后 clear；闲聊／改口否定／身份问不置位
+    if context.open_questions and (
+        user_marks_open_question_putdown(user_text)
+        or _extract_open_topic(user_text or "")
+    ):
+        openq_clear = True
     press_commit = False
     commit_resolve = False
     commit_deliverable = False
@@ -192,6 +201,7 @@ def arbitrate(
         must_not_pretend=must_not_pretend,
         openq_resolve=openq_resolve,
         openq_curiosity_hang=openq_curiosity_hang,
+        openq_clear=openq_clear,
         press_commit=press_commit,
         commit_resolve=commit_resolve,
         commit_deliverable=commit_deliverable,

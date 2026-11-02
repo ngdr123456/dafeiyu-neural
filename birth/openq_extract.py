@@ -88,17 +88,18 @@ def should_resolve_open_question(*, brief, user_text: str, has_open: bool) -> bo
     return bool(getattr(brief, "openq_resolve", False)) is OPENQ_RESOLVE_FLAG
 
 
-def should_clear_open_questions(*, user_text: str, has_open: bool) -> bool:
-    """换题 clear 须可检验：真开新话头或用户明示放下。闲聊／改口／身份勿清。"""
+# 与 ThoughtBrief.openq_clear 同一语义：arbitrate 写、此处读；改口文案不静默失效
+OPENQ_CLEAR_FLAG = True  # Brief.openq_clear 的约定真值
+
+
+def should_clear_open_questions(
+    *, brief, has_open: bool, user_text: str = ""
+) -> bool:
+    """换题 clear 可检验化：仅当 Brief 结构化标记 openq_clear（+ has_open）才 clear。
+
+    与 should_resolve_open_question 同语义：arbitrate 写、此处读；改口文案不静默失效。
+    user_text 仅作兼容保留，此处不再扫放下／开题词表。
+    """
     if not has_open:
         return False
-    text = (user_text or "").strip()
-    if not text:
-        return False
-    if user_marks_open_question_putdown(text):
-        return True
-    # 真开新话头（复用动力层前缀，避免另造词表堵嘴）
-    from .drive import _extract_open_topic
-    if _extract_open_topic(text):
-        return True
-    return False
+    return bool(getattr(brief, "openq_clear", False)) is OPENQ_CLEAR_FLAG

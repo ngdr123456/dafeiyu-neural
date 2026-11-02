@@ -77,6 +77,8 @@ class ThoughtBrief:
     openq_resolve: bool = False
     # 结构化：本轮好奇挂起 → pipeline 写「待接的话头」（勿再扫 CURIOSITY_MARKS）
     openq_curiosity_hang: bool = False
+    # 结构化：本轮用户明示放下／真开新话头 → 开口后 clear 悬问（pipeline 勿再扫放下词表）
+    openq_clear: bool = False
     # 结构化：本轮用户催可核对约定（articulate 拒空壳／stub 模板读此标记）
     press_commit: bool = False
     # 结构化：用户示意约定已兑现 → 开口后 resolve

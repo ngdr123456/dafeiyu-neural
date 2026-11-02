@@ -59,6 +59,51 @@ def test_identity_question_keeps_openq():
     assert active_store().pending_questions() == before
 
 
+def test_putdown_turn_writes_openq_clear_flag():
+    """「换个话题」→ Brief.openq_clear True；随后 pending 空（若未再挂新悬问）。"""
+    _seed_openq()
+    r = turn("换个话题", stub=True)
+    assert r.brief.openq_clear is True
+    assert r.brief.openq_curiosity_hang is False
+    assert active_store().pending_questions() == []
+
+
+def test_open_topic_turn_writes_openq_clear_flag():
+    """先挂悬问，再「我想聊月亮」→ 换题 clear：旧「待接」不得残留。"""
+    _seed_openq()
+    r = turn("我想聊月亮", stub=True)
+    assert r.brief.openq_clear is True
+    # 开题后可能挂新台上问句；旧「待接的话头：…月亮…」应被 clear
+    assert not any("待接的话头" in q for q in active_store().pending_questions())
+
+
+def test_idle_deny_identity_do_not_set_openq_clear():
+    """改口否定／身份问／闲聊：openq_clear False，只认 Brief 标记，悬问仍在。"""
+    from birth.openq_extract import should_clear_open_questions
+
+    for text in ("那刚才说的不算", "你是代码吗", "今天怎么样"):
+        _seed_openq()
+        before = list(active_store().pending_questions())
+        r = turn(text, stub=True)
+        assert r.brief.openq_clear is False, f"{text}: openq_clear={r.brief.openq_clear}"
+        assert should_clear_open_questions(
+            brief=r.brief, has_open=True, user_text=text
+        ) is False, text
+        assert r.brief.dominant != "meaning" or r.brief.openq_resolve is False, text
+        assert active_store().pending_questions() == before, text
+
+
+def test_brief_openq_clear_defaults_false():
+    """ThoughtBrief 缺省 openq_clear=False；clear 判定只认该字段。"""
+    from birth.openq_extract import OPENQ_CLEAR_FLAG, should_clear_open_questions
+    from birth.types import ThoughtBrief
+
+    assert ThoughtBrief(dominant="drive").openq_clear is False
+    assert OPENQ_CLEAR_FLAG is True
+    bare = ThoughtBrief(dominant="drive")
+    assert not should_clear_open_questions(brief=bare, has_open=True)
+
+
 def test_resolve_uses_brief_flag_not_say_intent():
     """改口文案也不静默失效：只认 openq_resolve 标记。"""
     from birth.openq_extract import should_resolve_open_question
