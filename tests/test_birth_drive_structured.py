@@ -6,7 +6,8 @@
 2) 好奇挂起 + filler → pursue（主路径读 ThinContext.curiosity_hang_pending 布尔，
    「待接的话头：」前缀仅兜底兼容旧快照；不扫 CURIOSITY_MARKS）；
 3) session_ok 缺省 False → None（不推）；
-4) 无结构信号（空 ThinContext）时仍走 MARKS 兜底，原有行为逐字段不变。
+4) 无结构信号（空 ThinContext）时仍走 MARKS 兜底，原有行为逐字段不变；
+5) 非 S3：drive_greet_pending／drive_hold_pending 有结构时 hold，不依赖 GREETINGS／SATISFIED_MARKS。
 """
 
 from __future__ import annotations
@@ -138,3 +139,87 @@ def test_empty_context_falls_back_to_marks_chain():
     filler = infer_drive("嗯", ctx)
     assert filler.direction is None
     assert filler.salience == "low"
+
+
+def test_drive_greet_flag_without_greeting_marks_holds():
+    """主路径：drive_greet_pending=True，文案不含 GREETINGS → 仍 hold low。"""
+    ctx = ThinContext(session_ok=True, drive_greet_pending=True)
+    # 故意用不在 GREETINGS 集合、也不含「你好」短句的中性陈述
+    sig = infer_drive("今天天气怎样啊兄弟", ctx)
+    assert sig.direction == "hold"
+    assert sig.salience == "low"
+    assert "招呼" in sig.why, sig.why
+
+
+def test_drive_hold_flag_without_satisfied_marks_holds():
+    """主路径：drive_hold_pending=True，文案不含 SATISFIED_MARKS → 仍 hold low。"""
+    ctx = ThinContext(session_ok=True, drive_hold_pending=True)
+    sig = infer_drive("再说两句星空的事吧", ctx)
+    assert sig.direction == "hold"
+    assert sig.salience == "low"
+    assert "满足" in sig.why or "收束" in sig.why, sig.why
+
+
+def test_drive_greet_marks_fallback_without_flag():
+    """兜底：无 drive_greet_pending 时，GREETINGS 仍探出招呼 → hold（与旧行为一致）。"""
+    ctx = ThinContext(session_ok=True, drive_greet_pending=False)
+    sig = infer_drive("你好", ctx)
+    assert sig.direction == "hold"
+    assert sig.salience == "low"
+    assert "招呼" in sig.why, sig.why
+
+
+def test_drive_hold_marks_fallback_without_flag():
+    """兜底：无 drive_hold_pending 时，SATISFIED_MARKS 仍探出收束 → hold。"""
+    ctx = ThinContext(session_ok=True, drive_hold_pending=False)
+    sig = infer_drive("够了先这样", ctx)
+    assert sig.direction == "hold"
+    assert sig.salience == "low"
+    assert "满足" in sig.why or "收束" in sig.why, sig.why
+
+
+def test_drive_greet_structured_beats_curiosity_marks_in_text():
+    """有 greet 结构时，即使文案含 CURIOSITY_MARKS 也不先 pursue（S4 在好奇 MARKS 前）。"""
+    ctx = ThinContext(session_ok=True, drive_greet_pending=True)
+    sig = infer_drive("为什么呀", ctx)  # 会命中 CURIOSITY_MARKS，但 flag 优先
+    assert sig.direction == "hold"
+    assert "招呼" in sig.why, sig.why
+
+
+def test_should_set_drive_greet_hold_helpers():
+    """写入侧 helper：结构 cue 优先；无结构时词表兜底；marks_fallback=False 不扫。"""
+    from birth.drive import (
+        should_set_drive_greet_pending,
+        should_set_drive_hold_pending,
+    )
+
+    assert should_set_drive_greet_pending(greet_cue=True, user_text="xxx", marks_fallback=False)
+    assert not should_set_drive_greet_pending(greet_cue=False, user_text="xxx", marks_fallback=False)
+    assert should_set_drive_greet_pending(greet_cue=False, user_text="你好", marks_fallback=True)
+    assert not should_set_drive_greet_pending(greet_cue=False, user_text="今天天气", marks_fallback=True)
+
+    assert should_set_drive_hold_pending(hold_cue=True, user_text="xxx", marks_fallback=False)
+    assert not should_set_drive_hold_pending(hold_cue=False, user_text="xxx", marks_fallback=False)
+    assert should_set_drive_hold_pending(hold_cue=False, user_text="够了先这样", marks_fallback=True)
+    assert not should_set_drive_hold_pending(hold_cue=False, user_text="再说星空", marks_fallback=True)
+
+
+def test_pipeline_structured_greet_hold_without_marks():
+    """live turn：上游 structured_drive_greet／hold → flag 置位 → drive hold，文案无词表。"""
+    from birth.articulate import set_stub_mode, clear_llm_hook
+    from birth.pipeline import active_store, turn
+
+    set_stub_mode(True)
+    clear_llm_hook()
+    active_store().new_session()
+
+    r = turn("今天天气怎样啊兄弟", stub=True, structured_drive_greet=True)
+    assert r.brief.drive.direction == "hold"
+    assert r.brief.drive.salience == "low"
+    assert "招呼" in r.brief.drive.why
+
+    active_store().new_session()
+    r2 = turn("再说两句星空的事吧", stub=True, structured_drive_hold=True)
+    assert r2.brief.drive.direction == "hold"
+    assert r2.brief.drive.salience == "low"
+    assert "满足" in r2.brief.drive.why or "收束" in r2.brief.drive.why

@@ -61,6 +61,10 @@ class ThinContext:
     curiosity_hang_pending: bool = False
     # 结构化：本轮用户改口／否认同场承诺（pipeline／上游写；drive S2 主路径读；勿主靠 _denies_commitment 词表）
     commitment_deny_pending: bool = False
+    # 结构化：本轮招呼 hold（pipeline／上游写；drive 非 S3 主路径读；勿主靠 GREETINGS 词表）
+    drive_greet_pending: bool = False
+    # 结构化：本轮满足／收束 hold（pipeline／上游写；drive 非 S3 主路径读；勿主靠 SATISFIED_MARKS）
+    drive_hold_pending: bool = False
 
 
 @dataclass

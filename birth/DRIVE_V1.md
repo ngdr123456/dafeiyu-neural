@@ -12,8 +12,8 @@
 - **禁止** 新增 0～1 分数、Hz、wanting 数值门面。
 
 ## 规则优先级（先命中先返回；org 身份冲突不在动力层拦截，信号仍可产出）
-1. **招呼** → hold / low（现状）。
-2. **满足／收束线索**（「够了」「先这样」「挺好的」「不用了」「就这样吧」等轻量输入侧）→ `hold` 或 `direction=None` / low；why=喜欢/满足侧已接住，不必再追。
+1. **招呼** → hold / low。主路径读 ThinContext.`drive_greet_pending`（pipeline 写；上游 `structured_drive_greet` 或无结构时 GREETINGS 兜底写入）；GREETINGS 仅无 flag 时 drive 内兜底（不扩词表）。
+2. **满足／收束线索** → `hold` / low；why=喜欢/满足侧已接住，不必再追。主路径读 ThinContext.`drive_hold_pending`（pipeline 写；上游 `structured_drive_hold` 或无结构时 SATISFIED_MARKS 兜底写入）；SATISFIED_MARKS 仅无 flag 时 drive 内兜底（不扩词表）。
 3. **用户明确打开话题**（「我想聊X」「跟你说件…」「我们谈谈…」）→ `pursue` / mid；why=缺口在外、想要打开这一话头；并把 X 短摘进 why（供仲裁/开口，不进性格库）。
 4. **好奇问为什么** → pursue / high（现状）。
 5. **回指同场 facts** → pursue / mid（现状，体验通道刀）。**订正**：若同场仍有未兑现 `last_commitments`，且本轮是回指／改口否定类 → **guard** / mid；已有要护优先于普通回指追。无承诺时的纯回指仍 pursue。改口判定主路径读 ThinContext.`commitment_deny_pending` 结构化布尔（pipeline 写入前移 `structured_commit_deny`／early stance 守诺结构（`structured_deny_from_stance`）；真无结构时 COMMIT_DENY_MARKS 兜底；resolve／clear／new_session／回合末清）；drive 仅无 flag 时兜底扫 `_denies_commitment`（宁缺勿扩词表）。

@@ -46,7 +46,7 @@ FALSE_GREEN_RISKS = """
 - 枚举漏检已对拍 utterance：validate 拦 pursue／guard／hold（独立英文词）与 non_negotiable 等标识；brief_to_prompt 仍查。残余：未穷尽一切内部符号别名。
 - 好奇挂起已闭合：pipeline 读 `openq_curiosity_hang`，不再扫 CURIOSITY_MARKS。drive 好奇挂起主路径已改读 ThinContext.curiosity_hang_pending（pipeline 经 store 显式置位；resolve／clear／new_session 清 False）；残余：无 flag 时仍可用「待接的话头：」前缀兜底（兼容旧快照）；pipeline 仍写该前缀作文案载体，台上话术未变；drive 内部仍用 MARKS 作输入侧线索。
 - 换题 clear 已闭合：arbitrate 写 `openq_clear`（放下标记或 drive `_extract_open_topic`），pipeline 读标记 clear，不再扫放下词表；残余：输入侧线索仍是固定词表（PUTDOWN_MARKS／OPEN_TOPIC_PREFIXES，未扩）。
-- drive 主路径先读结构化线索（DriveCues：承诺在场／悬问／好奇挂起 flag（前缀兜底）／session_ok）；冲突时结构化优先（test_birth_drive_structured）。残余：无结构信号时仍扫输入侧 MARKS 兜底（招呼／收束／好奇／失望／空追），词表固定未扩。
+- drive 主路径先读结构化线索（DriveCues：承诺在场／悬问／好奇挂起 flag（前缀兜底）／session_ok／drive_greet_pending／drive_hold_pending）；冲突时结构化优先（test_birth_drive_structured）。本刀非 S3：招呼 hold／收束 hold 已改读 ThinContext flag（pipeline 写；上游 structured_drive_greet／hold 或无结构时 GREETINGS／SATISFIED 兜底写入）。残余假绿（非 S3 仍 MARKS）：好奇 pursue（CURIOSITY_MARKS）、打开话题（OPEN_TOPIC_PREFIXES）、失望／空追（DISAPPOINT／_EMPTY_STAGE）、话题延续；无 flag 时招呼／收束仍词表兜底；词表固定未扩。
 - drive 改口→guard 主路径已改读 ThinContext.commitment_deny_pending；写入侧已前移：turn 初先吃 `structured_commit_deny` kwarg，再 early stance 守诺结构（`structured_deny_from_stance`，与 Brief.commit_deny 同条件）同轮置 flag；有结构时写入不扫 COMMIT_DENY_MARKS；词表仅真无结构时兜底（未扩）。残余：early stance／drive 在无 flag 时仍可能自扫 `_denies_commitment`（层内兜底）。
 - stance／Org 守诺主路径已改读 ThinContext.commitment_deny_pending（承诺在场＋flag → non_negotiable＋STAKE_HOLD_SAME_FIELD）；Org grain 读结构化 stance.posture／commitments，不扫改口词表；COMMIT_DENY_MARKS 仅无 flag 时兜底（未扩）。写入侧假绿已闭合（early stance 结构前移）；残余：stance／drive 无 flag 时层内词表兜底；arbitrate／articulate 仍以 stake 常量「先守同场说过的话」作 Brief 侧守诺标记（非用户词表）。
 """

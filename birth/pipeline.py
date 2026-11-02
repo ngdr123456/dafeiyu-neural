@@ -23,7 +23,11 @@ from .openq_extract import (
     should_resolve_open_question,
 )
 from .context import ThinContextStore
-from .drive import infer_drive
+from .drive import (
+    infer_drive,
+    should_set_drive_greet_pending,
+    should_set_drive_hold_pending,
+)
 from .stance_org import default_org, default_stance
 from .types import ThoughtBrief
 
@@ -54,6 +58,8 @@ def turn(
     debug: bool = False,
     stub: bool | None = None,
     structured_commit_deny: bool = False,
+    structured_drive_greet: bool = False,
+    structured_drive_hold: bool = False,
 ) -> TurnResult:
     """跑完一轮完整闭环。new_session=True 显式开新场（唯一清空入口）。
 
@@ -64,6 +70,9 @@ def turn(
     从其守诺结构（与 Brief.commit_deny 同条件）前移置 flag；COMMIT_DENY_MARKS
     仅真无结构时兜底——兼容旧路径但不扩词表，不改台上话术；勿误伤
     PRESS_COMMIT／交付／放下。
+    structured_drive_greet／structured_drive_hold: 上游结构化招呼／收束 hold cue；
+    有结构时 drive 非 S3 主路径读 ThinContext flag，不扫 GREETINGS／SATISFIED_MARKS；
+    真无结构时词表兜底（不扩词表）。
     """
     if new_session:
         _STORE.new_session()
@@ -109,6 +118,23 @@ def turn(
         ):
             _STORE.set_commitment_deny_pending(True)
             context = _STORE.snapshot()
+
+    # 非 S3：招呼／收束 hold 写入（有结构 cue 不扫词表；真无结构时 GREETINGS／SATISFIED 兜底）
+    _STORE.set_drive_greet_pending(False)
+    _STORE.set_drive_hold_pending(False)
+    if should_set_drive_greet_pending(
+        greet_cue=structured_drive_greet,
+        user_text=user_text,
+        marks_fallback=not bool(structured_drive_greet),
+    ):
+        _STORE.set_drive_greet_pending(True)
+    if should_set_drive_hold_pending(
+        hold_cue=structured_drive_hold,
+        user_text=user_text,
+        marks_fallback=not bool(structured_drive_hold),
+    ):
+        _STORE.set_drive_hold_pending(True)
+    context = _STORE.snapshot()
 
     drive = infer_drive(user_text, context)
     # 旗标可能刚被 early 守诺结构置位：重算 stance，使主路径读 flag（结构路径）
@@ -158,8 +184,10 @@ def turn(
         if open_q:
             _STORE.append_open_question(open_q)
 
-    # 改口否定 flag 只服务本轮 drive S2：回合末清，不漏到下一轮（store 侧 resolve/clear/new_session 也会清）
+    # 改口否定／招呼／收束 flag 只服务本轮 drive：回合末清，不漏到下一轮
     _STORE.set_commitment_deny_pending(False)
+    _STORE.set_drive_greet_pending(False)
+    _STORE.set_drive_hold_pending(False)
 
     return TurnResult(
         utterance=utterance,
