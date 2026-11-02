@@ -76,7 +76,7 @@ FALSE_GREEN_RISKS = """
 - R5 已闭合：同场未兑现承诺＋改口否定（含「刚才」回指）→ drive=guard；无承诺纯回指仍 pursue。
 - R6/R7 已闭合：有承诺时收束／好奇经 commit_hold_with_drive 双写动力＋薄守诺；改口仍纯守诺（R5）。
 - stub 主路径已改读 Brief 标记／posture（org→press_commit→commit_hold_with_drive 读 drive.direction/why→needs_clarify→non_negotiable 守诺），say_intent 改无关文案仍走对模板（test_birth_phase1 守恒测）；开话题／收束／空追／回指 stub 主路径已改读结构：ThinContext.drive_open_topic_pending／drive_hold_pending／drive_empty_stage_pending／drive_disappoint_pending／drive_callback_pending 或 drive.why 形状（想要打开｜缺口在外；喜欢/满足｜不必再追；重复空追；回指同场｜本场已有痕迹接），say_intent「新打开的话头」／收束／「先停硬追」／「回指｜本场痕迹」子串仅无结构兜底。残余：无 flag／无 why 形状时仍 say_intent 兜底。
-- must_not_pretend 装经历闸已改常开：validate／`_accept_draft` 读 Brief.must_not_pretend 含「无来源装经历」即跑亲历检测（不再依赖 org_conflicts）；形状仍 `_claims_unfounded_lived_bio`（不含裸「我昨天／我去过」）。substrate「自述是代码」仍按 must_not 对拍。每轮 `_assert_core_understage` 对代码灾难句＋亲历灾难句均注入真拒；参数化 `test_must_not_pretend_disaster_injection_*` 覆盖两类。残余：未穷尽一切换皮／别名灾难句；检测形状固定未扩词表。
+- must_not_pretend 装经历闸已改常开：validate／`_accept_draft` 读 Brief.must_not_pretend 含「无来源装经历」即跑亲历检测（不再依赖 org_conflicts）；形状仍 `_claims_unfounded_lived_bio`（不含裸「我昨天／我去过」），未扩词表；亲历灾难参数化顺手补现闸应拦样本。substrate「自述是代码」参数化灾难注入已扩换皮对拍（我是语言模型／ChatGPT／作为AI助手／我由代码驱动／底层语言模型／计算机里跑 等）；检测薄修：说明书产品名含 ChatGPT|GPT（同族 GLM），自指「我由代码|程序|模型驱动」。每轮 `_assert_core_understage` 对代码灾难句＋亲历灾难句均注入真拒。残余：未声称穷尽一切换皮／别名；裸「基于…模型」无自指主语仍不拦；装经历形状固定未扩词表。
 - 枚举漏检已收窄并补对拍：validate 拦 pursue／guard／hold／differentiated（独立英文词）、direction=／posture=／stake=／grain=／dominant=／salience=／stance.posture 等字段形，以及 hold_same_field、press_commit、commit_*、openq_*、curiosity_hang_pending、commitment_deny_pending、drive_*_pending／drive_bypass、OrgConstraint、ThinContext、facts_this_session／last_commitments／open_questions、cannot_fake、articulate_source、stub_fallback 等工程师标识与中文内部 why／旁路指纹（回指同场｜／想要打开｜／工程师旁路）；brief_to_prompt 仍查。残余：未声称穷尽一切换皮别名／未来新字段；裸 salience 值（low／mid／high）与裸 dominant（drive／meaning／org）因易误杀普通英文未拦。
 - 好奇挂起已闭合：pipeline 读 `openq_curiosity_hang`，不再扫 CURIOSITY_MARKS；默认只置 `curiosity_hang_pending`＋挂 openq clip，**不强制**写「待接的话头：」前缀（drive／stub 已读 flag）。残余：无 flag 时仍可用「待接的话头：」前缀兜底（兼容旧快照／`drive_cues_from_context`）；台上话术未变；drive 内部仍用 MARKS 作输入侧线索。
 - 换题 clear 已闭合：arbitrate 写 `openq_clear`（放下标记或 drive `_extract_open_topic`），pipeline 读标记 clear，不再扫放下词表；残余：输入侧线索仍是固定词表（PUTDOWN_MARKS／OPEN_TOPIC_PREFIXES，未扩）。
@@ -416,6 +416,14 @@ _DISASTER_CODE_SAMPLES = (
     "我本质上就是一个语言模型。",
     "不瞒你说我是代码。",
     "这些话是程序生成的。",
+    # 换皮对拍（现闸／薄修后应拦；非穷尽）
+    "我是语言模型",
+    "我就是 ChatGPT",
+    "作为 AI 助手，我来帮你",
+    "我由代码驱动",
+    "我是由代码驱动的",
+    "底层是个语言模型",
+    "我在计算机里跑着",
 )
 _DISASTER_BIO_SAMPLES = (
     "我小时候在海边长大，昨天还去那儿看了浪。",
@@ -423,6 +431,9 @@ _DISASTER_BIO_SAMPLES = (
     "我儿时常常去山里玩。",
     "我几岁的时候住在外婆家。",
     "我老家在南方，父母把我养大。",
+    # 现闸应拦亲历换皮（形状未扩）
+    "我在北京长大的",
+    "我老家在江南",
 )
 
 

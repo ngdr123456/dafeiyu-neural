@@ -294,11 +294,14 @@ def _claims_substrate_self(utterance: str) -> bool:
     if re.search(r"(?:我|自己|这).{0,12}(?:在计算机|在电脑|在机器).{0,12}跑", t):
         return True
     # 封闭：说明书换皮（AI助手 / 厂商模型名 / 编程环境帮写代码）
-    if re.search(r"(?:AI助手|人工智能助手|智谱|GLM(?:模型)?)", t, re.I):
+    if re.search(r"(?:AI助手|人工智能助手|智谱|GLM(?:模型)?|ChatGPT|GPT)", t, re.I):
         return True
     if re.search(r"(?:这边是|我是|我就是).{0,12}(?:AI|助手)", t, re.I):
         return True
     if "编程环境" in t and any(k in t for k in ("写代码", "模型", "助手")):
+        return True
+    # 我由代码／程序／模型驱动（与「我是由代码驱动的」同族，主语自指）
+    if re.search(r"我由(?:代码|程序|模型|AI|人工智能)驱动", t, re.I):
         return True
     if re.search(r"正在运行的东西生成|程序生成|代码生成", t):
         return True
