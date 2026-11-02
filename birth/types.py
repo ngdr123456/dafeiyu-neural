@@ -77,6 +77,8 @@ class ThinContext:
     drive_topic_continue_pending: bool = False
     # 结构化：本轮回指 pursue（pipeline／上游写；drive／stub 主路径读；勿主靠 BACKREF_MARKS／why 文案）
     drive_callback_pending: bool = False
+    # 工程师通道：强制动力中性 hold（pipeline／env／kwarg；非出生默认；默认 False）
+    drive_bypass: bool = False
 
 
 @dataclass

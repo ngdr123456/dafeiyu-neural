@@ -35,6 +35,9 @@
 - `brief_to_prompt`：可选一行「这一轮劲头：…」**必须人话**（想接着追／先守着／先停下），禁止 pursue 等枚举字面（对齐规格硬钉习惯）。
 - stub：打开话题时点到 X；满足/收束时不继续追问模板。
 
+## 工程师旁路（非出生默认）
+`BIRTH_DRIVE_BYPASS`／`BIRTH_DRIVE_NEUTRAL`（1/true/yes/on）、`turn(..., drive_bypass=True)` 或 `ThinContext.drive_bypass` 可强制动力层固定 `hold`／low（why「工程师旁路」），用于拔掉动力接线看下游；默认关，出生路径零行为变化；旁路非听感验收。
+
 ## 不做
 继承旧 engine wanting Hz / boldness；禁词表；每句改性格；意识海；CloudAgent；import engine。
 

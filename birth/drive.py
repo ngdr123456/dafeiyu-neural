@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass
 
@@ -362,12 +363,43 @@ def should_set_drive_callback_pending(
         return False
     return is_session_backref((user_text or "").strip(), context)
 
+
+_BYPASS_ENV_TRUTHY = frozenset({"1", "true", "yes", "on"})
+
+
+def is_drive_bypass_on(
+    *,
+    explicit: bool | None = None,
+    context: ThinContext | None = None,
+) -> bool:
+    """工程师通道：是否强制动力中性 hold。默认关；非出生默认。
+
+    开启途径（任一即可）：
+    - explicit=True（infer_drive／turn 的 drive_bypass kwarg）
+    - ThinContext.drive_bypass=True
+    - 环境变量 BIRTH_DRIVE_BYPASS 或 BIRTH_DRIVE_NEUTRAL ∈ {1,true,yes,on}
+    """
+    if explicit is True:
+        return True
+    if context is not None and bool(getattr(context, "drive_bypass", False)):
+        return True
+    for key in ("BIRTH_DRIVE_BYPASS", "BIRTH_DRIVE_NEUTRAL"):
+        if os.environ.get(key, "").strip().lower() in _BYPASS_ENV_TRUTHY:
+            return True
+    return False
+
+
 def infer_drive(
     user_text: str,
     context: ThinContext,
     cues: DriveCues | None = None,
+    *,
+    drive_bypass: bool | None = None,
 ) -> DriveSignal:
     """DRIVE_V1 优先级：结构化阶段先行；无结构信号时才走 MARKS 兜底。
+
+    工程师旁路（drive_bypass／ThinContext.drive_bypass／BIRTH_DRIVE_BYPASS｜NEUTRAL）：
+    开则固定 hold/low、why「工程师旁路」，跳过全部 S*；默认关，零行为变化。
 
     S2 改口否定主路径读 ThinContext.commitment_deny_pending 结构化布尔
     （pipeline 经 store 在 turn 开头置位）；兜底范围见 S2 注释。
@@ -387,6 +419,14 @@ def infer_drive(
     text = (user_text or "").strip()
     if cues is None:
         cues = drive_cues_from_context(context)
+
+    # 工程师旁路：拔掉动力接线，固定中性 hold（管线仍跑；非听感验收）
+    if is_drive_bypass_on(explicit=drive_bypass, context=context):
+        return DriveSignal(
+            direction="hold",
+            salience="low",
+            why="工程师旁路",
+        )
 
     # -- 结构化阶段：先读 cues，不动词表 --------------------------------
     # S1) 新场未接上 → 不推

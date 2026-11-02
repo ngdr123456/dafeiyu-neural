@@ -13,6 +13,7 @@
    分别 guard／hold／pursue／pursue，不依赖 DISAPPOINT_MARKS／_EMPTY_STAGE_MARKS／话题词／BACKREF_MARKS。
 6) DRIVE_V1 §6：同场 last_commitments 非空时，空台／话题延续／回指（含 structured_* 与 pipeline 兜底写 flag）
    不得压过 guard；turn 路径与直调 infer_drive 对齐。
+7) 工程师旁路默认关＝现网；开（kwarg／env／ThinContext.drive_bypass）→ 固定 hold／low，turn 仍跑通。
 """
 
 from __future__ import annotations
@@ -653,3 +654,76 @@ def test_infer_drive_callback_flag_with_commitments_guards():
     assert sig.direction == "guard", sig
     assert "要护" in sig.why, sig.why
 
+
+def test_drive_bypass_default_off_preserves_curiosity():
+    """默认旁路关：好奇文本仍 pursue（与现网一致）。"""
+    ctx = ThinContext(session_ok=True)
+    sig = infer_drive("为什么会闪", ctx)
+    assert sig.direction == "pursue"
+    assert sig.salience == "high"
+    assert "工程师旁路" not in sig.why
+
+
+def test_drive_bypass_kwarg_forces_hold():
+    """infer_drive(drive_bypass=True) → 固定 hold／low，why 含工程师旁路。"""
+    ctx = ThinContext(session_ok=True)
+    sig = infer_drive("为什么会闪", ctx, drive_bypass=True)
+    assert sig.direction == "hold"
+    assert sig.salience == "low"
+    assert "工程师旁路" in sig.why
+
+
+def test_drive_bypass_context_flag_forces_hold():
+    """ThinContext.drive_bypass=True → 固定 hold（不依赖好奇 MARKS）。"""
+    ctx = ThinContext(session_ok=True, drive_bypass=True)
+    sig = infer_drive("为什么会闪", ctx)
+    assert sig.direction == "hold"
+    assert sig.salience == "low"
+    assert "工程师旁路" in sig.why
+
+
+def test_drive_bypass_env_forces_hold(monkeypatch):
+    """BIRTH_DRIVE_BYPASS=1 → 固定 hold；清环境后恢复。"""
+    import os
+    from birth.drive import is_drive_bypass_on
+
+    monkeypatch.setenv("BIRTH_DRIVE_BYPASS", "1")
+    assert is_drive_bypass_on() is True
+    ctx = ThinContext(session_ok=True)
+    sig = infer_drive("为什么会闪", ctx)
+    assert sig.direction == "hold"
+    assert "工程师旁路" in sig.why
+
+    monkeypatch.delenv("BIRTH_DRIVE_BYPASS", raising=False)
+    monkeypatch.setenv("BIRTH_DRIVE_NEUTRAL", "true")
+    sig2 = infer_drive("为什么会闪", ThinContext(session_ok=True))
+    assert sig2.direction == "hold"
+
+    monkeypatch.delenv("BIRTH_DRIVE_NEUTRAL", raising=False)
+    # 确保测试结束后旁路关
+    for k in ("BIRTH_DRIVE_BYPASS", "BIRTH_DRIVE_NEUTRAL"):
+        os.environ.pop(k, None)
+    sig3 = infer_drive("为什么会闪", ThinContext(session_ok=True))
+    assert sig3.direction == "pursue"
+
+
+def test_turn_drive_bypass_completes_with_hold():
+    """turn(drive_bypass=True) 仍跑通；brief.drive 为 hold；默认关路径不受影响。"""
+    from birth.articulate import set_stub_mode, clear_llm_hook
+    from birth.pipeline import active_store, turn
+
+    set_stub_mode(True)
+    clear_llm_hook()
+    active_store().new_session()
+
+    r = turn("为什么会闪", stub=True, drive_bypass=True, new_session=True)
+    assert r.utterance, "旁路开时 utterance 不应空"
+    assert r.brief.drive is not None
+    assert r.brief.drive.direction == "hold"
+    assert r.brief.drive.salience == "low"
+    assert "工程师旁路" in r.brief.drive.why
+
+    # 默认关：同输入恢复 pursue
+    r2 = turn("为什么会闪", stub=True, new_session=True)
+    assert r2.brief.drive.direction == "pursue"
+    assert "工程师旁路" not in r2.brief.drive.why

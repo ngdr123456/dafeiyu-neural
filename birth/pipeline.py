@@ -72,6 +72,7 @@ def turn(
     structured_drive_empty_stage: bool = False,
     structured_drive_topic_continue: bool = False,
     structured_drive_callback: bool = False,
+    drive_bypass: bool = False,
 ) -> TurnResult:
     """跑完一轮完整闭环。new_session=True 显式开新场（唯一清空入口）。
 
@@ -93,6 +94,8 @@ def turn(
     不扫 DISAPPOINT_MARKS／_EMPTY_STAGE_MARKS／话题词；真无结构时兜底（不扩词表）。
     structured_drive_callback: 上游结构化回指 pursue cue；有结构时读 ThinContext.drive_callback_pending，
     不扫 BACKREF_MARKS；真无结构时 is_session_backref 兜底（不扩词表）。有承诺时写入侧不置（§6）。
+    drive_bypass: 工程师通道——强制动力层中性 hold（亦可 BIRTH_DRIVE_BYPASS／NEUTRAL 环境变量
+    或 ThinContext.drive_bypass）；默认 False，出生路径零行为变化；非听感验收。
     """
     if new_session:
         _STORE.new_session()
@@ -149,6 +152,9 @@ def turn(
     _STORE.set_drive_empty_stage_pending(False)
     _STORE.set_drive_topic_continue_pending(False)
     _STORE.set_drive_callback_pending(False)
+    _STORE.set_drive_bypass(False)
+    if drive_bypass:
+        _STORE.set_drive_bypass(True)
     if should_set_drive_greet_pending(
         greet_cue=structured_drive_greet,
         user_text=user_text,
@@ -207,7 +213,7 @@ def turn(
         _STORE.set_drive_callback_pending(True)
     context = _STORE.snapshot()
 
-    drive = infer_drive(user_text, context)
+    drive = infer_drive(user_text, context, drive_bypass=drive_bypass or None)
     # 旗标可能刚被 early 守诺结构置位：重算 stance，使主路径读 flag（结构路径）
     stance = default_stance(user_text, context)
     org = default_org(context, drive=drive, stance=stance, user_text=user_text)
@@ -265,6 +271,7 @@ def turn(
     _STORE.set_drive_empty_stage_pending(False)
     _STORE.set_drive_topic_continue_pending(False)
     _STORE.set_drive_callback_pending(False)
+    _STORE.set_drive_bypass(False)
 
     return TurnResult(
         utterance=utterance,

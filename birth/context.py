@@ -42,6 +42,7 @@ class ThinContextStore:
             drive_empty_stage_pending=ctx.drive_empty_stage_pending,
             drive_topic_continue_pending=ctx.drive_topic_continue_pending,
             drive_callback_pending=ctx.drive_callback_pending,
+            drive_bypass=ctx.drive_bypass,
         )
 
     def new_session(self) -> None:
@@ -149,6 +150,13 @@ class ThinContextStore:
         有 last_commitments 时写入侧不置（对齐 §6，勿压过 guard）。
         """
         self._context.drive_callback_pending = pending
+
+    def set_drive_bypass(self, pending: bool) -> None:
+        """工程师通道：强制动力层中性 hold（非出生默认）。
+
+        drive 主路径读该布尔／env／kwarg；默认 False；回合末清，防漏到下一轮。
+        """
+        self._context.drive_bypass = pending
 
     def resolve_open_question(self) -> str | None:
         """接完第一条悬问：弹出并返回它；没有悬问时返回 None。
