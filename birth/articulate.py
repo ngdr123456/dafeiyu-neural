@@ -148,10 +148,11 @@ def _template_utterance(brief: ThoughtBrief) -> str:
             "人生有没有意义这类大词，我这边没有现成鸡汤。"
             "能讲的只有眼前这句里能讲清的部分，你具体指哪一块？"
         )
+    from .stance_org import STAKE_HOLD_SAME_FIELD
     # 5) 守诺改口：posture + 承诺/stake 结构化判定（不再靠 say_intent 子串做主路径）
     if brief.stance.posture == "non_negotiable" and (
         brief.context.last_commitments
-        or "先守同场说过的话" in (brief.stance.stake or "")
+        or STAKE_HOLD_SAME_FIELD in (brief.stance.stake or "")
     ):
         return (
             "同场里说过的话我不当没说过。"

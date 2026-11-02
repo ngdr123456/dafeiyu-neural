@@ -24,7 +24,7 @@ from .commit_extract import (
 )
 from .openq_extract import user_marks_open_question_putdown
 from .session_trace import is_session_backref, recent_facts, topic_hint_from_facts
-from .stance_org import MUST_NOT_PRETEND_CORE, detect_org_conflict
+from .stance_org import MUST_NOT_PRETEND_CORE, STAKE_HOLD_SAME_FIELD, detect_org_conflict
 from .types import (
     DriveSignal,
     OrgConstraint,
@@ -126,7 +126,7 @@ def arbitrate(
     elif (
         stance.posture == "non_negotiable"
         and context.last_commitments
-        and "先守同场说过的话" in (stance.stake or "")
+        and STAKE_HOLD_SAME_FIELD in (stance.stake or "")
     ):
         # 意义：守住自己出口的承诺（可与 commitment 分支合并）
         dominant = "meaning"

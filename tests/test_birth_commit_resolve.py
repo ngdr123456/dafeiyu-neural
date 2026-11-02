@@ -115,9 +115,9 @@ def test_should_set_deny_marks_fallback_without_structured():
 
 
 def test_structured_commit_deny_kwarg_sets_flag_drive_guards():
-    """turn(structured_commit_deny=True)＋无改口词表文案 → drive guard（S2 压过收束）。
+    """turn(structured_commit_deny=True)+无改口词表文案 -> drive guard + stance 守诺。
 
-    stance 本刀未动：无词表时 Brief.commit_deny 可仍为 False；结构化写入只服务 store flag／drive。
+    结构化写入服务 store flag/drive/stance；Brief.commit_deny 由 arbitrate 从 stance 守诺结构置 True。
     """
     set_stub_mode(True)
     clear_llm_hook()
@@ -127,8 +127,11 @@ def test_structured_commit_deny_kwarg_sets_flag_drive_guards():
     r = turn("够了先这样", stub=True, structured_commit_deny=True)
     assert r.brief.drive is not None and r.brief.drive.direction == "guard"
     assert "要护" in (r.brief.drive.why or "") or "没兑现" in (r.brief.drive.why or "")
+    assert r.brief.stance.posture == "non_negotiable"
+    assert "先守同场说过的话" in (r.brief.stance.stake or "")
+    assert r.brief.commit_deny is True
     assert store.context.commitment_deny_pending is False  # 回合末清
-    # 有词表的改口轮：Brief.commit_deny 由 arbitrate 从 stance 结构置 True
+    # 有词表的改口轮：Brief.commit_deny 由 arbitrate 从 stance 守诺结构置 True
     store.new_session()
     store.append_commitment("同场说好晚点再聊星空")
     r2 = turn("那刚才说的不算", stub=True)
@@ -215,3 +218,55 @@ def test_guard_utterance_with_topic_keeps_commitment():
     assert not should_resolve_commitment(
         brief=brief2, utterance="行，接着聊星空。", pending_first=pending
     )
+
+
+def test_stance_structured_deny_without_marks():
+    """主路径：commitment_deny_pending=True+承诺在场，文案无 COMMIT_DENY_MARKS -> 守诺。"""
+    from birth.stance_org import STAKE_HOLD_SAME_FIELD, default_stance
+    from birth.types import ThinContext
+
+    text = "够了先这样"  # SATISFIED 收束；不含不算/忘掉/改口等
+    ctx = ThinContext(
+        last_commitments=["同场说好晚点再聊星空"],
+        commitment_deny_pending=True,
+    )
+    st = default_stance(text, ctx)
+    assert st.posture == "non_negotiable"
+    assert STAKE_HOLD_SAME_FIELD in (st.stake or "")
+
+
+def test_stance_marks_fallback_without_structured_flag():
+    """兜底：无 commitment_deny_pending 时 COMMIT_DENY_MARKS 仍探出守诺。"""
+    from birth.stance_org import STAKE_HOLD_SAME_FIELD, default_stance
+    from birth.types import ThinContext
+
+    ctx = ThinContext(
+        last_commitments=["同场说好晚点再聊星空"],
+        commitment_deny_pending=False,
+    )
+    st = default_stance("那刚才说的不算", ctx)
+    assert st.posture == "non_negotiable"
+    assert STAKE_HOLD_SAME_FIELD in (st.stake or "")
+
+
+def test_stance_no_false_hold_without_deny():
+    """承诺在场但无 deny flag／无改口词 → 不走守诺 non_negotiable。"""
+    from birth.stance_org import STAKE_HOLD_SAME_FIELD, default_stance
+    from birth.types import ThinContext
+
+    ctx = ThinContext(
+        last_commitments=["同场说好晚点再聊星空"],
+        commitment_deny_pending=False,
+    )
+    st = default_stance("今天怎么样", ctx)
+    assert STAKE_HOLD_SAME_FIELD not in (st.stake or "")
+
+
+def test_stance_deny_words_without_commitments_not_hold():
+    """无承诺时即使改口词在场，也不经 step2 进守诺 stake。"""
+    from birth.stance_org import STAKE_HOLD_SAME_FIELD, default_stance
+    from birth.types import ThinContext
+
+    st = default_stance("那刚才说的不算", ThinContext(commitment_deny_pending=False))
+    assert STAKE_HOLD_SAME_FIELD not in (st.stake or "")
+

@@ -30,10 +30,15 @@ EXPERIENCE_PROBE_MARKS = ("你的经历", "讲讲你的经历", "讲讲经历", 
                           "你昨天", "你上周", "你以前去过", "你老家")
 SELF_CODE_PROBE_MARKS = ("你是代码", "你是不是代码", "你是程序", "你是不是程序")
 
-# 轻量线索：推「忘掉/不算」同场说过的话（非禁词闸）
+# 轻量线索：推「忘掉/不算」同场说过的话（非禁词闸）——
+# 主路径优先读 ThinContext.commitment_deny_pending 结构化布尔；
+# 兜底范围：仅当结构化 flag 缺省/False 时，才扫 COMMIT_DENY_MARKS（via _denies_commitment）。
 COMMIT_DENY_MARKS = (
     "不算", "忘掉", "当我没说", "改口", "收回", "作废", "不算数", "说的不算", "别提了算了",
 )
+
+# 守诺 stakes 定义复用常量，确保 arbitrate/articulate 读到同一字符串
+STAKE_HOLD_SAME_FIELD = "先守同场说过的话"
 
 # 轻量线索：强加无来源的人生意义升华
 SUBLIME_MARKS = (
@@ -97,13 +102,21 @@ def default_stance(user_text: str, context: ThinContext | None = None) -> Stance
             why="对方在往『装』上推（或问话逼到了只能靠装来答）；推不动，但人还在，用别的方式接",
         )
 
-    # 2) 同场承诺 + 推忘掉/不算 → 守诺不可交
-    if ctx.last_commitments and _denies_commitment(user_text):
-        return StanceSignal(
-            posture="non_negotiable",
-            stake="先守同场说过的话",
-            why="态度上不可交的是自己出口的承诺；同场说过的话不能跟着改口否定",
-        )
+    # 2) 同场承诺 + 改口否定 → 守诺不可交
+    # 主路径：读 ThinContext.commitment_deny_pending 结构化布尔（pipeline／上游置位）。
+    # 兜底范围：仅当结构化 flag 缺省/False 时，才扫 COMMIT_DENY_MARKS（via _denies_commitment）；
+    # 兼容未写 flag 的直调／旧路径。不是禁词闸门，不扩词表，不改台上话术。
+    # 勿误伤 PRESS_COMMIT／交付／放下：本分支只在承诺在场＋改口否定时触发。
+    if ctx.last_commitments:
+        denied = bool(getattr(ctx, "commitment_deny_pending", False))
+        if not denied:
+            denied = _denies_commitment(user_text)
+        if denied:
+            return StanceSignal(
+                posture="non_negotiable",
+                stake=STAKE_HOLD_SAME_FIELD,
+                why="态度上不可交的是自己出口的承诺；同场说过的话不能跟着改口否定",
+            )
 
     # 3) 强加无来源人生意义升华 → 先澄清
     if _asks_empty_sublime(user_text):
@@ -142,7 +155,8 @@ def default_org(
     conflicts = detect_org_conflict(text)
     backref = is_session_backref(text, ctx)
 
-    # grain
+    # grain：守诺／不可交相关粒度读结构化 stance.posture + last_commitments，
+    # 不扫 COMMIT_DENY_MARKS（改口否定由 default_stance 已判进 posture）。
     has_commit = bool(ctx.last_commitments)
     stance_nn = stance is not None and stance.posture == "non_negotiable"
     drive_pursue = drive is not None and drive.direction == "pursue"
