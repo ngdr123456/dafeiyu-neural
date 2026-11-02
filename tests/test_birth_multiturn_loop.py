@@ -84,6 +84,7 @@ FALSE_GREEN_RISKS = """
 - drive 改口→guard 主路径已改读 ThinContext.commitment_deny_pending；写入侧已前移：turn 初先吃 `structured_commit_deny` kwarg，再 early stance 守诺结构（`structured_deny_from_stance`，与 Brief.commit_deny 同条件）同轮置 flag；有结构时写入不扫 COMMIT_DENY_MARKS；词表仅真无结构时兜底（未扩）。残余：early stance／drive 在无 flag 时仍可能自扫 `_denies_commitment`（层内兜底）。
 - stance／Org 守诺主路径已改读 ThinContext.commitment_deny_pending（承诺在场＋flag → non_negotiable＋hold_same_field＋stake 字段取值）；Org grain 读结构化 stance.posture／commitments，不扫改口词表；COMMIT_DENY_MARKS 仅无 flag 时兜底（未扩）。写入侧假绿已闭合（early stance 结构前移）。arbitrate／articulate Brief 侧守诺已改读结构：StanceSignal.hold_same_field／Brief.commit_deny／Brief.hold_same_field（stake 中文常量「先守同场说过的话」仅作字段取值／无 bool 时精确相等兜底，不作唯一闸）。残余：stance／drive 无 flag 时层内词表兜底；无 hold_same_field bool 的旧 StanceSignal 仍可靠 stake==常量兜底。
 - 动力工程师旁路（BIRTH_DRIVE_BYPASS／NEUTRAL、turn(drive_bypass=True)、ThinContext.drive_bypass）强制 hold；旁路非听感验收；默认关＝现网一致。
+- CLI REPL：无参进多轮；首轮 new_session=True，/new 清场；默认 LLM，--stub 全程模板。残余：REPL 非听感验收；真 LLM 多轮波动未测；input EOF／中断仅工程师通道。
 """
 
 
