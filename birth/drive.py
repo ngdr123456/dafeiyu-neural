@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 
 from .context import ThinContextStore  # noqa: F401  (类型提示用)
 from .session_trace import is_session_backref, topic_hint_from_facts
@@ -45,6 +46,29 @@ DISAPPOINT_MARKS = (
 )
 
 _EMPTY_STAGE_MARKS = ("嗯，听着", "你想让接几句", "这句我接", "听着呢")
+
+
+@dataclass
+class DriveCues:
+    """结构化线索：主路径先读上下文结构，不再先扫输入侧词表。"""
+
+    commitments_present: bool = False
+    open_question_pending: bool = False
+    # 悬问里带「待接的话头：」前缀（pipeline 写入的好奇挂起）
+    curiosity_hang_pending: bool = False
+    session_ok: bool = True
+
+
+def drive_cues_from_context(context: ThinContext) -> DriveCues:
+    """从 ThinContext 抽结构化线索（不扫用户输入侧词表）。"""
+    return DriveCues(
+        commitments_present=bool(context.last_commitments),
+        open_question_pending=bool(context.open_questions),
+        curiosity_hang_pending=any(
+            q.startswith("待接的话头：") for q in (context.open_questions or [])
+        ),
+        session_ok=context.session_ok,
+    )
 
 
 def _is_greeting(text: str) -> bool:
@@ -119,10 +143,43 @@ def _topic_continuation(text: str, context: ThinContext) -> DriveSignal | None:
     return None
 
 
-def infer_drive(user_text: str, context: ThinContext) -> DriveSignal:
-    """DRIVE_V1 优先级：先命中先返回；三槽位不增。"""
+def infer_drive(
+    user_text: str,
+    context: ThinContext,
+    cues: DriveCues | None = None,
+) -> DriveSignal:
+    """DRIVE_V1 优先级：结构化阶段先行；无结构信号时才走 MARKS 兜底。"""
     text = (user_text or "").strip()
+    if cues is None:
+        cues = drive_cues_from_context(context)
 
+    # -- 结构化阶段：先读 cues，不动词表 --------------------------------
+    # S1) 新场未接上 → 不推
+    if not cues.session_ok:
+        return DriveSignal(direction=None, salience="low", why="新场未接上，先不推")
+
+    # S2) 承诺在场 + 本轮改口否定 → guard（复用 stance 线索，懒导入避免环）
+    if cues.commitments_present and context.last_commitments:
+        from .stance_org import _denies_commitment
+        if _denies_commitment(text):
+            first = context.last_commitments[0]
+            return DriveSignal(
+                direction="guard",
+                salience="mid",
+                why=f"同场有没兑现的话（{first}），已有要护，这轮不能当没说过",
+            )
+
+    # S3) 好奇挂起 + filler → 适时捡起悬问
+    if cues.curiosity_hang_pending and context.open_questions:
+        if is_neutral_filler(text):
+            first = context.open_questions[0]
+            return DriveSignal(
+                direction="pursue",
+                salience="mid",
+                why=f"同场还有悬而未决的问题（{first}），可以适时捡起来",
+            )
+
+    # 兜底：无结构信号判定时才扫输入侧 MARKS（CURIOSITY/SATISFIED/DISAPPOINT/_EMPTY_STAGE）
     # 1) 招呼
     if _is_greeting(text):
         return DriveSignal(

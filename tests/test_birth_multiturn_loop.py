@@ -46,6 +46,7 @@ FALSE_GREEN_RISKS = """
 - 枚举漏检已对拍 utterance：validate 拦 pursue／guard／hold（独立英文词）与 non_negotiable 等标识；brief_to_prompt 仍查。残余：未穷尽一切内部符号别名。
 - 好奇挂起已闭合：pipeline 读 `openq_curiosity_hang`，不再扫 CURIOSITY_MARKS；残余：drive 内部仍用 MARKS 作输入侧线索。
 - 换题 clear 已闭合：arbitrate 写 `openq_clear`（放下标记或 drive `_extract_open_topic`），pipeline 读标记 clear，不再扫放下词表；残余：输入侧线索仍是固定词表（PUTDOWN_MARKS／OPEN_TOPIC_PREFIXES，未扩）。
+- drive 主路径先读结构化线索（DriveCues：承诺在场／悬问／好奇挂起／session_ok）；冲突时结构化优先（test_birth_drive_structured）。残余：无结构信号时仍扫输入侧 MARKS 兜底（招呼／收束／好奇／失望／空追），词表固定未扩。
 """
 
 
