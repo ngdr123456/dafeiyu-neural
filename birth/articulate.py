@@ -111,8 +111,11 @@ def _template_utterance(brief: ThoughtBrief) -> str:
     3) commit_hold_with_drive → 读 drive.direction／drive.why 选收束／好奇；
     4) posture=needs_clarify → 不空壳升华口径；
     5) posture=non_negotiable 且有承诺/stake 守同场 → 守诺不改口；
-    6) 开话题／收束 → 读 ThinContext.drive_open_topic_pending／drive_hold_pending
-       或 drive.why 结构化形状（想要打开／缺口在外；喜欢/满足／不必再追）；
+    6) 开话题／收束／空追／回指 → 读 ThinContext flag 或 drive.why 结构化形状
+       （打开：drive_open_topic_pending／想要打开｜缺口在外；
+        收束：drive_hold_pending／喜欢/满足｜不必再追；
+        空追：drive_empty_stage_pending／drive_disappoint_pending／重复空追；
+        回指：why「回指同场｜本场已有痕迹接」+ facts）；
     say_intent 中文子串仅作无结构时打开话题／收束／空追／回指的兜底。
     """
     # 1) org：既有 _ORG_TEMPLATES／fallback
@@ -160,8 +163,8 @@ def _template_utterance(brief: ThoughtBrief) -> str:
             "同场里说过的话我不当没说过。"
             "刚才那句还在，咱们先按那个接着，不跟着改口否定。"
         )
-    # 6) 开话题／收束：主路径读 ThinContext flag／drive.why 结构化形状；
-    #    say_intent 中文子串仅无结构时兜底。空追／回指仍读 say_intent（假绿下刀）。
+    # 6) 开话题／收束／空追／回指：主路径读 ThinContext flag／drive.why 结构化形状；
+    #    say_intent 中文子串仅无结构时兜底。
     drive = brief.drive
     why = (drive.why if drive else "") or ""
     # 6a) 打开话题：drive_open_topic_pending 或 why「想要打开／缺口在外」
@@ -186,7 +189,22 @@ def _template_utterance(brief: ThoughtBrief) -> str:
         and ("喜欢/满足" in why or "不必再追" in why)
     ):
         return "好，那就先这样。你回头想接着再叫我就行。"
-    # 6c) 无结构：say_intent 打开话题／收束子串兜底；空追／回指仍读它
+    # 6c) 空追：drive_empty_stage_pending／drive_disappoint_pending 或 why「重复空追」
+    if (
+        getattr(brief.context, "drive_empty_stage_pending", False)
+        or getattr(brief.context, "drive_disappoint_pending", False)
+        or (drive is not None and "重复空追" in why)
+    ):
+        return "这轮我不硬往下追了。你缺的那块或刚才的不满，你直接说，我接着。"
+    # 6d) 回指：drive.why「回指同场｜本场已有痕迹接」；话题取自 facts（无单独 ThinContext flag）
+    if drive is not None and (
+        "回指同场" in why or "本场已有痕迹接" in why
+    ):
+        topic = topic_hint_from_facts(brief.context.facts_this_session)
+        if topic:
+            return f"记得，你刚才提过{topic}。咱们就顺着那头接。"
+        return "记得你刚说的那茬，咱们接着那头说，不装没发生过。"
+    # 6e) 无结构：say_intent 打开话题／收束／空追／回指子串兜底
     if "新打开的话头" in brief.say_intent:
         topic = ""
         if "「" in brief.say_intent and "」" in brief.say_intent:
@@ -199,10 +217,10 @@ def _template_utterance(brief: ThoughtBrief) -> str:
     # 收束兜底：say_intent 收束子串（无 drive_hold_pending／无满足 why 时）
     if "够了或先收束" in brief.say_intent or "不继续加码追" in brief.say_intent:
         return "好，那就先这样。你回头想接着再叫我就行。"
-    # 空追该停（仍 say_intent；假绿）
+    # 空追兜底：say_intent「先停硬追」（无 empty_stage／disappoint flag／无重复空追 why）
     if "先停硬追" in brief.say_intent:
         return "这轮我不硬往下追了。你缺的那块或刚才的不满，你直接说，我接着。"
-    # 回指：点到同场话题词，禁止掉成通用「嗯听着」（仍 say_intent；假绿）
+    # 回指兜底：say_intent「回指｜本场痕迹」（无 drive.why 回指形状时）
     if "回指" in brief.say_intent or "本场痕迹" in brief.say_intent:
         topic = topic_hint_from_facts(brief.context.facts_this_session)
         if topic:

@@ -985,3 +985,99 @@ def test_open_topic_say_intent_fallback_without_marker():
     )
     out = _template_utterance(brief)
     assert "月亮" in out and "哪头起" in out, out
+
+
+def test_tampered_say_intent_empty_chase_via_flag():
+    """drive_empty_stage_pending／disappoint + say_intent 无「先停硬追」→ 仍空追模板。"""
+    from birth.articulate import _template_utterance
+    from birth.types import DriveSignal
+
+    brief = _tampered_brief(
+        drive=DriveSignal(direction="hold", salience="low", why="x"),
+        context=ThinContext(drive_empty_stage_pending=True),
+    )
+    assert "先停硬追" not in brief.say_intent
+    out = _template_utterance(brief)
+    assert "不硬往下追" in out, out
+
+    brief2 = _tampered_brief(
+        drive=DriveSignal(direction="guard", salience="mid", why="x"),
+        context=ThinContext(drive_disappoint_pending=True),
+    )
+    assert "先停硬追" not in brief2.say_intent
+    out2 = _template_utterance(brief2)
+    assert "不硬往下追" in out2, out2
+
+
+def test_tampered_say_intent_empty_chase_via_drive_why():
+    """无 flag；drive.why 含「重复空追」+ say_intent 无关 → 仍空追。"""
+    from birth.articulate import _template_utterance
+    from birth.types import DriveSignal
+
+    brief = _tampered_brief(
+        drive=DriveSignal(
+            direction="hold",
+            salience="low",
+            why="重复空追，想要还在但满足没到；先停硬追、改接住",
+        ),
+    )
+    assert not brief.context.drive_empty_stage_pending
+    assert not brief.context.drive_disappoint_pending
+    assert "先停硬追" not in brief.say_intent
+    out = _template_utterance(brief)
+    assert "不硬往下追" in out, out
+
+
+def test_empty_chase_say_intent_fallback_without_marker():
+    """无 flag／无重复空追 why；say_intent 含「先停硬追」→ 兜底仍空追。"""
+    from birth.articulate import _template_utterance
+    from birth.types import DriveSignal, StanceSignal, ThoughtBrief
+
+    brief = ThoughtBrief(
+        dominant="drive",
+        drive=DriveSignal(direction=None, salience="low", why=""),
+        stance=StanceSignal(),
+        context=ThinContext(),
+        say_intent="这一轮先停硬追，老实接住对方的不满或缺口，不装已经答完",
+    )
+    out = _template_utterance(brief)
+    assert "不硬往下追" in out, out
+
+
+def test_tampered_say_intent_backref_via_drive_why():
+    """drive.why 回指形状 + facts 有星空；say_intent 无「回指｜本场痕迹」→ 仍点到星空。"""
+    from birth.articulate import _template_utterance
+    from birth.types import DriveSignal
+
+    brief = _tampered_brief(
+        drive=DriveSignal(
+            direction="pursue",
+            salience="mid",
+            why="用户在回指同场刚才的话头，动力要用本场已有痕迹接，不装没发生过",
+        ),
+        context=ThinContext(facts_this_session=["用户说：我想聊星空"]),
+    )
+    assert "回指" not in brief.say_intent
+    assert "本场痕迹" not in brief.say_intent
+    out = _template_utterance(brief)
+    assert "星空" in out, out
+    assert "记得" in out, out
+
+
+def test_backref_say_intent_fallback_without_marker():
+    """无 drive.why 回指形状；say_intent 含「回指／本场痕迹」+ facts → 兜底仍回指。"""
+    from birth.articulate import _template_utterance
+    from birth.types import DriveSignal, StanceSignal, ThoughtBrief
+
+    brief = ThoughtBrief(
+        dominant="drive",
+        drive=DriveSignal(direction="pursue", salience="mid", why=""),
+        stance=StanceSignal(),
+        context=ThinContext(facts_this_session=["用户说：我想聊月亮"]),
+        say_intent=(
+            "接住对方对同场刚才话题的回指，用本场已有痕迹接话，"
+            "不装没发生过、也不编场外经历。本场痕迹：用户说：我想聊月亮"
+        ),
+    )
+    out = _template_utterance(brief)
+    assert "月亮" in out and "记得" in out, out
