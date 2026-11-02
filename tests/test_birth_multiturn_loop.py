@@ -41,7 +41,7 @@ FALSE_GREEN_RISKS = """
 - R4 多轮剧本仍 stub=True 保回归；另有 hook／可选 deepseek 测催答应可提取。LLM 空壳答应会被拒收并 stub 兜底，但真网波动／模型跑偏仍可能偶发。
 - R5 已闭合：同场未兑现承诺＋改口否定（含「刚才」回指）→ drive=guard；无承诺纯回指仍 pursue。
 - R6/R7 已闭合：有承诺时收束／好奇经 commit_hold_with_drive 双写动力＋薄守诺；改口仍纯守诺（R5）。
-- stub 主路径已改读 Brief 标记／posture（org→press_commit→commit_hold_with_drive 读 drive.direction/why→needs_clarify→non_negotiable 守诺），say_intent 改无关文案仍走对模板（test_birth_phase1 守恒测）；残余：打开话题／收束／空追／回指兜底仍读 say_intent 中文子串，未全结构化。
+- stub 主路径已改读 Brief 标记／posture（org→press_commit→commit_hold_with_drive 读 drive.direction/why→needs_clarify→non_negotiable 守诺），say_intent 改无关文案仍走对模板（test_birth_phase1 守恒测）；开话题／收束 stub 主路径已改读 ThinContext.drive_open_topic_pending／drive_hold_pending 或 drive.why 结构化形状（想要打开／缺口在外；喜欢/满足／不必再追），say_intent「新打开的话头」／收束子串仅无结构兜底。残余：空追（先停硬追）／回指（回指｜本场痕迹）仍读 say_intent 中文子串，未全结构化。
 - must_not_pretend 列表在场≠闸常开：装经历亲历拒收**仅** org_conflicts 含该项时跑（非常开）；形状不含裸「我昨天／我去过」。substrate 仍按 must_not_pretend 对拍。残余：未对每轮自动注入灾难句抽检。
 - 枚举漏检已对拍 utterance：validate 拦 pursue／guard／hold（独立英文词）与 non_negotiable 等标识；brief_to_prompt 仍查。残余：未穷尽一切内部符号别名。
 - 好奇挂起已闭合：pipeline 读 `openq_curiosity_hang`，不再扫 CURIOSITY_MARKS。drive 好奇挂起主路径已改读 ThinContext.curiosity_hang_pending（pipeline 经 store 显式置位；resolve／clear／new_session 清 False）；残余：无 flag 时仍可用「待接的话头：」前缀兜底（兼容旧快照）；pipeline 仍写该前缀作文案载体，台上话术未变；drive 内部仍用 MARKS 作输入侧线索。

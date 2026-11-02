@@ -111,7 +111,9 @@ def _template_utterance(brief: ThoughtBrief) -> str:
     3) commit_hold_with_drive → 读 drive.direction／drive.why 选收束／好奇；
     4) posture=needs_clarify → 不空壳升华口径；
     5) posture=non_negotiable 且有承诺/stake 守同场 → 守诺不改口；
-    say_intent 中文子串仅作残余打开话题／收束／空追／回指的兜底。
+    6) 开话题／收束 → 读 ThinContext.drive_open_topic_pending／drive_hold_pending
+       或 drive.why 结构化形状（想要打开／缺口在外；喜欢/满足／不必再追）；
+    say_intent 中文子串仅作无结构时打开话题／收束／空追／回指的兜底。
     """
     # 1) org：既有 _ORG_TEMPLATES／fallback
     if brief.dominant == "org":
@@ -158,7 +160,33 @@ def _template_utterance(brief: ThoughtBrief) -> str:
             "同场里说过的话我不当没说过。"
             "刚才那句还在，咱们先按那个接着，不跟着改口否定。"
         )
-    # 6) 残余兜底：say_intent 中文子串／模板映射（打开话题／收束／空追／回指仍读它）
+    # 6) 开话题／收束：主路径读 ThinContext flag／drive.why 结构化形状；
+    #    say_intent 中文子串仅无结构时兜底。空追／回指仍读 say_intent（假绿下刀）。
+    drive = brief.drive
+    why = (drive.why if drive else "") or ""
+    # 6a) 打开话题：drive_open_topic_pending 或 why「想要打开／缺口在外」
+    if getattr(brief.context, "drive_open_topic_pending", False) or (
+        drive is not None
+        and drive.direction == "pursue"
+        and ("想要打开" in why or "缺口在外" in why)
+    ):
+        topic = ""
+        if "（" in why and "）" in why:
+            topic = why.split("（", 1)[1].split("）", 1)[0].strip()
+        if not topic and "「" in brief.say_intent and "」" in brief.say_intent:
+            topic = brief.say_intent.split("「", 1)[1].split("」", 1)[0].strip()
+        if topic:
+            return f"行，那就聊{topic}。你想从哪头起？"
+        return "行，你开的这个话头我接着。你想从哪头起？"
+    # 6b) 收束：drive_hold_pending 或 hold＋why「喜欢/满足／不必再追」
+    #     （勿把招呼 hold+low 误当收束——无 flag／无满足 why 时走下方 exact／兜底）
+    if getattr(brief.context, "drive_hold_pending", False) or (
+        drive is not None
+        and drive.direction == "hold"
+        and ("喜欢/满足" in why or "不必再追" in why)
+    ):
+        return "好，那就先这样。你回头想接着再叫我就行。"
+    # 6c) 无结构：say_intent 打开话题／收束子串兜底；空追／回指仍读它
     if "新打开的话头" in brief.say_intent:
         topic = ""
         if "「" in brief.say_intent and "」" in brief.say_intent:
@@ -168,17 +196,13 @@ def _template_utterance(brief: ThoughtBrief) -> str:
         return "行，你开的这个话头我接着。你想从哪头起？"
     if brief.say_intent in _ONSTAGE_TEMPLATES:
         return _ONSTAGE_TEMPLATES[brief.say_intent]
-    # 满足／收束：drive.hold 或 say_intent 收束子串，不继续加码追问
-    if (
-        (brief.drive is not None and brief.drive.direction == "hold")
-        or "够了或先收束" in brief.say_intent
-        or "不继续加码追" in brief.say_intent
-    ):
+    # 收束兜底：say_intent 收束子串（无 drive_hold_pending／无满足 why 时）
+    if "够了或先收束" in brief.say_intent or "不继续加码追" in brief.say_intent:
         return "好，那就先这样。你回头想接着再叫我就行。"
-    # 空追该停
+    # 空追该停（仍 say_intent；假绿）
     if "先停硬追" in brief.say_intent:
         return "这轮我不硬往下追了。你缺的那块或刚才的不满，你直接说，我接着。"
-    # 回指：点到同场话题词，禁止掉成通用「嗯听着」
+    # 回指：点到同场话题词，禁止掉成通用「嗯听着」（仍 say_intent；假绿）
     if "回指" in brief.say_intent or "本场痕迹" in brief.say_intent:
         topic = topic_hint_from_facts(brief.context.facts_this_session)
         if topic:

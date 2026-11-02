@@ -905,3 +905,83 @@ def test_commit_hold_with_drive_reads_drive_marks_not_say_intent():
     )
     out3 = _template_utterance(b_thin)
     assert "还在" in out3, out3
+
+
+def test_tampered_say_intent_open_topic_via_flag():
+    """drive_open_topic_pending=True 且 say_intent 无「新打开的话头」→ 仍开话题模板。"""
+    from birth.articulate import _template_utterance
+    from birth.types import DriveSignal
+
+    brief = _tampered_brief(
+        drive=DriveSignal(direction="pursue", salience="mid", why="x"),
+        context=ThinContext(drive_open_topic_pending=True),
+    )
+    assert "新打开的话头" not in brief.say_intent
+    out = _template_utterance(brief)
+    assert "哪头起" in out, out
+    assert "话头" in out or "聊" in out, out
+
+
+def test_tampered_say_intent_open_topic_via_drive_why():
+    """无 flag；drive why 含想要打开／缺口在外＋（星空）→ 仍点到星空开话题。"""
+    from birth.articulate import _template_utterance
+    from birth.types import DriveSignal
+
+    brief = _tampered_brief(
+        drive=DriveSignal(
+            direction="pursue",
+            salience="mid",
+            why="缺口在外、想要打开这一话头（星空）",
+        ),
+    )
+    assert "新打开的话头" not in brief.say_intent
+    assert not brief.context.drive_open_topic_pending
+    out = _template_utterance(brief)
+    assert "星空" in out and "哪头起" in out, out
+
+
+def test_tampered_say_intent_hold_via_flag():
+    """drive_hold_pending=True 且 say_intent 无收束子串 → 仍收束模板。"""
+    from birth.articulate import _template_utterance
+
+    brief = _tampered_brief(
+        context=ThinContext(drive_hold_pending=True),
+    )
+    assert "够了或先收束" not in brief.say_intent
+    assert "不继续加码追" not in brief.say_intent
+    out = _template_utterance(brief)
+    assert "先这样" in out, out
+
+
+def test_tampered_say_intent_hold_via_drive_why():
+    """无 flag；drive hold＋why 喜欢/满足／不必再追 → 仍收束。"""
+    from birth.articulate import _template_utterance
+    from birth.types import DriveSignal
+
+    brief = _tampered_brief(
+        drive=DriveSignal(
+            direction="hold",
+            salience="low",
+            why="喜欢/满足侧已接住，不必再追；对方示意够了或先收束",
+        ),
+    )
+    assert not brief.context.drive_hold_pending
+    assert "够了或先收束" not in brief.say_intent
+    out = _template_utterance(brief)
+    assert "先这样" in out, out
+
+
+def test_open_topic_say_intent_fallback_without_marker():
+    """无 flag／无打开 why；say_intent 含「新打开的话头「月亮」」→ 兜底仍聊月亮。"""
+    from birth.articulate import _template_utterance
+    from birth.types import DriveSignal, StanceSignal, ThoughtBrief
+
+    brief = ThoughtBrief(
+        dominant="drive",
+        drive=DriveSignal(direction=None, salience="low", why=""),
+        stance=StanceSignal(),
+        context=ThinContext(),
+        say_intent="接住对方新打开的话头「月亮」，可以顺着问一句，不抢着下结论",
+    )
+    out = _template_utterance(brief)
+    assert "月亮" in out and "哪头起" in out, out
