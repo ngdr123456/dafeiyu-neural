@@ -12,17 +12,18 @@ COMMIT_DENY_FLAG = True
 
 
 def structured_deny_from_stance(stance, *, has_commitments: bool) -> bool:
-    """从 stance 守诺结构读 deny（与 arbitrate 置 Brief.commit_deny 同条件）。
+    """从 stance 守诺结构读 deny（与 arbitrate 置 Brief.commit_deny／hold_same_field 同条件）。
 
-    不扫 COMMIT_DENY_MARKS；供 pipeline 在写入 commitment_deny_pending 之前
-    前移结构化检测／同轮回灌。
+    主路径读 StanceSignal.hold_same_field（via stance_holds_same_field）；
+    不扫 COMMIT_DENY_MARKS、不以 stake 中文串作唯一闸。
+    供 pipeline 在写入 commitment_deny_pending 之前前移结构化检测／同轮回灌。
     """
-    from .stance_org import STAKE_HOLD_SAME_FIELD
+    from .stance_org import stance_holds_same_field
 
     return (
         bool(has_commitments)
         and getattr(stance, "posture", None) == "non_negotiable"
-        and STAKE_HOLD_SAME_FIELD in (getattr(stance, "stake", None) or "")
+        and stance_holds_same_field(stance)
     )
 
 

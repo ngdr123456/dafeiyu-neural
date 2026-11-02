@@ -110,7 +110,7 @@ def _template_utterance(brief: ThoughtBrief) -> str:
     2) press_commit → 催答应约定句；
     3) commit_hold_with_drive → 读 drive.direction／drive.why 选收束／好奇；
     4) posture=needs_clarify → 不空壳升华口径；
-    5) posture=non_negotiable 且有承诺/stake 守同场 → 守诺不改口；
+    5) Brief.commit_deny／hold_same_field／stance.hold_same_field（或 posture+承诺）→ 守诺不改口；
     6) 开话题／收束／空追／回指 → 读 ThinContext flag 或 drive.why 结构化形状
        （打开：drive_open_topic_pending／想要打开｜缺口在外；
         收束：drive_hold_pending／喜欢/满足｜不必再追；
@@ -153,11 +153,21 @@ def _template_utterance(brief: ThoughtBrief) -> str:
             "人生有没有意义这类大词，我这边没有现成鸡汤。"
             "能讲的只有眼前这句里能讲清的部分，你具体指哪一块？"
         )
-    from .stance_org import STAKE_HOLD_SAME_FIELD
-    # 5) 守诺改口：posture + 承诺/stake 结构化判定（不再靠 say_intent 子串做主路径）
-    if brief.stance.posture == "non_negotiable" and (
-        brief.context.last_commitments
-        or STAKE_HOLD_SAME_FIELD in (brief.stance.stake or "")
+    from .stance_org import stance_holds_same_field
+    # 5) 守诺改口：主路径读 Brief.commit_deny／Brief.hold_same_field；
+    #    或 posture=non_negotiable 且（stance.hold_same_field／承诺在场）。
+    #    stake 中文常量仅作 stance_holds_same_field 无 bool 时的字段取值兜底，
+    #    不作唯一闸；不再靠 say_intent 子串。
+    if (
+        getattr(brief, "commit_deny", False)
+        or getattr(brief, "hold_same_field", False)
+        or (
+            brief.stance.posture == "non_negotiable"
+            and (
+                stance_holds_same_field(brief.stance)
+                or brief.context.last_commitments
+            )
+        )
     ):
         return (
             "同场里说过的话我不当没说过。"

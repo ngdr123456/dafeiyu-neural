@@ -856,13 +856,26 @@ def test_tampered_say_intent_non_negotiable_commitments_still_keep_word():
     out = _template_utterance(brief)
     assert "不当没说过" in out or "不跟着改口" in out, out
 
-    # stake 带守诺口径、commitments 空的备路
+    # stake 带守诺口径、commitments 空的备路（旧字段取值兜底）
     brief2 = _tampered_brief(
         dominant="meaning",
         stance=StanceSignal(posture="non_negotiable", stake="先守同场说过的话"),
     )
     out2 = _template_utterance(brief2)
     assert "不当没说过" in out2 or "不跟着改口" in out2, out2
+
+    # 结构优先：hold_same_field／commit_deny，stake 文案已改 → 仍守诺
+    brief3 = _tampered_brief(
+        dominant="meaning",
+        stance=StanceSignal(
+            posture="non_negotiable", stake="改过的文案", hold_same_field=True
+        ),
+        commit_deny=True,
+        hold_same_field=True,
+    )
+    assert "先守同场说过的话" not in (brief3.stance.stake or "")
+    out3 = _template_utterance(brief3)
+    assert "不当没说过" in out3 or "不跟着改口" in out3, out3
 
 
 def test_commit_hold_with_drive_reads_drive_marks_not_say_intent():

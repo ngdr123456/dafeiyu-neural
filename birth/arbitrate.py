@@ -24,7 +24,7 @@ from .commit_extract import (
 )
 from .openq_extract import user_marks_open_question_putdown
 from .session_trace import is_session_backref, recent_facts, topic_hint_from_facts
-from .stance_org import MUST_NOT_PRETEND_CORE, STAKE_HOLD_SAME_FIELD, detect_org_conflict
+from .stance_org import MUST_NOT_PRETEND_CORE, detect_org_conflict, stance_holds_same_field
 from .types import (
     DriveSignal,
     OrgConstraint,
@@ -120,18 +120,21 @@ def arbitrate(
     commit_deliver_intent = False
     commit_hold_with_drive = False
     commit_deny = False
+    hold_same_field = False
     if conflicts:
         dominant = "org"
         say_intent = _org_say_intent(conflicts)
     elif (
         stance.posture == "non_negotiable"
         and context.last_commitments
-        and STAKE_HOLD_SAME_FIELD in (stance.stake or "")
+        and stance_holds_same_field(stance)
     ):
         # 意义：守住自己出口的承诺（可与 commitment 分支合并）
+        # 主路径读 stance.hold_same_field（stake 中文常量仅字段取值／旧兜底，不作唯一闸）
         dominant = "meaning"
         say_intent = "先守住同场自己说过的话，不跟着改口否定；再接眼前这句"
         commit_deny = True
+        hold_same_field = True
     elif stance.posture == "needs_clarify":
         dominant = "meaning"
         say_intent = "不空壳升华：先澄清这一轮能讲清的直径，没有根据就不装人生答案"
@@ -210,5 +213,6 @@ def arbitrate(
         commit_deliver_intent=commit_deliver_intent,
         commit_hold_with_drive=commit_hold_with_drive,
         commit_deny=commit_deny,
+        hold_same_field=hold_same_field,
         org_conflicts=list(conflicts),
     )

@@ -232,6 +232,7 @@ def test_stance_structured_deny_without_marks():
     )
     st = default_stance(text, ctx)
     assert st.posture == "non_negotiable"
+    assert st.hold_same_field is True
     assert STAKE_HOLD_SAME_FIELD in (st.stake or "")
 
 
@@ -246,6 +247,7 @@ def test_stance_marks_fallback_without_structured_flag():
     )
     st = default_stance("那刚才说的不算", ctx)
     assert st.posture == "non_negotiable"
+    assert st.hold_same_field is True
     assert STAKE_HOLD_SAME_FIELD in (st.stake or "")
 
 
@@ -289,6 +291,25 @@ def test_structured_deny_from_stance_unit():
     )
     assert not structured_deny_from_stance(
         StanceSignal(posture="yieldable", stake=STAKE_HOLD_SAME_FIELD, why="x"),
+        has_commitments=True,
+    )
+    # 结构优先：hold_same_field=True 即使 stake 文案改掉／缺省仍 True
+    assert structured_deny_from_stance(
+        StanceSignal(
+            posture="non_negotiable",
+            stake="改口后的stake文案",
+            hold_same_field=True,
+            why="x",
+        ),
+        has_commitments=True,
+    )
+    assert structured_deny_from_stance(
+        StanceSignal(
+            posture="non_negotiable",
+            stake="",
+            hold_same_field=True,
+            why="x",
+        ),
         has_commitments=True,
     )
 
@@ -360,3 +381,71 @@ def test_should_set_marks_fallback_flag_respected():
         marks_fallback=False,
     )
 
+
+def test_arbitrate_hold_same_field_without_stake_chinese():
+    """有 stance.hold_same_field＋承诺在场 → Brief.commit_deny／hold_same_field，
+    即使 stake 不含「先守同场说过的话」。"""
+    from birth.arbitrate import arbitrate
+    from birth.types import DriveSignal, OrgConstraint, StanceSignal, ThinContext
+
+    ctx = ThinContext(last_commitments=["同场说好晚点再聊星空"])
+    stance = StanceSignal(
+        posture="non_negotiable",
+        stake="完全改过的stake文案",
+        hold_same_field=True,
+        why="守诺",
+    )
+    brief = arbitrate(
+        DriveSignal(direction="hold", salience="low", why="x"),
+        stance,
+        OrgConstraint(),
+        ctx,
+        user_text="够了先这样",
+    )
+    assert brief.commit_deny is True
+    assert brief.hold_same_field is True
+    assert "先守同场说过的话" not in (brief.stance.stake or "")
+
+
+def test_articulate_structure_without_stake_chinese():
+    """Brief.commit_deny／hold_same_field／stance.hold_same_field 时 stub 守诺，
+    即使 stake 无「先守同场说过的话」；无结构时 stake 缺省不守诺。"""
+    from birth.articulate import _template_utterance
+    from birth.types import StanceSignal, ThinContext, ThoughtBrief
+
+    def _out(**kw):
+        base = dict(
+            dominant="meaning",
+            say_intent="无关改口文案xyz",
+            stance=StanceSignal(posture="yieldable"),
+            context=ThinContext(),
+        )
+        base.update(kw)
+        return _template_utterance(ThoughtBrief(**base))
+
+    # Brief.commit_deny 结构
+    out1 = _out(commit_deny=True, stance=StanceSignal(posture="non_negotiable", stake=""))
+    assert "不当没说过" in out1 or "不跟着改口" in out1, out1
+
+    # Brief.hold_same_field 结构
+    out2 = _out(
+        hold_same_field=True,
+        stance=StanceSignal(posture="non_negotiable", stake="别的文案"),
+    )
+    assert "不当没说过" in out2 or "不跟着改口" in out2, out2
+
+    # stance.hold_same_field＋posture，stake 改文案
+    out3 = _out(
+        stance=StanceSignal(
+            posture="non_negotiable",
+            stake="改过的",
+            hold_same_field=True,
+        ),
+    )
+    assert "不当没说过" in out3 or "不跟着改口" in out3, out3
+
+    # 无结构、无承诺、stake 也不含常量 → 不走守诺
+    out4 = _out(
+        stance=StanceSignal(posture="non_negotiable", stake="别的不可交"),
+    )
+    assert "不当没说过" not in out4 and "不跟着改口" not in out4, out4

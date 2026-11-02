@@ -34,6 +34,9 @@ class StanceSignal:
     posture: Posture = "yieldable"
     stake: str = ""
     why: str = ""
+    # 结构化：本轮守同场承诺（stance_org 写；arbitrate／articulate／commit_extract 读；
+    # 勿以用户可见 stake 中文串作唯一闸。stake 仍可写成 STAKE_HOLD_SAME_FIELD 作字段取值）
+    hold_same_field: bool = False
 
 
 @dataclass
@@ -107,6 +110,8 @@ class ThoughtBrief:
     commit_resolve: bool = False
     # 结构化：本轮用户改口／否认同场承诺（arbitrate 写；pipeline／commit_extract 读；勿主靠 COMMIT_DENY_MARKS）
     commit_deny: bool = False
+    # 结构化：本轮 Brief 侧守同场（arbitrate 与 commit_deny 同支置位；articulate 主路径读此／commit_deny／stance.hold_same_field，勿靠 stake 中文串）
+    hold_same_field: bool = False
     # 结构化：本轮守着 pending 承诺，台上开口可交付主题则 resolve
     commit_deliverable: bool = False
     # 用户话已点到 pending 主题（可检验「接着交付」意图，非仅守诺）

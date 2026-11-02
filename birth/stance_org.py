@@ -37,8 +37,20 @@ COMMIT_DENY_MARKS = (
     "不算", "忘掉", "当我没说", "改口", "收回", "作废", "不算数", "说的不算", "别提了算了",
 )
 
-# 守诺 stakes 定义复用常量，确保 arbitrate/articulate 读到同一字符串
+# 守诺 stake 字段取值（作文案／旧路径兜底精确相等用）；消费侧主路径读 hold_same_field／Brief 标记
 STAKE_HOLD_SAME_FIELD = "先守同场说过的话"
+
+
+def stance_holds_same_field(stance) -> bool:
+    """守同场结构化判定：主路径读 StanceSignal.hold_same_field。
+
+    兜底范围：仅当 bool 缺省/False 时，才用 stake 字段取值精确等于
+    STAKE_HOLD_SAME_FIELD（兼容旧构造／未写 bool 的路径）。不是用户词表闸，
+    不扩词表；改 stake 文案但 hold_same_field=True 时仍为 True。
+    """
+    if bool(getattr(stance, "hold_same_field", False)):
+        return True
+    return (getattr(stance, "stake", None) or "") == STAKE_HOLD_SAME_FIELD
 
 # 轻量线索：强加无来源的人生意义升华
 SUBLIME_MARKS = (
@@ -114,7 +126,8 @@ def default_stance(user_text: str, context: ThinContext | None = None) -> Stance
         if denied:
             return StanceSignal(
                 posture="non_negotiable",
-                stake=STAKE_HOLD_SAME_FIELD,
+                stake=STAKE_HOLD_SAME_FIELD,  # 字段取值／可读文案；闸门读 hold_same_field
+                hold_same_field=True,
                 why="态度上不可交的是自己出口的承诺；同场说过的话不能跟着改口否定",
             )
 
