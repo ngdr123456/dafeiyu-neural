@@ -70,3 +70,45 @@ def test_deny_commitment_does_not_resolve():
     store.append_commitment("同场里说好这轮先补月亮的事")
     turn("那刚才说的不算", stub=True)
     assert store.pending_commitments(), store.pending_commitments()
+
+
+def test_resolve_uses_brief_flags_not_loose_marks():
+    """有 commit_resolve／可检验交付才 resolve；无标记即使闲话也不清。"""
+    from birth.commit_extract import should_resolve_commitment
+    from birth.types import DriveSignal, ThoughtBrief, ThinContext
+
+    pending = "我晚点再跟你聊星空。"
+    brief_resolve = ThoughtBrief(
+        dominant="meaning",
+        drive=DriveSignal(direction="guard", salience="mid", why="x"),
+        say_intent="文案已改，不含兑现字样",
+        commit_resolve=True,
+        context=ThinContext(),
+    )
+    assert should_resolve_commitment(
+        brief=brief_resolve, utterance="随便", pending_first=pending
+    )
+
+    brief_deliver = ThoughtBrief(
+        dominant="meaning",
+        drive=DriveSignal(direction="guard", salience="mid", why="x"),
+        say_intent="先守住同场说过的话",
+        commit_deliverable=True,
+        context=ThinContext(),
+    )
+    assert should_resolve_commitment(
+        brief=brief_deliver, utterance="行，接着聊星空。", pending_first=pending
+    )
+    assert not should_resolve_commitment(
+        brief=brief_deliver, utterance="今天天气怎么样", pending_first=pending
+    )
+
+    brief_none = ThoughtBrief(
+        dominant="drive",
+        drive=DriveSignal(direction=None, salience="low", why="x"),
+        say_intent="那件事你兑现了",  # 仅子串，无标记
+        context=ThinContext(),
+    )
+    assert not should_resolve_commitment(
+        brief=brief_none, utterance="那件事你兑现了", pending_first=pending
+    )

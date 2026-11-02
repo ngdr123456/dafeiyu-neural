@@ -103,70 +103,69 @@ _FULFILL_USER_MARKS = (
     "这句兑现了",
 )
 
-# 台上像把 pending 可核对后续接上的轻量形状
-_DELIVER_UTTER_MARKS = (
-    "接着聊",
-    "补上",
-    "补一下",
-    "说到这",
-    "就聊",
-    "先把这事说完",
-    "把前面那句接上",
-)
-
 
 def user_marks_commitment_done(user_text: str) -> bool:
-    """用户明确示意那件约定已补／已兑现。"""
+    """用户明确示意约定已补／已兑现（宁缺既有线索，勿扩；供 arbitrate 置 commit_resolve）。"""
     text = (user_text or "").strip()
     if not text:
         return False
     return any(m in text for m in _FULFILL_USER_MARKS)
 
 
-def utterance_covers_pending_commitment(utterance: str, commitment: str) -> bool:
-    """台上开口是否把 pending 承诺的可核对后续接上（宁缺毋滥）。
+# 与 ThoughtBrief.commit_resolve 同一语义
+COMMIT_RESOLVE_FLAG = True
 
-    要求：承诺短摘里能抠到一点内容词，且开口含该词 + 接上形状；
-    拿不准（抠不出内容）→ False，不清。
-    """
-    utt = (utterance or "").strip()
+
+def _pending_topic_tokens(commitment: str) -> list[str]:
+    """从承诺短摘抠内容词（去约定壳）；抠不出则空——拿不准不清。"""
     pending = (commitment or "").strip()
-    if not utt or not pending or len(pending) < 4:
+    if len(pending) < 4:
+        return []
+    compact = "".join(ch for ch in pending if ch not in "好，。、… ")
+    for shape in sorted(_COMMIT_SHAPES, key=len, reverse=True):
+        compact = compact.replace(shape, "")
+    for noise in ("跟你", "再聊", "晚点", "回头", "下次", "改天", "稍后"):
+        compact = compact.replace(noise, "")
+    tokens = []
+    for i in range(0, max(0, len(compact) - 1)):
+        tok = compact[i : i + 2]
+        if tok.strip() and tok not in tokens:
+            tokens.append(tok)
+    # 也收 3 字若有
+    if len(compact) >= 3:
+        tokens.append(compact[:3])
+    return [t for t in tokens if len(t) >= 2]
+
+
+def utterance_covers_pending_commitment(utterance: str, commitment: str) -> bool:
+    """台上开口是否命中 pending 主题（结构化主题重叠；不靠交付中文词表）。"""
+    utt = (utterance or "").strip()
+    if not utt:
         return False
-    if not any(m in utt for m in _DELIVER_UTTER_MARKS):
-        return False
-    # 从承诺里去掉约定壳，抠一点内容
-    body = pending
-    for shape in _COMMIT_SHAPES:
-        body = body.replace(shape, " ")
-    for noise in ("好，", "。", "，", "、", "…", "跟你", "再"):
-        body = body.replace(noise, " ")
-    tokens = [w for w in body.split() if len(w) >= 2]
+    tokens = _pending_topic_tokens(commitment)
     if not tokens:
-        # 无空格中文：取连续 2+ 字片段中最长的非壳残留
-        compact = "".join(ch for ch in pending if ch not in "好，。、… ")
-        for shape in sorted(_COMMIT_SHAPES, key=len, reverse=True):
-            compact = compact.replace(shape, "")
-        tokens = [compact[i:i+2] for i in range(0, max(0, len(compact) - 1)) if compact[i:i+2].strip()]
-        tokens = [t for t in tokens if t and t not in ("跟你", "再聊", "晚点")]
-    # 至少有一个内容词出现在开口里
-    for tok in tokens:
-        if len(tok) >= 2 and tok in utt:
-            return True
-    return False
+        return False
+    return any(tok in utt for tok in tokens)
 
 
 def should_resolve_commitment(
     *,
-    user_text: str,
+    brief,
     utterance: str,
     pending_first: str | None,
 ) -> bool:
-    """可检验才 resolve；拿不准返回 False（不清）。不扩成通用嘴闸。"""
+    """只读 Brief 结构化标记 + 可检验主题交付；拿不准不清。
+
+    - commit_resolve：用户侧线索已由 arbitrate 置位（宁缺既有词，勿扩、勿进 validate）
+    - commit_deliverable + 开口命中 pending 主题 → resolve
+    禁止只靠散落中文兑现词表在 pipeline 里判。
+    """
     if not pending_first:
         return False
-    if user_marks_commitment_done(user_text):
+    if bool(getattr(brief, "commit_resolve", False)) is COMMIT_RESOLVE_FLAG:
         return True
-    if utterance_covers_pending_commitment(utterance, pending_first):
+    if getattr(brief, "commit_deliverable", False) and utterance_covers_pending_commitment(
+        utterance, pending_first
+    ):
         return True
     return False

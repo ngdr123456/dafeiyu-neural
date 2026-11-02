@@ -77,3 +77,7 @@ class ThoughtBrief:
     openq_resolve: bool = False
     # 结构化：本轮用户催可核对约定（articulate 拒空壳／stub 模板读此标记）
     press_commit: bool = False
+    # 结构化：用户示意约定已兑现 → 开口后 resolve
+    commit_resolve: bool = False
+    # 结构化：本轮守着 pending 承诺，台上开口可交付主题则 resolve
+    commit_deliverable: bool = False

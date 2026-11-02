@@ -82,7 +82,7 @@ def turn(
     # 承诺兑现／放下（对齐悬问 resolve；宁缺毋滥，拿不准不清）
     pending0 = context.last_commitments[0] if context.last_commitments else None
     if should_resolve_commitment(
-        user_text=user_text, utterance=utterance, pending_first=pending0
+        brief=brief, utterance=utterance, pending_first=pending0
     ):
         _STORE.resolve_commitment()
 

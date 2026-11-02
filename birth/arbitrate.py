@@ -17,7 +17,7 @@
 from __future__ import annotations
 
 from .drive import is_neutral_filler
-from .commit_extract import user_presses_commitment
+from .commit_extract import user_marks_commitment_done, user_presses_commitment
 from .session_trace import is_session_backref, recent_facts, topic_hint_from_facts
 from .stance_org import MUST_NOT_PRETEND_CORE, detect_org_conflict
 from .types import (
@@ -96,6 +96,8 @@ def arbitrate(
 
     openq_resolve = False
     press_commit = False
+    commit_resolve = False
+    commit_deliverable = False
     if conflicts:
         dominant = "org"
         say_intent = _org_say_intent(conflicts)
@@ -110,8 +112,14 @@ def arbitrate(
     elif stance.posture == "needs_clarify":
         dominant = "meaning"
         say_intent = "不空壳升华：先澄清这一轮能讲清的直径，没有根据就不装人生答案"
+    elif context.last_commitments and user_marks_commitment_done(user_text):
+        # 用户示意已兑现：结构化 commit_resolve（宁缺既有线索，勿扩词表）
+        dominant = "meaning"
+        commit_resolve = True
+        say_intent = "对方示意同场那件约定已接上，可以放下再接眼前这句"
     elif context.last_commitments:
         dominant = "meaning"
+        commit_deliverable = True  # 台上开口若命中 pending 主题则可 resolve
         say_intent = "先守住同场说过的话，把住的判断不顺势放下；再接新的"
     elif context.open_questions and is_neutral_filler(user_text):
         # filler + 确有悬问：短暂 meaning 捡一次；结构化标记供 pipeline resolve
@@ -148,5 +156,7 @@ def arbitrate(
         must_not_pretend=must_not_pretend,
         openq_resolve=openq_resolve,
         press_commit=press_commit,
+        commit_resolve=commit_resolve,
+        commit_deliverable=commit_deliverable,
         org_conflicts=list(conflicts),
     )

@@ -27,8 +27,7 @@ API（对齐悬问）：
 - `resolve_commitment()`：弹第一条
 - `clear_commitments()`：整场放下（慎用）
 
-pipeline 接线（宁缺毋滥；**勿**禁词堵嘴、勿扩成通用嘴闸）：
-- 用户明确「兑现了／补过了／你说过了…」类轻量线索 → resolve
-- 或本轮台上开口把 pending 可核对后续接上（含内容词 + 接着聊／补上…）→ resolve
-- 拿不准 → **不清**
-- 本刀**不**扩 `extract_commitment` 写入词表
+pipeline 接线（结构化；宁缺毋滥）：
+- `Brief.commit_resolve`：arbitrate 在用户兑现线索路径置 True → resolve（线索宁缺勿扩、**勿进 validate**）
+- `Brief.commit_deliverable`：守着 pending 时置 True；台上开口**命中 pending 主题** → resolve（不靠交付中文词表）
+- 拿不准 → **不清**；不扩 `extract_commitment` 写入词表
