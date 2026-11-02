@@ -39,7 +39,7 @@ FALSE_GREEN_RISKS = """
 - `_accept_draft` 用 extract 拒收**仅当** Brief.press_commit；禁止只靠 say_intent 中文子串；禁止扩词表／通用堵嘴；不扩 commit_extract 词表。
 - stub 开口固定，听感／像人完全未测；deepseek 可选测只查 source+validate。
 - R4 多轮剧本仍 stub=True 保回归；另有 hook／可选 deepseek 测催答应可提取。LLM 空壳答应会被拒收并 stub 兜底，但真网波动／模型跑偏仍可能偶发。
-- R5 drive 因「刚才」回指命中为 pursue，承诺护卫 guard 被挤掉——本测认 meaning+stance，不假装 drive=guard。
+- R5 已闭合：同场未兑现承诺＋改口否定（含「刚才」回指）→ drive=guard；无承诺纯回指仍 pursue。
 - R6/R7 有未兑现承诺时 dominant 常为 meaning，收束／好奇的 drive 方向对了但说辞仍偏守承诺模板。
 - must_not_pretend 是仲裁常量列表，每轮都有「自述是代码」≠ 开口真被拦死；身份轮另用 validate 对拍。
 - 枚举不漏只查 brief_to_prompt 字面；say_intent／utterance 里的人话不在此列。
@@ -157,8 +157,11 @@ def test_multiturn_closed_loop_script():
     tag = "R5 那刚才说的不算"
     r = turn("那刚才说的不算", stub=True)
     s = _assert_core_understage(
-        r, tag=tag, dominant="meaning", direction="pursue",
+        r, tag=tag, dominant="meaning", direction="guard", salience="mid",
         commits_nonempty=True, facts_gt=prev,
+    )
+    assert "要护" in r.brief.drive.why or "没兑现" in r.brief.drive.why, (
+        f"{tag}: why 未点已有要护 {r.brief.drive.why!r}"
     )
     assert r.brief.stance.posture == "non_negotiable", (
         f"{tag}: stance want=non_negotiable got={r.brief.stance.posture}"

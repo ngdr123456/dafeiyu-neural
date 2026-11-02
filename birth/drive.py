@@ -156,8 +156,18 @@ def infer_drive(user_text: str, context: ThinContext) -> DriveSignal:
             why="用户问出了『为什么』类问题，好奇本身就是够格的推力，顺着看清楚",
         )
 
-    # 5) 回指
+    # 5) 回指（与未兑现承诺冲突时：已有要护优先于普通回指追）
     if is_session_backref(text, context):
+        if context.last_commitments:
+            # 懒导入：stance_org 已依赖 drive.is_neutral_filler，避免环
+            from .stance_org import _denies_commitment
+            if _denies_commitment(text):
+                first = context.last_commitments[0]
+                return DriveSignal(
+                    direction="guard",
+                    salience="mid",
+                    why=f"同场有没兑现的话（{first}），已有要护，这轮不能当没说过",
+                )
         return DriveSignal(
             direction="pursue",
             salience="mid",
