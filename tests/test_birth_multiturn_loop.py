@@ -26,12 +26,46 @@ _ENUM_LEAKS = (
     "pursue",
     "guard",
     "hold",
+    "differentiated",
     "non_negotiable",
     "needs_clarify",
     "yieldable",
     "direction=",
     "salience=",
     "posture",
+    "posture=",
+    "stake=",
+    "grain=",
+    "stance.posture",
+    "hold_same_field",
+    "press_commit",
+    "commit_deny",
+    "commit_resolve",
+    "commit_deliverable",
+    "commit_deliver_intent",
+    "commit_hold_with_drive",
+    "openq_resolve",
+    "openq_curiosity_hang",
+    "openq_clear",
+    "curiosity_hang_pending",
+    "commitment_deny_pending",
+    "drive_greet_pending",
+    "drive_hold_pending",
+    "drive_curiosity_pending",
+    "drive_open_topic_pending",
+    "drive_disappoint_pending",
+    "drive_empty_stage_pending",
+    "drive_topic_continue_pending",
+    "drive_callback_pending",
+    "drive_bypass",
+    "OrgConstraint",
+    "ThinContext",
+    "facts_this_session",
+    "last_commitments",
+    "open_questions",
+    "cannot_fake",
+    "articulate_source",
+    "stub_fallback",
 )
 
 # 假绿风险（交付报告）：pytest 全绿本身不算过闸
@@ -43,7 +77,7 @@ FALSE_GREEN_RISKS = """
 - R6/R7 已闭合：有承诺时收束／好奇经 commit_hold_with_drive 双写动力＋薄守诺；改口仍纯守诺（R5）。
 - stub 主路径已改读 Brief 标记／posture（org→press_commit→commit_hold_with_drive 读 drive.direction/why→needs_clarify→non_negotiable 守诺），say_intent 改无关文案仍走对模板（test_birth_phase1 守恒测）；开话题／收束／空追／回指 stub 主路径已改读结构：ThinContext.drive_open_topic_pending／drive_hold_pending／drive_empty_stage_pending／drive_disappoint_pending／drive_callback_pending 或 drive.why 形状（想要打开｜缺口在外；喜欢/满足｜不必再追；重复空追；回指同场｜本场已有痕迹接），say_intent「新打开的话头」／收束／「先停硬追」／「回指｜本场痕迹」子串仅无结构兜底。残余：无 flag／无 why 形状时仍 say_intent 兜底。
 - must_not_pretend 列表在场≠闸常开：装经历亲历拒收**仅** org_conflicts 含该项时跑（非常开）；形状不含裸「我昨天／我去过」。substrate 仍按 must_not_pretend 对拍。每轮自动注入灾难句抽检已闭合：`_assert_core_understage` 对本轮 Brief 注入「自述是代码」灾难句经真实 validate／`_accept_draft` 断言拒收；org_conflicts 含「无来源装经历」时同轮再注入亲历灾难句断言拒收；另有参数化 `test_must_not_pretend_disaster_injection` 覆盖两类多样本。残余：未穷尽一切换皮／别名灾难句；装经历闸仍非常开（无 org 冲突时不注入亲历抽检）。
-- 枚举漏检已对拍 utterance：validate 拦 pursue／guard／hold（独立英文词）与 non_negotiable 等标识；brief_to_prompt 仍查。残余：未穷尽一切内部符号别名。
+- 枚举漏检已收窄并补对拍：validate 拦 pursue／guard／hold／differentiated（独立英文词）、direction=／posture=／stake=／grain=／dominant=／salience=／stance.posture 等字段形，以及 hold_same_field、press_commit、commit_*、openq_*、curiosity_hang_pending、commitment_deny_pending、drive_*_pending／drive_bypass、OrgConstraint、ThinContext、facts_this_session／last_commitments／open_questions、cannot_fake、articulate_source、stub_fallback 等工程师标识与中文内部 why／旁路指纹（回指同场｜／想要打开｜／工程师旁路）；brief_to_prompt 仍查。残余：未声称穷尽一切换皮别名／未来新字段；裸 salience 值（low／mid／high）与裸 dominant（drive／meaning／org）因易误杀普通英文未拦。
 - 好奇挂起已闭合：pipeline 读 `openq_curiosity_hang`，不再扫 CURIOSITY_MARKS；默认只置 `curiosity_hang_pending`＋挂 openq clip，**不强制**写「待接的话头：」前缀（drive／stub 已读 flag）。残余：无 flag 时仍可用「待接的话头：」前缀兜底（兼容旧快照／`drive_cues_from_context`）；台上话术未变；drive 内部仍用 MARKS 作输入侧线索。
 - 换题 clear 已闭合：arbitrate 写 `openq_clear`（放下标记或 drive `_extract_open_topic`），pipeline 读标记 clear，不再扫放下词表；残余：输入侧线索仍是固定词表（PUTDOWN_MARKS／OPEN_TOPIC_PREFIXES，未扩）。
 - drive 主路径先读结构化线索（DriveCues：承诺在场／悬问／好奇挂起 flag（前缀兜底）／session_ok／drive_greet_pending／drive_hold_pending／drive_open_topic_pending／drive_curiosity_pending／drive_disappoint_pending／drive_empty_stage_pending／drive_topic_continue_pending／drive_callback_pending）；冲突时结构化优先（test_birth_drive_structured）。非 S3 主分支已全改读 ThinContext flag（pipeline 写；上游 structured_drive_* 或无结构时词表／facts 兜底写入）：招呼 hold／收束 hold／打开话题 pursue／好奇 pursue／失望 guard／空台 hold／话题延续 pursue／回指 pursue。「非 S3 仍 MARKS」大条已收；回指单独 ThinContext flag 已闭合。DRIVE_V1 §6 已钉：同场 last_commitments 非空时，§6 guard 先于 S8–S11；写入侧有承诺不置空台／话题／失望／回指 flag；turn 空台＋承诺与 structured_topic_continue／callback＋承诺均仍 guard。残余：无 flag 时写入／drive 仍词表或 facts 兜底（DISAPPOINT／_EMPTY_STAGE／话题词／BACKREF_MARKS 等）；词表固定未扩；S4–S7（招呼／收束／打开／好奇）仍可先于 §6（规格顺序）。

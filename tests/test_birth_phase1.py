@@ -453,25 +453,73 @@ def test_lived_bio_gate_not_always_on():
 
 
 def test_stage_enum_leak_rejected():
-    """台上若吐出 pursue／non_negotiable 等台下枚举 → validate 非空；合法 stub 过。"""
+    """台上若吐出 pursue／non_negotiable／内部 flag 等台下标识 → validate 非空；合法 stub 过。"""
     from birth.articulate import _accept_draft, validate
 
     r = turn("你好", new_session=True, stub=True)
     assert validate(r.brief, r.utterance) == [], r.utterance
 
-    for bad in (
+    bad_samples = (
         "这一轮我 pursue 你的话头。",
         "我的立场是 non_negotiable。",
         "ThoughtBrief says hold",
         "direction=pursue 先这样",
-    ):
+        # 字段形
+        "这一轮 posture=yieldable。",
+        "stake=先守同场说过的话",
+        "grain=differentiated",
+        "stance.posture 是 yieldable",
+        # 承诺／守诺内部标记
+        "hold_same_field 先这样",
+        "press_commit 收到",
+        "commit_deny 了",
+        "commit_resolve 了",
+        "commit_deliverable 了",
+        "commit_deliver_intent 了",
+        "commit_hold_with_drive 走起",
+        # 悬问内部标记
+        "openq_resolve 了",
+        "openq_curiosity_hang 了",
+        "openq_clear 了",
+        "curiosity_hang_pending 了",
+        "commitment_deny_pending 了",
+        # 动力内部 flag／旁路
+        "drive_greet_pending 了",
+        "drive_hold_pending 了",
+        "drive_curiosity_pending 了",
+        "drive_open_topic_pending 了",
+        "drive_disappoint_pending 了",
+        "drive_empty_stage_pending 了",
+        "drive_topic_continue_pending 了",
+        "drive_callback_pending 了",
+        "drive_bypass 了",
+        # 结构类型／上下文薄痕
+        "OrgConstraint 里说的",
+        "ThinContext 里说的",
+        "facts_this_session 有",
+        "last_commitments 有",
+        "open_questions 有",
+        # 来源／兜底内部标识
+        "cannot_fake 了",
+        "articulate_source 是 hook",
+        "stub_fallback 了",
+        # 台下 why／旁路中文指纹
+        "回指同场｜本场已有痕迹接",
+        "想要打开｜缺口在外",
+        "工程师旁路开着",
+        # 枚举整词
+        "这轮 differentiated 了",
+    )
+    for bad in bad_samples:
         reasons = validate(r.brief, bad)
         assert reasons, bad
         assert _accept_draft(r.brief, bad) is None, bad
 
-    # 中文人话不含英文枚举须过
+    # 中文人话不含英文枚举须过；勿误杀「把握」／posture 人话／stake 中文常量
     assert validate(r.brief, "好，那就先这样。你回头想接着再叫我就行。") == []
     assert validate(r.brief, "我把握得住这轮节奏。") == []
+    assert validate(r.brief, "这轮可退，不可交，需要澄清再说。") == []
+    assert validate(r.brief, "先守同场说过的话，这轮不另起话头。") == []
 
 
 def test_stage_enum_leak_hook_falls_back():

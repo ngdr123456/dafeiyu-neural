@@ -364,13 +364,34 @@ def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
         "Brief(", "say_intent", "dominant=", "ThoughtBrief", "DriveSignal(",
         "DriveSignal", "StanceSignal", "must_not_pretend", "org_conflicts",
         "direction=", "salience=", "non_negotiable", "needs_clarify", "yieldable",
+        # 字段形（含赋值）与工程师标识；裸 posture 易误伤，用 posture= 更稳
+        "posture=", "stake=", "grain=", "stance.posture",
+        # 承诺／守诺内部标记
+        "hold_same_field", "press_commit", "commit_deny", "commit_resolve",
+        "commit_deliverable", "commit_deliver_intent", "commit_hold_with_drive",
+        # 悬问内部标记
+        "openq_resolve", "openq_curiosity_hang", "openq_clear",
+        "curiosity_hang_pending", "commitment_deny_pending",
+        # 动力内部 flag／旁路
+        "drive_greet_pending", "drive_hold_pending", "drive_curiosity_pending",
+        "drive_open_topic_pending", "drive_disappoint_pending",
+        "drive_empty_stage_pending", "drive_topic_continue_pending",
+        "drive_callback_pending", "drive_bypass",
+        # 结构类型／上下文薄痕
+        "OrgConstraint", "ThinContext", "facts_this_session",
+        "last_commitments", "open_questions",
+        # 来源／兜底内部标识
+        "cannot_fake", "articulate_source", "stub_fallback",
+        # 台下 why／旁路中文指纹（非用户对话禁词）
+        "回指同场｜", "想要打开｜", "工程师旁路",
     )
     if any(marker in text for marker in leak_markers):
         reasons.append("台下字段漏进台上")
-    # 台下枚举字面（独立英文词／标识）；勿误杀中文人话如「把握」
+    # 台下枚举字面（独立英文词／标识）；勿误杀中文人话如「把握」。
+    # differentiated 只拦整词（simple／rule 太常见，不拦）。
     import re as _re_leak
     if _re_leak.search(
-        r"(?i)(?<![A-Za-z_])(?:pursue|guard|hold)(?![A-Za-z_])",
+        r"(?i)(?<![A-Za-z_])(?:pursue|guard|hold|differentiated)(?![A-Za-z_])",
         text,
     ):
         reasons.append("台下枚举字面漏进台上")
