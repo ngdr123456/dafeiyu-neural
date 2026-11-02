@@ -35,7 +35,7 @@
 - `brief_to_prompt` 已带本场事实；本刀若 say_intent/stance 变厚，prompt 可多一行立场人话：把 posture 译成「可退／不可交／需澄清」再拼 stake；**禁止** `non_negotiable` 等枚举字面与字段名进 prompt（规格官硬钉）
 - stub：needs_clarify / commitment 守诺 各补一条模板，勿掉成「嗯听着」
 - **不**恢复禁词表；validate 仍对照 Brief
-- `must_not_pretend`「无来源装经历」须 **validate 可拒**：第一人称无依据亲历自传（对齐 intent_org 亲历范畴薄形状）不过；拒装／直说没有须过；**禁止**只靠列表装饰、禁止扩 EXPERIENCE_*_MARKS 当禁词
+- `must_not_pretend`「无来源装经历」须 **validate 可拒**，但闸 **非常开**：仅 `org_conflicts` 含该项时拒第一人称无依据亲历自传（小时候／出生／长大等锚；勿裸「我昨天」）；拒装／直说没有须过；**禁止**只靠列表装饰、禁止扩 EXPERIENCE_*_MARKS 当禁词
 
 ## 不做
 全书观点表接线；发育阶段进度条；每句改性格；意识海；CloudAgent；import engine。

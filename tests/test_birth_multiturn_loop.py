@@ -41,7 +41,7 @@ FALSE_GREEN_RISKS = """
 - R4 多轮剧本仍 stub=True 保回归；另有 hook／可选 deepseek 测催答应可提取。LLM 空壳答应会被拒收并 stub 兜底，但真网波动／模型跑偏仍可能偶发。
 - R5 已闭合：同场未兑现承诺＋改口否定（含「刚才」回指）→ drive=guard；无承诺纯回指仍 pursue。
 - R6/R7 已闭合：有承诺时收束／好奇经 commit_hold_with_drive 双写动力＋薄守诺；改口仍纯守诺（R5）。
-- must_not_pretend 列表在场≠每轮都跑灾难句；「自述是代码／无来源装经历」均已对拍 validate（substrate＋无依据亲历自传），hook 灾难句拒收走 stub_fallback；残余：未对每轮自动注入灾难句抽检。
+- must_not_pretend 列表在场≠闸常开：装经历亲历拒收**仅** org_conflicts 含该项时跑（非常开）；形状不含裸「我昨天／我去过」。substrate 仍按 must_not_pretend 对拍。残余：未对每轮自动注入灾难句抽检。
 - 枚举不漏只查 brief_to_prompt 字面；say_intent／utterance 里的人话不在此列。
 """
 

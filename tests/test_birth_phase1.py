@@ -419,6 +419,24 @@ def test_lived_bio_reject_falls_back_to_org_stub():
         set_stub_mode(True)
 
 
+def test_lived_bio_gate_not_always_on():
+    """非常开：普通 meaning／有承诺 Brief 上守诺时间回指不过亲历闸。"""
+    from birth.articulate import validate
+    from birth.pipeline import active_store
+
+    active_store().new_session()
+    turn("我想聊星空", stub=True)
+    turn("你答应晚点再聊", stub=True)
+    r = turn("今天怎么样", stub=True)  # 有承诺 → meaning 守诺
+    assert "无来源装经历" not in (r.brief.org_conflicts or [])
+    guardish = "我昨天答应你的那句还在"
+    assert validate(r.brief, guardish) == [], (
+        f"误杀守诺时间回指: {validate(r.brief, guardish)} brief.conflicts={r.brief.org_conflicts}"
+    )
+    # 即便带「我小时候」形状，无 org 冲突也不跑本闸
+    assert validate(r.brief, "我小时候在海边长大") == []
+
+
 
 def test_deepseek_load_api_key_from_env(monkeypatch, tmp_path):
     from birth import llm_deepseek as ds

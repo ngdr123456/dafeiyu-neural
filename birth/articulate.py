@@ -236,10 +236,11 @@ def _claims_substrate_self(utterance: str) -> bool:
 
 
 def _claims_unfounded_lived_bio(utterance: str, facts=None) -> bool:
-    """对照 must_not_pretend「无来源装经历」：第一人称钉成有来处亲历，且 facts 无依据。
+    """装经历 org 路径专用：第一人称编造出生／成长／亲历时空，且 facts 无依据。
 
-    对齐 intent_org 亲历范畴的薄形状；不是扩 EXPERIENCE_*_MARKS，也不是禁词闸。
-    明确拒装／直说没有 → False（须通过）。
+    **非常开**：只由 validate 在 org_conflicts／dominant=org 装经历路径调用。
+    砍掉裸「我昨天／我去过」等无亲历锚形状，避免误杀守诺时间回指。
+    不是扩 EXPERIENCE_*_MARKS，也不是禁词闸。拒装／直说没有 → False。
     """
     import re
 
@@ -261,16 +262,12 @@ def _claims_unfounded_lived_bio(utterance: str, facts=None) -> bool:
         )
     ):
         return False
-    # 第一人称亲历形状（与 demands_lived_biography 范畴同向，宁缺）
+    # 亲历自传锚（小时候／出生／长大／老家…）；勿用裸「我昨天」
     patterns = (
         r"我小时候",
         r"我儿时",
         r"我出生",
         r"我.{0,12}长大",
-        r"我昨天",
-        r"我前天",
-        r"我去年",
-        r"我去过",
         r"我几岁",
         r"我老家",
         r"我父母",
@@ -314,10 +311,9 @@ def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
             r"(?:在程序里|程序里跑|代码里跑)", compact
         ):
             reasons.append("开口把回话说成程序/模型产物，对照身份冲突说不通")
-    # 无来源装经历：Brief 带着该约束时，拒第一人称无依据亲历自传（非词表闸）
-    if "无来源装经历" in brief.must_not_pretend or "无来源装经历" in (
-        brief.org_conflicts or []
-    ):
+    # 无来源装经历拒收：**非常开**——仅当 org_conflicts 含「无来源装经历」
+    # （dominant=org 装经历路径同此）；勿因 must_not 常驻列表每轮开启
+    if "无来源装经历" in (brief.org_conflicts or []):
         facts = list(brief.context.facts_this_session or [])
         if _claims_unfounded_lived_bio(text, facts):
             reasons.append("开口装无来源亲历，对照 must_not_pretend 说不通")
