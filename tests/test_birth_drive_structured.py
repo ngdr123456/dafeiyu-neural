@@ -7,7 +7,8 @@
    「待接的话头：」前缀仅兜底兼容旧快照；不扫 CURIOSITY_MARKS）；
 3) session_ok 缺省 False → None（不推）；
 4) 无结构信号（空 ThinContext）时仍走 MARKS 兜底，原有行为逐字段不变；
-5) 非 S3：drive_greet_pending／drive_hold_pending 有结构时 hold，不依赖 GREETINGS／SATISFIED_MARKS。
+5) 非 S3：drive_greet_pending／drive_hold_pending 有结构时 hold，不依赖 GREETINGS／SATISFIED_MARKS；
+   drive_open_topic_pending／drive_curiosity_pending 有结构时 pursue，不依赖 OPEN_TOPIC_PREFIXES／CURIOSITY_MARKS。
 """
 
 from __future__ import annotations
@@ -223,3 +224,103 @@ def test_pipeline_structured_greet_hold_without_marks():
     assert r2.brief.drive.direction == "hold"
     assert r2.brief.drive.salience == "low"
     assert "满足" in r2.brief.drive.why or "收束" in r2.brief.drive.why
+
+def test_drive_curiosity_flag_without_curiosity_marks_pursues():
+    """主路径：drive_curiosity_pending=True，文案不含 CURIOSITY_MARKS → 仍 pursue high。"""
+    ctx = ThinContext(session_ok=True, drive_curiosity_pending=True)
+    sig = infer_drive("今天天气怎样啊兄弟", ctx)
+    assert sig.direction == "pursue"
+    assert sig.salience == "high"
+    assert "好奇" in sig.why, sig.why
+
+
+def test_drive_open_topic_flag_without_prefix_pursues():
+    """主路径：drive_open_topic_pending=True，文案不含 OPEN_TOPIC_PREFIXES → 仍 pursue mid。"""
+    ctx = ThinContext(session_ok=True, drive_open_topic_pending=True)
+    sig = infer_drive("今天天气怎样啊兄弟", ctx)
+    assert sig.direction == "pursue"
+    assert sig.salience == "mid"
+    assert "话头" in sig.why, sig.why
+
+
+def test_drive_curiosity_marks_fallback_without_flag():
+    """兜底：无 drive_curiosity_pending 时，CURIOSITY_MARKS 仍探出好奇 → pursue high。"""
+    ctx = ThinContext(session_ok=True, drive_curiosity_pending=False)
+    sig = infer_drive("为什么会闪", ctx)
+    assert sig.direction == "pursue"
+    assert sig.salience == "high"
+    assert "好奇" in sig.why, sig.why
+
+
+def test_drive_open_topic_marks_fallback_without_flag():
+    """兜底：无 drive_open_topic_pending 时，OPEN_TOPIC_PREFIXES 仍探出打开话题 → pursue mid。"""
+    ctx = ThinContext(session_ok=True, drive_open_topic_pending=False)
+    sig = infer_drive("我想聊星空", ctx)
+    assert sig.direction == "pursue"
+    assert sig.salience == "mid"
+    assert "话头" in sig.why and "星空" in sig.why, sig.why
+
+
+def test_drive_open_topic_structured_beats_curiosity_marks_in_text():
+    """有 open_topic 结构时，即使文案含 CURIOSITY_MARKS 也先 pursue mid（S6 在 S7／好奇 MARKS 前）。"""
+    ctx = ThinContext(session_ok=True, drive_open_topic_pending=True)
+    sig = infer_drive("为什么呀", ctx)
+    assert sig.direction == "pursue"
+    assert sig.salience == "mid"
+    assert "话头" in sig.why, sig.why
+
+
+def test_should_set_drive_curiosity_open_topic_helpers():
+    """写入侧 helper：结构 cue 优先；无结构时词表兜底；marks_fallback=False 不扫。"""
+    from birth.drive import (
+        should_set_drive_curiosity_pending,
+        should_set_drive_open_topic_pending,
+    )
+
+    assert should_set_drive_curiosity_pending(
+        curiosity_cue=True, user_text="xxx", marks_fallback=False
+    )
+    assert not should_set_drive_curiosity_pending(
+        curiosity_cue=False, user_text="xxx", marks_fallback=False
+    )
+    assert should_set_drive_curiosity_pending(
+        curiosity_cue=False, user_text="为什么会闪", marks_fallback=True
+    )
+    assert not should_set_drive_curiosity_pending(
+        curiosity_cue=False, user_text="今天天气", marks_fallback=True
+    )
+
+    assert should_set_drive_open_topic_pending(
+        open_topic_cue=True, user_text="xxx", marks_fallback=False
+    )
+    assert not should_set_drive_open_topic_pending(
+        open_topic_cue=False, user_text="xxx", marks_fallback=False
+    )
+    assert should_set_drive_open_topic_pending(
+        open_topic_cue=False, user_text="我想聊星空", marks_fallback=True
+    )
+    assert not should_set_drive_open_topic_pending(
+        open_topic_cue=False, user_text="今天天气", marks_fallback=True
+    )
+
+
+def test_pipeline_structured_curiosity_open_topic_without_marks():
+    """live turn：上游 structured_drive_curiosity／open_topic → flag 置位 → pursue，文案无词表。"""
+    from birth.articulate import set_stub_mode, clear_llm_hook
+    from birth.pipeline import active_store, turn
+
+    set_stub_mode(True)
+    clear_llm_hook()
+    active_store().new_session()
+
+    r = turn("今天天气怎样啊兄弟", stub=True, structured_drive_curiosity=True)
+    assert r.brief.drive.direction == "pursue"
+    assert r.brief.drive.salience == "high"
+    assert "好奇" in r.brief.drive.why
+
+    active_store().new_session()
+    r2 = turn("今天天气怎样啊兄弟", stub=True, structured_drive_open_topic=True)
+    assert r2.brief.drive.direction == "pursue"
+    assert r2.brief.drive.salience == "mid"
+    assert "话头" in r2.brief.drive.why
+

@@ -14,8 +14,8 @@
 ## 规则优先级（先命中先返回；org 身份冲突不在动力层拦截，信号仍可产出）
 1. **招呼** → hold / low。主路径读 ThinContext.`drive_greet_pending`（pipeline 写；上游 `structured_drive_greet` 或无结构时 GREETINGS 兜底写入）；GREETINGS 仅无 flag 时 drive 内兜底（不扩词表）。
 2. **满足／收束线索** → `hold` / low；why=喜欢/满足侧已接住，不必再追。主路径读 ThinContext.`drive_hold_pending`（pipeline 写；上游 `structured_drive_hold` 或无结构时 SATISFIED_MARKS 兜底写入）；SATISFIED_MARKS 仅无 flag 时 drive 内兜底（不扩词表）。
-3. **用户明确打开话题**（「我想聊X」「跟你说件…」「我们谈谈…」）→ `pursue` / mid；why=缺口在外、想要打开这一话头；并把 X 短摘进 why（供仲裁/开口，不进性格库）。
-4. **好奇问为什么** → pursue / high（现状）。
+3. **用户明确打开话题**（「我想聊X」「跟你说件…」「我们谈谈…」）→ `pursue` / mid；why=缺口在外、想要打开这一话头；并把 X 短摘进 why（供仲裁/开口，不进性格库）。主路径读 ThinContext.`drive_open_topic_pending`（pipeline 写；上游 `structured_drive_open_topic` 或无结构时 OPEN_TOPIC_PREFIXES 兜底写入）；OPEN_TOPIC_PREFIXES 仅无 flag 时 drive 内兜底（不扩词表）。
+4. **好奇问为什么** → pursue / high。主路径读 ThinContext.`drive_curiosity_pending`（pipeline 写；上游 `structured_drive_curiosity` 或无结构时 CURIOSITY_MARKS 兜底写入）；CURIOSITY_MARKS 仅无 flag 时 drive 内兜底（不扩词表）。与同场 `curiosity_hang_pending`（S3 挂起）不同。
 5. **回指同场 facts** → pursue / mid（现状，体验通道刀）。**订正**：若同场仍有未兑现 `last_commitments`，且本轮是回指／改口否定类 → **guard** / mid；已有要护优先于普通回指追。无承诺时的纯回指仍 pursue。改口判定主路径读 ThinContext.`commitment_deny_pending` 结构化布尔（pipeline 写入前移 `structured_commit_deny`／early stance 守诺结构（`structured_deny_from_stance`）；真无结构时 COMMIT_DENY_MARKS 兜底；resolve／clear／new_session／回合末清）；drive 仅无 flag 时兜底扫 `_denies_commitment`（宁缺勿扩词表）。
 6. **同场有 last_commitments** → **guard** / mid（已有要护＝守；hold 留给满足收束／空追该停——规格官订正）。
 7. **同场悬问未决且本轮 filler** → 动力可 pursue/mid（现状）；仲裁仍负责短暂 meaning 捡一次。好奇挂起主路径读 ThinContext.`curiosity_hang_pending` 结构化布尔（pipeline 写 store flag，resolve／clear／new_session 清）；「待接的话头：」前缀仅在无 flag 时兜底（兼容旧快照），不是禁词闸门、不改台上话术。

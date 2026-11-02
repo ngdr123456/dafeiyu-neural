@@ -25,8 +25,10 @@ from .openq_extract import (
 from .context import ThinContextStore
 from .drive import (
     infer_drive,
+    should_set_drive_curiosity_pending,
     should_set_drive_greet_pending,
     should_set_drive_hold_pending,
+    should_set_drive_open_topic_pending,
 )
 from .stance_org import default_org, default_stance
 from .types import ThoughtBrief
@@ -60,6 +62,8 @@ def turn(
     structured_commit_deny: bool = False,
     structured_drive_greet: bool = False,
     structured_drive_hold: bool = False,
+    structured_drive_curiosity: bool = False,
+    structured_drive_open_topic: bool = False,
 ) -> TurnResult:
     """跑完一轮完整闭环。new_session=True 显式开新场（唯一清空入口）。
 
@@ -72,6 +76,9 @@ def turn(
     PRESS_COMMIT／交付／放下。
     structured_drive_greet／structured_drive_hold: 上游结构化招呼／收束 hold cue；
     有结构时 drive 非 S3 主路径读 ThinContext flag，不扫 GREETINGS／SATISFIED_MARKS；
+    真无结构时词表兜底（不扩词表）。
+    structured_drive_curiosity／structured_drive_open_topic: 上游结构化好奇／打开话题
+    pursue cue；有结构时读 ThinContext flag，不扫 CURIOSITY_MARKS／OPEN_TOPIC_PREFIXES；
     真无结构时词表兜底（不扩词表）。
     """
     if new_session:
@@ -119,9 +126,12 @@ def turn(
             _STORE.set_commitment_deny_pending(True)
             context = _STORE.snapshot()
 
-    # 非 S3：招呼／收束 hold 写入（有结构 cue 不扫词表；真无结构时 GREETINGS／SATISFIED 兜底）
+    # 非 S3：招呼／收束 hold／打开话题／好奇 pursue 写入
+    # （有结构 cue 不扫词表；真无结构时 GREETINGS／SATISFIED／OPEN_TOPIC／CURIOSITY 兜底）
     _STORE.set_drive_greet_pending(False)
     _STORE.set_drive_hold_pending(False)
+    _STORE.set_drive_open_topic_pending(False)
+    _STORE.set_drive_curiosity_pending(False)
     if should_set_drive_greet_pending(
         greet_cue=structured_drive_greet,
         user_text=user_text,
@@ -134,6 +144,18 @@ def turn(
         marks_fallback=not bool(structured_drive_hold),
     ):
         _STORE.set_drive_hold_pending(True)
+    if should_set_drive_open_topic_pending(
+        open_topic_cue=structured_drive_open_topic,
+        user_text=user_text,
+        marks_fallback=not bool(structured_drive_open_topic),
+    ):
+        _STORE.set_drive_open_topic_pending(True)
+    if should_set_drive_curiosity_pending(
+        curiosity_cue=structured_drive_curiosity,
+        user_text=user_text,
+        marks_fallback=not bool(structured_drive_curiosity),
+    ):
+        _STORE.set_drive_curiosity_pending(True)
     context = _STORE.snapshot()
 
     drive = infer_drive(user_text, context)
@@ -184,10 +206,12 @@ def turn(
         if open_q:
             _STORE.append_open_question(open_q)
 
-    # 改口否定／招呼／收束 flag 只服务本轮 drive：回合末清，不漏到下一轮
+    # 改口否定／招呼／收束／打开话题／好奇 flag 只服务本轮 drive：回合末清，不漏到下一轮
     _STORE.set_commitment_deny_pending(False)
     _STORE.set_drive_greet_pending(False)
     _STORE.set_drive_hold_pending(False)
+    _STORE.set_drive_open_topic_pending(False)
+    _STORE.set_drive_curiosity_pending(False)
 
     return TurnResult(
         utterance=utterance,

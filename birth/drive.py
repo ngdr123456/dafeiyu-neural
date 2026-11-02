@@ -62,6 +62,10 @@ class DriveCues:
     drive_greet_pending: bool = False
     # 满足／收束 hold：主路径读 ThinContext.drive_hold_pending；SATISFIED_MARKS 仅无结构时兜底
     drive_hold_pending: bool = False
+    # 结构化：本轮好奇 pursue（pipeline／上游写；drive 非 S3 主路径读；勿主靠 CURIOSITY_MARKS）
+    drive_curiosity_pending: bool = False
+    # 结构化：本轮打开话题 pursue（pipeline／上游写；drive 非 S3 主路径读；勿主靠 OPEN_TOPIC_PREFIXES）
+    drive_open_topic_pending: bool = False
     session_ok: bool = True
 
 
@@ -71,6 +75,7 @@ def drive_cues_from_context(context: ThinContext) -> DriveCues:
     改口否定（S2）主路径读 ThinContext.commitment_deny_pending 布尔；
     好奇挂起主路径读 ThinContext.curiosity_hang_pending 布尔；
     招呼／收束 hold（非 S3）主路径读 drive_greet_pending／drive_hold_pending。
+    结构化：好奇 pursue / 打开话题 pursue 主路径读新 flag；
     兜底范围见各段注释：仅当结构化 flag 缺省/False 时才扫输入侧线索
     （兼容旧快照／未写 flag 的路径）；不是禁词闸门，不扩词表，不改台上话术。
     """
@@ -87,6 +92,12 @@ def drive_cues_from_context(context: ThinContext) -> DriveCues:
         curiosity_hang_pending=flag or prefix_fallback,
         drive_greet_pending=bool(getattr(context, "drive_greet_pending", False)),
         drive_hold_pending=bool(getattr(context, "drive_hold_pending", False)),
+        drive_curiosity_pending=bool(
+            getattr(context, "drive_curiosity_pending", False)
+        ),
+        drive_open_topic_pending=bool(
+            getattr(context, "drive_open_topic_pending", False)
+        ),
         session_ok=context.session_ok,
     )
 
@@ -125,6 +136,44 @@ def should_set_drive_hold_pending(
     if not marks_fallback:
         return False
     return _is_satisfied((user_text or "").strip())
+
+
+def should_set_drive_curiosity_pending(
+    *,
+    curiosity_cue: bool = False,
+    user_text: str = "",
+    marks_fallback: bool = True,
+) -> bool:
+    """主路径读上游结构化 curiosity_cue；仅无结构且允许兜底时才扫 CURIOSITY_MARKS。
+
+    兜底范围：curiosity_cue 缺省/False 且 marks_fallback 时，才用既有 CURIOSITY_MARKS
+    （兼容未写 flag 的直调／旧路径）。不是禁词闸门，不扩词表，不改台上话术。
+    与 curiosity_hang_pending（S3 同场挂起）不同：本 flag 仅本轮好奇 pursue。
+    """
+    if bool(curiosity_cue):
+        return True
+    if not marks_fallback:
+        return False
+    text = (user_text or "").strip()
+    return any(mark in text for mark in CURIOSITY_MARKS)
+
+
+def should_set_drive_open_topic_pending(
+    *,
+    open_topic_cue: bool = False,
+    user_text: str = "",
+    marks_fallback: bool = True,
+) -> bool:
+    """主路径读上游结构化 open_topic_cue；仅无结构且允许兜底时才扫 OPEN_TOPIC_PREFIXES。
+
+    兜底范围：open_topic_cue 缺省/False 且 marks_fallback 时，才用既有 _extract_open_topic
+    （兼容未写 flag 的直调／旧路径）。不是禁词闸门，不扩词表，不改台上话术。
+    """
+    if bool(open_topic_cue):
+        return True
+    if not marks_fallback:
+        return False
+    return _extract_open_topic((user_text or "").strip()) is not None
 
 
 def _is_greeting(text: str) -> bool:
@@ -212,6 +261,8 @@ def infer_drive(
     （pipeline 写 store flag）；「待接的话头：」前缀仅兜底兼容旧快照。
     S4／S5 招呼／收束 hold 主路径读 drive_greet_pending／drive_hold_pending；
     GREETINGS／SATISFIED_MARKS 仅无结构时兜底（不扩词表）。
+    S6／S7 打开话题／好奇 pursue 主路径读 drive_open_topic_pending／drive_curiosity_pending；
+    OPEN_TOPIC_PREFIXES／CURIOSITY_MARKS 仅无结构时兜底（不扩词表）。
     """
     text = (user_text or "").strip()
     if cues is None:
@@ -263,6 +314,24 @@ def infer_drive(
             direction="hold",
             salience="low",
             why="喜欢/满足侧已接住，不必再追；对方示意够了或先收束",
+        )
+
+    # S6) 结构化打开话题 → pursue mid（主路径读 flag；OPEN_TOPIC_PREFIXES 仅无结构时兜底）
+    if cues.drive_open_topic_pending:
+        opened = _extract_open_topic(text)  # why 富化，不决定分支
+        topic_bit = f"（{opened}）" if opened else ""
+        return DriveSignal(
+            direction="pursue",
+            salience="mid",
+            why=f"缺口在外、想要打开这一话头{topic_bit}",
+        )
+
+    # S7) 结构化好奇 → pursue high（主路径读 flag；CURIOSITY_MARKS 仅无结构时兜底）
+    if cues.drive_curiosity_pending:
+        return DriveSignal(
+            direction="pursue",
+            salience="high",
+            why="用户问出了『为什么』类问题，好奇本身就是够格的推力，顺着看清楚",
         )
 
     # 兜底：无结构信号判定时才扫输入侧 MARKS（GREETINGS/SATISFIED/CURIOSITY/DISAPPOINT/_EMPTY_STAGE）

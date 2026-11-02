@@ -36,6 +36,8 @@ class ThinContextStore:
             commitment_deny_pending=ctx.commitment_deny_pending,
             drive_greet_pending=ctx.drive_greet_pending,
             drive_hold_pending=ctx.drive_hold_pending,
+            drive_curiosity_pending=ctx.drive_curiosity_pending,
+            drive_open_topic_pending=ctx.drive_open_topic_pending,
         )
 
     def new_session(self) -> None:
@@ -94,6 +96,22 @@ class ThinContextStore:
         new_session／回合末清 False，防漏到下一轮。
         """
         self._context.drive_hold_pending = pending
+
+    def set_drive_curiosity_pending(self, pending: bool) -> None:
+        """pipeline 显式标记本轮好奇 pursue（上游结构化／写入侧）。
+
+        drive 非 S3 主路径读该布尔；CURIOSITY_MARKS 仅无 flag 时兜底。
+        new_session／回合末清 False，防漏到下一轮。
+        """
+        self._context.drive_curiosity_pending = pending
+
+    def set_drive_open_topic_pending(self, pending: bool) -> None:
+        """pipeline 显式标记本轮打开话题 pursue（上游结构化／写入侧）。
+
+        drive 非 S3 主路径读该布尔；OPEN_TOPIC_PREFIXES 仅无 flag 时兜底。
+        new_session／回合末清 False，防漏到下一轮。
+        """
+        self._context.drive_open_topic_pending = pending
 
     def resolve_open_question(self) -> str | None:
         """接完第一条悬问：弹出并返回它；没有悬问时返回 None。
