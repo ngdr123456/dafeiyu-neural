@@ -112,6 +112,12 @@ def user_marks_commitment_done(user_text: str) -> bool:
     return any(m in text for m in _FULFILL_USER_MARKS)
 
 
+def user_marks_commitment_deny(user_text: str) -> bool:
+    """用户改口／否认同场承诺线索（宁缺既有 COMMIT_DENY_MARKS，勿扩；供 pipeline 置 commitment_deny_pending）。"""
+    from .stance_org import _denies_commitment
+    return _denies_commitment(user_text)
+
+
 # 与 ThoughtBrief.commit_resolve 同一语义
 COMMIT_RESOLVE_FLAG = True
 

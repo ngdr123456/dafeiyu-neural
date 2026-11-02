@@ -71,6 +71,23 @@ def test_deny_commitment_does_not_resolve():
     assert store.pending_commitments(), store.pending_commitments()
 
 
+def test_commitment_deny_flag_used_then_cleared_no_leak():
+    """pipeline 薄接线：有 pending＋改口 → 本轮 drive 走 guard（经 flag 主路径）；
+    回合末 flag 清 False，不漏到下一轮；无 pending 时写入侧不置位。"""
+    set_stub_mode(True)
+    clear_llm_hook()
+    store = active_store()
+    store.new_session()
+    store.append_commitment("同场里说好这轮先补月亮的事")
+    r = turn("那刚才说的不算", stub=True)
+    assert r.brief.drive is not None and r.brief.drive.direction == "guard"
+    assert store.context.commitment_deny_pending is False  # 回合末已清，不漏
+    # 无 pending：即使命中改口词表也不置 flag
+    store.new_session()
+    turn("那刚才说的不算", stub=True)
+    assert store.context.commitment_deny_pending is False
+
+
 def test_resolve_uses_brief_flags_not_loose_marks():
     """有 commit_resolve／可检验交付才 resolve；无标记即使闲话也不清。"""
     from birth.commit_extract import should_resolve_commitment

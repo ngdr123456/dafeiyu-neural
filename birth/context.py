@@ -33,6 +33,7 @@ class ThinContextStore:
             last_commitments=list(ctx.last_commitments),
             facts_this_session=list(ctx.facts_this_session),
             curiosity_hang_pending=ctx.curiosity_hang_pending,
+            commitment_deny_pending=ctx.commitment_deny_pending,
         )
 
     def new_session(self) -> None:
@@ -67,6 +68,15 @@ class ThinContextStore:
         """
         self._context.curiosity_hang_pending = pending
 
+    def set_commitment_deny_pending(self, pending: bool) -> None:
+        """pipeline 显式标记本轮用户改口／否认同场承诺（读 Brief／写入侧线索）。
+
+        drive 主路径读该布尔（S2 承诺在场＋改口 → guard）；词表仅在无 flag 时兜底。
+        resolve_commitment／clear_commitments／new_session 均清回 False；
+        pipeline 也在每回合末清，防漏到下一轮。
+        """
+        self._context.commitment_deny_pending = pending
+
     def resolve_open_question(self) -> str | None:
         """接完第一条悬问：弹出并返回它；没有悬问时返回 None。
 
@@ -87,14 +97,17 @@ class ThinContextStore:
         """兑现／接完第一条承诺：弹出并返回它；没有则 None。
 
         对齐 resolve_open_question；态度上可守的对象，接完可放下。
+        改口否定 flag 一并清 False（承诺已了，改口线索无对象）。
         """
         if self._context.last_commitments:
+            self._context.commitment_deny_pending = False
             return self._context.last_commitments.pop(0)
         return None
 
     def clear_commitments(self) -> None:
-        """放下同场所有承诺（仅明确整场放下时用；宁缺毋滥）。"""
+        """放下同场所有承诺（仅明确整场放下时用；宁缺毋滥）；改口否定 flag 一并清。"""
         self._context.last_commitments.clear()
+        self._context.commitment_deny_pending = False
 
     # -- 只读视图 ----------------------------------------------
 

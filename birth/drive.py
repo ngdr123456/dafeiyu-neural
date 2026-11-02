@@ -53,6 +53,8 @@ class DriveCues:
     """结构化线索：主路径先读上下文结构，不再先扫输入侧词表。"""
 
     commitments_present: bool = False
+    # 改口否定挂起：主路径读 ThinContext.commitment_deny_pending 结构化布尔
+    commitment_deny_pending: bool = False
     open_question_pending: bool = False
     # 同场好奇挂起仍 pending：主路径读 ThinContext.curiosity_hang_pending 结构化布尔
     curiosity_hang_pending: bool = False
@@ -62,10 +64,10 @@ class DriveCues:
 def drive_cues_from_context(context: ThinContext) -> DriveCues:
     """从 ThinContext 抽结构化线索（不扫用户输入侧词表）。
 
+    改口否定（S2）主路径读 ThinContext.commitment_deny_pending 布尔；
     好奇挂起主路径读 ThinContext.curiosity_hang_pending 布尔。
-    兜底范围：仅当结构化 flag 缺省/False 时，才扫 open_questions 是否以
-    「待接的话头：」开头（兼容旧快照／未写 flag 的路径）；
-    不是禁词闸门，不扩词表，不改台上话术。
+    兜底范围见 S2／S3 注释：仅当结构化 flag 缺省/False 时才扫输入侧线索
+    （兼容旧快照／未写 flag 的路径）；不是禁词闸门，不扩词表，不改台上话术。
     """
     flag = bool(getattr(context, "curiosity_hang_pending", False))
     prefix_fallback = any(
@@ -73,6 +75,9 @@ def drive_cues_from_context(context: ThinContext) -> DriveCues:
     )
     return DriveCues(
         commitments_present=bool(context.last_commitments),
+        commitment_deny_pending=bool(
+            getattr(context, "commitment_deny_pending", False)
+        ),
         open_question_pending=bool(context.open_questions),
         curiosity_hang_pending=flag or prefix_fallback,
         session_ok=context.session_ok,
@@ -158,6 +163,8 @@ def infer_drive(
 ) -> DriveSignal:
     """DRIVE_V1 优先级：结构化阶段先行；无结构信号时才走 MARKS 兜底。
 
+    S2 改口否定主路径读 ThinContext.commitment_deny_pending 结构化布尔
+    （pipeline 经 store 在 turn 开头置位）；兜底范围见 S2 注释。
     S3 好奇挂起主路径读 ThinContext.curiosity_hang_pending 结构化布尔
     （pipeline 写 store flag）；「待接的话头：」前缀仅兜底兼容旧快照。
     """
@@ -170,10 +177,16 @@ def infer_drive(
     if not cues.session_ok:
         return DriveSignal(direction=None, salience="low", why="新场未接上，先不推")
 
-    # S2) 承诺在场 + 本轮改口否定 → guard（复用 stance 线索，懒导入避免环）
+    # S2) 承诺在场 + 本轮改口否定 → guard
+    # 主路径：读 cues.commitment_deny_pending（ThinContext 结构化布尔，pipeline／上游置位）。
+    # 兜底范围：仅当结构化 flag 缺省/False 时，才扫 _denies_commitment 词表
+    # （兼容未写 flag 的直调／旧路径）；不是禁词闸门，不扩词表，不改台上话术。
     if cues.commitments_present and context.last_commitments:
-        from .stance_org import _denies_commitment
-        if _denies_commitment(text):
+        denied = bool(cues.commitment_deny_pending)
+        if not denied:
+            from .stance_org import _denies_commitment
+            denied = _denies_commitment(text)
+        if denied:
             first = context.last_commitments[0]
             return DriveSignal(
                 direction="guard",
@@ -228,9 +241,13 @@ def infer_drive(
     # 5) 回指（与未兑现承诺冲突时：已有要护优先于普通回指追）
     if is_session_backref(text, context):
         if context.last_commitments:
-            # 懒导入：stance_org 已依赖 drive.is_neutral_filler，避免环
-            from .stance_org import _denies_commitment
-            if _denies_commitment(text):
+            # 主路径读 ThinContext.commitment_deny_pending；仅无 flag 时才扫
+            # _denies_commitment 词表兜底（懒导入：stance_org 已依赖 drive.is_neutral_filler，避免环）
+            denied = bool(cues.commitment_deny_pending)
+            if not denied:
+                from .stance_org import _denies_commitment
+                denied = _denies_commitment(text)
+            if denied:
                 first = context.last_commitments[0]
                 return DriveSignal(
                     direction="guard",

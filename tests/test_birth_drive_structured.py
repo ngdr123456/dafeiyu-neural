@@ -27,6 +27,35 @@ def test_commitments_conflict_structured_guard_beats_satisfied_mark():
     assert "要护" in sig.why and "没兑现" in sig.why, sig.why
 
 
+def test_commitment_deny_flag_without_marks_guards():
+    """主路径：结构化 commitment_deny_pending=True，且用户文本不含任何
+    COMMIT_DENY_MARKS（「够了先这样」只命中 SATISFIED 收束词）→ 仍 guard mid。
+    证明 S2 主路径读 flag，不靠词表：无 flag 时该文本会走 SATISFIED → hold。"""
+    ctx = ThinContext(
+        session_ok=True,
+        last_commitments=["同场说好晚点再聊星空"],
+        commitment_deny_pending=True,
+    )
+    sig = infer_drive("够了先这样", ctx)
+    assert sig.direction == "guard"
+    assert sig.salience == "mid"
+    assert "要护" in sig.why and "没兑现" in sig.why, sig.why
+
+
+def test_commitment_deny_marks_fallback_without_flag():
+    """兜底范围：无 flag（False）时，_denies_commitment 词表仍探出改口否定 → guard。
+    与旧行为一致（兼容未写 flag 的直调／旧路径；兜底匹配此前行为）。"""
+    ctx = ThinContext(
+        session_ok=True,
+        last_commitments=["同场说好晚点再聊星空"],
+        commitment_deny_pending=False,
+    )
+    sig = infer_drive("那刚才说的不算，够了", ctx)
+    assert sig.direction == "guard"
+    assert sig.salience == "mid"
+    assert "要护" in sig.why and "没兑现" in sig.why, sig.why
+
+
 def test_curiosity_hang_filler_pursues_open_question():
     """好奇挂起前缀兜底 + filler → pursue mid（无 flag 时仍可读「待接的话头：」）。"""
     ctx = ThinContext(

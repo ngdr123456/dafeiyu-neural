@@ -11,7 +11,11 @@ from dataclasses import dataclass
 
 from .arbitrate import arbitrate
 from .articulate import articulate, last_articulate_source
-from .commit_extract import extract_commitment, should_resolve_commitment
+from .commit_extract import (
+    extract_commitment,
+    should_resolve_commitment,
+    user_marks_commitment_deny,
+)
 from .openq_extract import (
     extract_open_question,
     should_clear_open_questions,
@@ -56,6 +60,11 @@ def turn(
     """
     if new_session:
         _STORE.new_session()
+
+    # 改口否定：上游结构化标记供 drive S2；词表仅在此写入侧复用既有线索，drive 主路径读 flag
+    _STORE.set_commitment_deny_pending(False)
+    if _STORE.pending_commitments() and user_marks_commitment_deny(user_text):
+        _STORE.set_commitment_deny_pending(True)
 
     context = _STORE.snapshot()
 
@@ -105,6 +114,9 @@ def turn(
         open_q = extract_open_question(utterance)
         if open_q:
             _STORE.append_open_question(open_q)
+
+    # 改口否定 flag 只服务本轮 drive S2：回合末清，不漏到下一轮（store 侧 resolve/clear/new_session 也会清）
+    _STORE.set_commitment_deny_pending(False)
 
     return TurnResult(
         utterance=utterance,
