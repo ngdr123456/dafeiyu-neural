@@ -797,3 +797,111 @@ def test_greeting_utterance_does_not_add_open_question():
     finally:
         clear_llm_hook()
         set_stub_mode(True)
+
+
+# -- stub 主路径读 Brief 标记／posture（say_intent 仅兜底） -------------------
+
+def _tampered_brief(**kw):
+    """人为改 say_intent 为无关文案，但结构化标记／posture 仍在。"""
+    from birth.types import DriveSignal, StanceSignal, ThoughtBrief
+
+    drive = kw.pop("drive", None) or DriveSignal(direction=None, salience="low", why="x")
+    return ThoughtBrief(
+        dominant=kw.pop("dominant", "drive"),
+        drive=drive,
+        stance=kw.pop("stance", StanceSignal()),
+        context=kw.pop("context", ThinContext()),
+        say_intent=kw.pop("say_intent", "【文案已改】与一切旧子串无关的一句话"),
+        **kw,
+    )
+
+
+def test_tampered_say_intent_press_commit_still_appointment():
+    """press_commit=True 且 say_intent 无催答应子串 → 仍出「晚点」约定句。"""
+    from birth.articulate import _template_utterance
+
+    brief = _tampered_brief(press_commit=True)
+    assert "催" not in brief.say_intent and "「" not in brief.say_intent
+    out = _template_utterance(brief)
+    assert "晚点" in out, out
+
+
+def test_tampered_say_intent_needs_clarify_still_no_empty_sublime():
+    """posture=needs_clarify 且 say_intent 无「不空壳升华」→ 仍不空壳口径。"""
+    from birth.articulate import _template_utterance
+    from birth.types import StanceSignal
+
+    brief = _tampered_brief(
+        dominant="meaning", stance=StanceSignal(posture="needs_clarify", stake="x")
+    )
+    assert "不空壳升华" not in brief.say_intent
+    out = _template_utterance(brief)
+    assert "鸡汤" in out, out
+
+
+def test_tampered_say_intent_non_negotiable_commitments_still_keep_word():
+    """non_negotiable + last_commitments 非空（say_intent 无守诺子串）→ 仍守诺。"""
+    from birth.articulate import _template_utterance
+    from birth.types import StanceSignal
+
+    brief = _tampered_brief(
+        dominant="meaning",
+        stance=StanceSignal(posture="non_negotiable", stake="先守同场说过的话"),
+        context=ThinContext(last_commitments=["同场里说好这轮先补月亮的事"]),
+    )
+    assert "守住" not in brief.say_intent
+    out = _template_utterance(brief)
+    assert "不当没说过" in out or "不跟着改口" in out, out
+
+    # stake 带守诺口径、commitments 空的备路
+    brief2 = _tampered_brief(
+        dominant="meaning",
+        stance=StanceSignal(posture="non_negotiable", stake="先守同场说过的话"),
+    )
+    out2 = _template_utterance(brief2)
+    assert "不当没说过" in out2 or "不跟着改口" in out2, out2
+
+
+def test_commit_hold_with_drive_reads_drive_marks_not_say_intent():
+    """commit_hold_with_drive：读 drive.direction／drive.why 选收束／好奇。"""
+    from birth.articulate import _template_utterance
+    from birth.types import DriveSignal, StanceSignal
+
+    # 好奇：pursue＋why 好奇；say_intent 已改无关文案
+    b_curio = _tampered_brief(
+        drive=DriveSignal(
+            direction="pursue", salience="high",
+            why="用户问出了『为什么』类问题，好奇本身就是够格的推力，顺着看清楚",
+        ),
+        stance=StanceSignal(posture="yieldable"),
+        context=ThinContext(last_commitments=["同场说好晚点聊月亮"]),
+        commit_hold_with_drive=True,
+    )
+    assert "好奇" not in b_curio.say_intent
+    out = _template_utterance(b_curio)
+    assert "勾着" in out or "哪一头" in out, out
+    assert "还在" in out, out
+
+    # 收束：hold＋why 喜欢/满足、不必再追
+    b_hold = _tampered_brief(
+        drive=DriveSignal(
+            direction="hold", salience="low",
+            why="喜欢/满足侧已接住，不必再追；对方示意够了或先收束",
+        ),
+        stance=StanceSignal(posture="yieldable"),
+        context=ThinContext(last_commitments=["同场说好晚点聊月亮"]),
+        commit_hold_with_drive=True,
+    )
+    assert "收束" not in b_hold.say_intent and "不继续加码追" not in b_hold.say_intent
+    out2 = _template_utterance(b_hold)
+    assert "先这样" in out2 and "还在" in out2, out2
+
+    # drive 不够（direction/why 均无线索）→ 薄兜底仍带「约定还在」痕迹
+    b_thin = _tampered_brief(
+        drive=DriveSignal(direction=None, salience="low", why=""),
+        stance=StanceSignal(posture="yieldable"),
+        context=ThinContext(last_commitments=["同场说好晚点聊月亮"]),
+        commit_hold_with_drive=True,
+    )
+    out3 = _template_utterance(b_thin)
+    assert "还在" in out3, out3

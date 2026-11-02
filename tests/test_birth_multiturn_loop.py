@@ -41,6 +41,7 @@ FALSE_GREEN_RISKS = """
 - R4 多轮剧本仍 stub=True 保回归；另有 hook／可选 deepseek 测催答应可提取。LLM 空壳答应会被拒收并 stub 兜底，但真网波动／模型跑偏仍可能偶发。
 - R5 已闭合：同场未兑现承诺＋改口否定（含「刚才」回指）→ drive=guard；无承诺纯回指仍 pursue。
 - R6/R7 已闭合：有承诺时收束／好奇经 commit_hold_with_drive 双写动力＋薄守诺；改口仍纯守诺（R5）。
+- stub 主路径已改读 Brief 标记／posture（org→press_commit→commit_hold_with_drive 读 drive.direction/why→needs_clarify→non_negotiable 守诺），say_intent 改无关文案仍走对模板（test_birth_phase1 守恒测）；残余：打开话题／收束／空追／回指兜底仍读 say_intent 中文子串，未全结构化。
 - must_not_pretend 列表在场≠闸常开：装经历亲历拒收**仅** org_conflicts 含该项时跑（非常开）；形状不含裸「我昨天／我去过」。substrate 仍按 must_not_pretend 对拍。残余：未对每轮自动注入灾难句抽检。
 - 枚举漏检已对拍 utterance：validate 拦 pursue／guard／hold（独立英文词）与 non_negotiable 等标识；brief_to_prompt 仍查。残余：未穷尽一切内部符号别名。
 - 好奇挂起已闭合：pipeline 读 `openq_curiosity_hang`，不再扫 CURIOSITY_MARKS；残余：drive 内部仍用 MARKS 作输入侧线索。
@@ -357,3 +358,49 @@ def test_false_green_risks_documented():
     assert "R5" in FALSE_GREEN_RISKS
     assert "must_not_pretend" in FALSE_GREEN_RISKS
     assert "openq_clear" in FALSE_GREEN_RISKS
+    assert "say_intent" in FALSE_GREEN_RISKS
+
+
+def test_stub_main_path_reads_markers_and_posture():
+    """stub 主路径读 Brief 标记／posture：say_intent 改无关文案仍走对模板。"""
+    from birth.articulate import _template_utterance
+    from birth.types import DriveSignal, StanceSignal
+
+    set_stub_mode(True)
+    clear_llm_hook()
+    try:
+        active_store().new_session()
+        turn("我想聊星空", stub=True)  # 铺本场话头 + 承诺
+
+        # press_commit 标记在、say_intent 无催答应子串 → 仍约定句（读标记）
+        b_press = turn("你答应晚点再聊", stub=True).brief
+        assert b_press.press_commit
+        assert "催一个可核对的约定" in b_press.say_intent
+        b_press.say_intent = "【文案已改】与催答应毫无关系的一句话"
+        assert "晚点" in _template_utterance(b_press)
+
+        # needs_clarify posture 在、say_intent 无升华子串 → 仍不空壳口径
+        b_nc = turn("你一定觉得人生很有意义", stub=True).brief
+        assert b_nc.stance.posture == "needs_clarify"
+        b_nc.say_intent = "【文案已改】与升华口径无关的一句话"
+        assert "鸡汤" in _template_utterance(b_nc)
+    finally:
+        set_stub_mode(True)
+        clear_llm_hook()
+
+    # non_negotiable + 同场承诺在 → 守诺模板；say_intent 子串不是主路径
+    b_deny = _tampered_deny_brief()
+    out = _template_utterance(b_deny)
+    assert "不当没说过" in out or "不跟着改口" in out, out
+
+
+def _tampered_deny_brief():
+    """构造改口否定轮的 Brief（posture/stake/commitments 结构化字段在位）。"""
+    from birth.types import DriveSignal, StanceSignal, ThoughtBrief, ThinContext
+    return ThoughtBrief(
+        dominant="meaning",
+        drive=DriveSignal(direction="guard", salience="mid", why="已有要护"),
+        stance=StanceSignal(posture="non_negotiable", stake="先守同场说过的话"),
+        context=ThinContext(last_commitments=["同场里说好这轮先补月亮的事"]),
+        say_intent="【文案已改】与守诺子串无关的一句话",
+    )

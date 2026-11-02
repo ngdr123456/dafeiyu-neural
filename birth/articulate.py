@@ -105,40 +105,22 @@ _DEFAULT_FALLBACK = "这句我接。你想先从哪说起，我就从哪接。"
 
 
 def _template_utterance(brief: ThoughtBrief) -> str:
-    """stub 开口：按 say_intent / org_conflicts 查模板。"""
+    """stub 开口：主路径读 Brief 结构化标记／posture——
+    1) dominant=org → _ORG_TEMPLATES／fallback；
+    2) press_commit → 催答应约定句；
+    3) commit_hold_with_drive → 读 drive.direction／drive.why 选收束／好奇；
+    4) posture=needs_clarify → 不空壳升华口径；
+    5) posture=non_negotiable 且有承诺/stake 守同场 → 守诺不改口；
+    say_intent 中文子串仅作残余打开话题／收束／空追／回指的兜底。
+    """
+    # 1) org：既有 _ORG_TEMPLATES／fallback
     if brief.dominant == "org":
         hits = [key for key in _ORG_TEMPLATES if key in brief.org_conflicts]
         if len(hits) == 1:
             return _ORG_TEMPLATES[hits[0]]
         return _ORG_FALLBACK
-    # 不空壳升华
-    if "不空壳升华" in brief.say_intent or brief.stance.posture == "needs_clarify":
-        return (
-            "人生有没有意义这类大词，我这边没有现成鸡汤。"
-            "能讲的只有眼前这句里能讲清的部分，你具体指哪一块？"
-        )
-    # 守同场承诺（改口否定：纯守诺）
-    if "守住同场自己说过的话" in brief.say_intent or (
-        brief.stance.posture == "non_negotiable"
-        and "先守同场说过的话" in (brief.stance.stake or "")
-    ):
-        return (
-            "同场里说过的话我不当没说过。"
-            "刚才那句还在，咱们先按那个接着，不跟着改口否定。"
-        )
-    # 有承诺＋收束／好奇：读结构化标记，动力模板＋薄守诺痕迹
-    if getattr(brief, "commit_hold_with_drive", False):
-        if "够了或先收束" in brief.say_intent or "不继续加码追" in brief.say_intent:
-            return (
-                "好，那就先这样。同场里说好的那句还在，"
-                "你回头想接着再叫我就行。"
-            )
-        if "好奇" in brief.say_intent or "顺着用户好奇" in brief.say_intent:
-            return (
-                "你问的这个正好也勾着我。同场里说好的那句还在；"
-                "你想先从哪一头往下捋？"
-            )
-    # 催答应 → 显式可被 commit_extract 提取的约定句（读 press_commit，不全局答应）
+    # 2) 催答应 → 显式可被 commit_extract 提取的约定句（读 press_commit 标记，
+    #    不靠 say_intent 判定；topic 仍可从 say_intent「」或 facts 取）
     if getattr(brief, "press_commit", False):
         topic = ""
         if "「" in brief.say_intent and "」" in brief.say_intent:
@@ -146,7 +128,36 @@ def _template_utterance(brief: ThoughtBrief) -> str:
         if not topic:
             topic = topic_hint_from_facts(brief.context.facts_this_session) or "这事"
         return f"好，我晚点再跟你聊{topic}。"
-    # 打开话题：点到 X
+    # 3) 有承诺＋收束／好奇：读 drive.direction／drive.why，不靠 say_intent 子串选模板
+    if getattr(brief, "commit_hold_with_drive", False):
+        direction = brief.drive.direction if brief.drive else None
+        why = (brief.drive.why if brief.drive else "") or ""
+        if direction == "pursue" or "好奇" in why:
+            return (
+                "你问的这个正好也勾着我。同场里说好的那句还在；"
+                "你想先从哪一头往下捋？"
+            )
+        # 收束：含「喜欢/满足」「不必再追」→ 不继续加码追；drive 不够则薄兜底收束
+        return (
+            "好，那就先这样。同场里说好的那句还在，"
+            "你回头想接着再叫我就行。"
+        )
+    # 4) 不空壳升华：只读 posture，不依赖 say_intent 子串
+    if brief.stance.posture == "needs_clarify":
+        return (
+            "人生有没有意义这类大词，我这边没有现成鸡汤。"
+            "能讲的只有眼前这句里能讲清的部分，你具体指哪一块？"
+        )
+    # 5) 守诺改口：posture + 承诺/stake 结构化判定（不再靠 say_intent 子串做主路径）
+    if brief.stance.posture == "non_negotiable" and (
+        brief.context.last_commitments
+        or "先守同场说过的话" in (brief.stance.stake or "")
+    ):
+        return (
+            "同场里说过的话我不当没说过。"
+            "刚才那句还在，咱们先按那个接着，不跟着改口否定。"
+        )
+    # 6) 残余兜底：say_intent 中文子串／模板映射（打开话题／收束／空追／回指仍读它）
     if "新打开的话头" in brief.say_intent:
         topic = ""
         if "「" in brief.say_intent and "」" in brief.say_intent:
@@ -154,8 +165,14 @@ def _template_utterance(brief: ThoughtBrief) -> str:
         if topic:
             return f"行，那就聊{topic}。你想从哪头起？"
         return "行，你开的这个话头我接着。你想从哪头起？"
-    # 满足／收束：不继续加码追问
-    if "够了或先收束" in brief.say_intent or "不继续加码追" in brief.say_intent:
+    if brief.say_intent in _ONSTAGE_TEMPLATES:
+        return _ONSTAGE_TEMPLATES[brief.say_intent]
+    # 满足／收束：drive.hold 或 say_intent 收束子串，不继续加码追问
+    if (
+        (brief.drive is not None and brief.drive.direction == "hold")
+        or "够了或先收束" in brief.say_intent
+        or "不继续加码追" in brief.say_intent
+    ):
         return "好，那就先这样。你回头想接着再叫我就行。"
     # 空追该停
     if "先停硬追" in brief.say_intent:
