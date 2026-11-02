@@ -98,6 +98,8 @@ def turn(
         # 新好奇挂起替换旧悬问（可检验的「新话头」，避免只进不出堆黏）
         if _STORE.pending_questions():
             _STORE.clear_open_questions()
+        # 结构化标记：drive 主路径读该布尔；「待接的话头：」前缀仅作文案载体＋兜底
+        _STORE.set_curiosity_hang_pending(True)
         _STORE.append_open_question(f"待接的话头：{_clip(user_text)}")
     else:
         open_q = extract_open_question(utterance)

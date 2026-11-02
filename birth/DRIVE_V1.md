@@ -18,7 +18,7 @@
 4. **好奇问为什么** → pursue / high（现状）。
 5. **回指同场 facts** → pursue / mid（现状，体验通道刀）。**订正**：若同场仍有未兑现 `last_commitments`，且本轮是回指／改口否定类（复用 stance `_denies_commitment` 线索，宁缺勿扩词表）→ **guard** / mid；已有要护优先于普通回指追。无承诺时的纯回指仍 pursue。
 6. **同场有 last_commitments** → **guard** / mid（已有要护＝守；hold 留给满足收束／空追该停——规格官订正）。
-7. **同场悬问未决且本轮 filler** → 动力可 pursue/mid（现状）；仲裁仍负责短暂 meaning 捡一次。
+7. **同场悬问未决且本轮 filler** → 动力可 pursue/mid（现状）；仲裁仍负责短暂 meaning 捡一次。好奇挂起主路径读 ThinContext.`curiosity_hang_pending` 结构化布尔（pipeline 写 store flag，resolve／clear／new_session 清）；「待接的话头：」前缀仅在无 flag 时兜底（兼容旧快照），不是禁词闸门、不改台上话术。
 8. **空追钝化（薄）**：若最近 facts 里连续 ≥2 轮都是用户在追同一话头、且台上只在用无内容接话模板／用户表达失望（「你怎么老这样」「还是没回答」）→ `hold` / low 或 `guard` / mid；why=重复空追，想要还在但满足没到，先停硬追、改接住。**第一期用轻量线索，勿上强化学习。**
 9. **默认陈述** → direction=None / low（现状）；但若 facts 已有明确话题词且本轮是对该话题的延续（非回指套话、含话题词）→ `pursue` / low-mid；why=顺着本场已打开的想要继续，不装没话头。
 

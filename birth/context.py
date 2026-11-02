@@ -32,10 +32,11 @@ class ThinContextStore:
             open_questions=list(ctx.open_questions),
             last_commitments=list(ctx.last_commitments),
             facts_this_session=list(ctx.facts_this_session),
+            curiosity_hang_pending=ctx.curiosity_hang_pending,
         )
 
     def new_session(self) -> None:
-        """唯一的清空入口：只有显式 new_session 才会清掉同场积累。"""
+        """唯一的清空入口：只有显式 new_session 才会清掉同场积累（含好奇挂起 flag）。"""
         self._context = ThinContext()
 
     # -- 积累（只加不减，精确重复去重避免自我灌水） ----------------------
@@ -58,18 +59,29 @@ class ThinContextStore:
         """动力层留下的悬而未决，供后续轮次捡起。"""
         self._append_unique(self._context.open_questions, question)
 
+    def set_curiosity_hang_pending(self, pending: bool) -> None:
+        """pipeline 显式标记好奇挂起（读 Brief.openq_curiosity_hang）。
+
+        只在挂起时置 True；resolve/clear/new_session 均清回 False，
+        drive 主路径读该布尔，勿再靠「待接的话头：」前缀文本。
+        """
+        self._context.curiosity_hang_pending = pending
+
     def resolve_open_question(self) -> str | None:
         """接完第一条悬问：弹出并返回它；没有悬问时返回 None。
 
         用在「本轮因悬问说过话」之后——捡一次就该接完，不留着长期占领主导。
+        好奇挂起 flag 一并清 False（宁缺毋滥：resolve 即视为挂起已接）。
         """
         if self._context.open_questions:
+            self._context.curiosity_hang_pending = False
             return self._context.open_questions.pop(0)
         return None
 
     def clear_open_questions(self) -> None:
-        """放下同场所有悬问（用户换题、开了新话头时用）。"""
+        """放下同场所有悬问（用户换题、开了新话头时用）；好奇挂起 flag 一并清。"""
         self._context.open_questions.clear()
+        self._context.curiosity_hang_pending = False
 
     def resolve_commitment(self) -> str | None:
         """兑现／接完第一条承诺：弹出并返回它；没有则 None。

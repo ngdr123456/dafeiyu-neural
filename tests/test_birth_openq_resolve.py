@@ -132,7 +132,49 @@ def test_curiosity_hang_flag_writes_pending_topic():
     from birth.articulate import set_stub_mode
 
     set_stub_mode(True)
+    clear_llm_hook()
     r = turn("为什么会闪", new_session=True, stub=True)
     assert r.brief.openq_curiosity_hang is True
     assert any("待接的话头" in q and "为什么会闪" in q for q in active_store().pending_questions())
+
+
+def test_curiosity_hang_flag_true_on_context_after_hang():
+    """好奇挂起后 store／ThinContext 布尔 flag True（drive 主路径读它）。"""
+    from birth.articulate import set_stub_mode
+    from birth.pipeline import active_store, turn
+
+    set_stub_mode(True)
+    clear_llm_hook()
+    r = turn("为什么会闪", new_session=True, stub=True)
+    assert r.brief.openq_curiosity_hang is True
+    assert active_store().snapshot().curiosity_hang_pending is True
+
+
+def test_curiosity_hang_flag_false_after_resolve():
+    """filler 接住悬问 → resolve → 好奇挂起 flag 清 False。"""
+    from birth.articulate import set_stub_mode
+    from birth.pipeline import active_store, turn
+
+    set_stub_mode(True)
+    clear_llm_hook()
+    turn("为什么会闪", new_session=True, stub=True)
+    assert active_store().snapshot().curiosity_hang_pending is True
+    turn("嗯", stub=True)  # meaning 短暂捡一次 → openq_resolve
+    assert active_store().snapshot().curiosity_hang_pending is False
+
+
+def test_curiosity_hang_flag_false_after_clear_and_new_session():
+    """放下（openq_clear）→ clear 悬问＋flag 清 False；new_session 归零。"""
+    from birth.articulate import set_stub_mode
+    from birth.pipeline import active_store, turn
+
+    set_stub_mode(True)
+    clear_llm_hook()
+    turn("为什么会闪", new_session=True, stub=True)
+    assert active_store().snapshot().curiosity_hang_pending is True
+    r = turn("换个话题", stub=True)  # openq_clear 路径
+    assert r.brief.openq_clear is True
+    assert active_store().snapshot().curiosity_hang_pending is False
+    active_store().new_session()
+    assert active_store().snapshot().curiosity_hang_pending is False
 

@@ -54,19 +54,27 @@ class DriveCues:
 
     commitments_present: bool = False
     open_question_pending: bool = False
-    # 悬问里带「待接的话头：」前缀（pipeline 写入的好奇挂起）
+    # 同场好奇挂起仍 pending：主路径读 ThinContext.curiosity_hang_pending 结构化布尔
     curiosity_hang_pending: bool = False
     session_ok: bool = True
 
 
 def drive_cues_from_context(context: ThinContext) -> DriveCues:
-    """从 ThinContext 抽结构化线索（不扫用户输入侧词表）。"""
+    """从 ThinContext 抽结构化线索（不扫用户输入侧词表）。
+
+    好奇挂起主路径读 ThinContext.curiosity_hang_pending 布尔。
+    兜底范围：仅当结构化 flag 缺省/False 时，才扫 open_questions 是否以
+    「待接的话头：」开头（兼容旧快照／未写 flag 的路径）；
+    不是禁词闸门，不扩词表，不改台上话术。
+    """
+    flag = bool(getattr(context, "curiosity_hang_pending", False))
+    prefix_fallback = any(
+        q.startswith("待接的话头：") for q in (context.open_questions or [])
+    )
     return DriveCues(
         commitments_present=bool(context.last_commitments),
         open_question_pending=bool(context.open_questions),
-        curiosity_hang_pending=any(
-            q.startswith("待接的话头：") for q in (context.open_questions or [])
-        ),
+        curiosity_hang_pending=flag or prefix_fallback,
         session_ok=context.session_ok,
     )
 
@@ -148,7 +156,11 @@ def infer_drive(
     context: ThinContext,
     cues: DriveCues | None = None,
 ) -> DriveSignal:
-    """DRIVE_V1 优先级：结构化阶段先行；无结构信号时才走 MARKS 兜底。"""
+    """DRIVE_V1 优先级：结构化阶段先行；无结构信号时才走 MARKS 兜底。
+
+    S3 好奇挂起主路径读 ThinContext.curiosity_hang_pending 结构化布尔
+    （pipeline 写 store flag）；「待接的话头：」前缀仅兜底兼容旧快照。
+    """
     text = (user_text or "").strip()
     if cues is None:
         cues = drive_cues_from_context(context)
@@ -169,7 +181,7 @@ def infer_drive(
                 why=f"同场有没兑现的话（{first}），已有要护，这轮不能当没说过",
             )
 
-    # S3) 好奇挂起 + filler → 适时捡起悬问
+    # S3) 好奇挂起（读 ThinContext flag，「待接的话头：」前缀仅兜底）+ filler → 适时捡起悬问
     if cues.curiosity_hang_pending and context.open_questions:
         if is_neutral_filler(text):
             first = context.open_questions[0]

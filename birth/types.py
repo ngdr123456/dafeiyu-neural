@@ -57,6 +57,8 @@ class ThinContext:
     open_questions: List[str] = field(default_factory=list)
     last_commitments: List[str] = field(default_factory=list)
     facts_this_session: List[str] = field(default_factory=list)
+    # 结构化：同场好奇挂起仍 pending（pipeline 写；drive 主路径读；勿靠「待接的话头：」前缀）
+    curiosity_hang_pending: bool = False
 
 
 @dataclass
