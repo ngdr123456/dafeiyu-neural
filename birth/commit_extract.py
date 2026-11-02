@@ -7,6 +7,29 @@ import re
 # 与 ThoughtBrief.press_commit 同一语义：arbitrate 写、articulate 读
 PRESS_COMMIT_FLAG = True
 
+# 与 ThoughtBrief.commit_deny 同一语义：arbitrate 写、此处／pipeline 读
+COMMIT_DENY_FLAG = True
+
+
+def should_set_commitment_deny_pending(
+    *,
+    commit_deny: bool = False,
+    user_text: str = "",
+    has_pending: bool = False,
+) -> bool:
+    """主路径读结构化 commit_deny（Brief.commit_deny／上游同族标记）。
+
+    兜底范围：仅当无结构化 commit_deny（False）且 has_pending 时，
+    才扫既有 COMMIT_DENY_MARKS（via user_marks_commitment_deny）；
+    兼容未写 Brief 标记的 turn 初写入／旧路径。不是禁词闸门，不扩词表，
+    不改台上话术。
+    """
+    if bool(commit_deny) is COMMIT_DENY_FLAG:
+        return True
+    if not has_pending:
+        return False
+    return user_marks_commitment_deny(user_text)
+
 # 答应／约定形状（输入侧轻量线索）
 _COMMIT_SHAPES = (
     "我晚点",
@@ -113,7 +136,11 @@ def user_marks_commitment_done(user_text: str) -> bool:
 
 
 def user_marks_commitment_deny(user_text: str) -> bool:
-    """用户改口／否认同场承诺线索（宁缺既有 COMMIT_DENY_MARKS，勿扩；供 pipeline 置 commitment_deny_pending）。"""
+    """用户改口／否认同场承诺线索（宁缺既有 COMMIT_DENY_MARKS，勿扩）。
+
+    仅作 should_set_commitment_deny_pending 无结构化 commit_deny 时的兜底；
+    主路径勿直接靠本函数置 commitment_deny_pending。
+    """
     from .stance_org import _denies_commitment
     return _denies_commitment(user_text)
 

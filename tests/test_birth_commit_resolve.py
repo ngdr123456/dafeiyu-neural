@@ -81,11 +81,65 @@ def test_commitment_deny_flag_used_then_cleared_no_leak():
     store.append_commitment("同场里说好这轮先补月亮的事")
     r = turn("那刚才说的不算", stub=True)
     assert r.brief.drive is not None and r.brief.drive.direction == "guard"
+    assert r.brief.commit_deny is True  # arbitrate 从 stance 守诺结构置 Brief 标记
     assert store.context.commitment_deny_pending is False  # 回合末已清，不漏
     # 无 pending：即使命中改口词表也不置 flag
     store.new_session()
     turn("那刚才说的不算", stub=True)
     assert store.context.commitment_deny_pending is False
+
+
+def test_should_set_deny_structured_without_marks():
+    """主路径：结构化 commit_deny=True，文案无 COMMIT_DENY_MARKS → 仍应置位。"""
+    from birth.commit_extract import should_set_commitment_deny_pending
+
+    text = "够了先这样"  # SATISFIED 收束词；不含不算/忘掉/改口/收回/作废等
+    assert should_set_commitment_deny_pending(
+        commit_deny=True, user_text=text, has_pending=True
+    )
+    assert not should_set_commitment_deny_pending(
+        commit_deny=False, user_text=text, has_pending=True
+    )
+
+
+def test_should_set_deny_marks_fallback_without_structured():
+    """兜底：无结构化时 COMMIT_DENY_MARKS 仍探出；无 pending 即使有词也不置。"""
+    from birth.commit_extract import should_set_commitment_deny_pending
+
+    assert should_set_commitment_deny_pending(
+        commit_deny=False, user_text="那刚才说的不算", has_pending=True
+    )
+    assert not should_set_commitment_deny_pending(
+        commit_deny=False, user_text="那刚才说的不算", has_pending=False
+    )
+
+
+def test_structured_commit_deny_kwarg_sets_flag_drive_guards():
+    """turn(structured_commit_deny=True)＋无改口词表文案 → drive guard（S2 压过收束）。
+
+    stance 本刀未动：无词表时 Brief.commit_deny 可仍为 False；结构化写入只服务 store flag／drive。
+    """
+    set_stub_mode(True)
+    clear_llm_hook()
+    store = active_store()
+    store.new_session()
+    store.append_commitment("同场说好晚点再聊星空")
+    r = turn("够了先这样", stub=True, structured_commit_deny=True)
+    assert r.brief.drive is not None and r.brief.drive.direction == "guard"
+    assert "要护" in (r.brief.drive.why or "") or "没兑现" in (r.brief.drive.why or "")
+    assert store.context.commitment_deny_pending is False  # 回合末清
+    # 有词表的改口轮：Brief.commit_deny 由 arbitrate 从 stance 结构置 True
+    store.new_session()
+    store.append_commitment("同场说好晚点再聊星空")
+    r2 = turn("那刚才说的不算", stub=True)
+    assert r2.brief.commit_deny is True
+    assert r2.brief.drive is not None and r2.brief.drive.direction == "guard"
+
+
+def test_brief_commit_deny_defaults_false():
+    from birth.types import ThoughtBrief
+
+    assert ThoughtBrief(dominant="drive").commit_deny is False
 
 
 def test_resolve_uses_brief_flags_not_loose_marks():

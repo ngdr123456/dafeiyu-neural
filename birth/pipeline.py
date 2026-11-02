@@ -14,7 +14,7 @@ from .articulate import articulate, last_articulate_source
 from .commit_extract import (
     extract_commitment,
     should_resolve_commitment,
-    user_marks_commitment_deny,
+    should_set_commitment_deny_pending,
 )
 from .openq_extract import (
     extract_open_question,
@@ -52,18 +52,27 @@ def turn(
     new_session: bool = False,
     debug: bool = False,
     stub: bool | None = None,
+    structured_commit_deny: bool = False,
 ) -> TurnResult:
     """跑完一轮完整闭环。new_session=True 显式开新场（唯一清空入口）。
 
     debug 只是让工程师通道外显得更方便（CLI 用它打印 Brief）；管线行为不受影响。
     stub=True 强制模板开口；None 跟随 articulate 全局/环境（默认可走 LLM）。
+    structured_commit_deny: 上游结构化 deny Brief-family 标记（如 ThoughtBrief.commit_deny）；
+    为 True 时优先使用结构化信号；为 False（默认）时回退至现有
+    COMMIT_DENY_MARKS 词表兜底——兼容旧路径但不扩词表，不改台上话术。
     """
     if new_session:
         _STORE.new_session()
 
-    # 改口否定：上游结构化标记供 drive S2；词表仅在此写入侧复用既有线索，drive 主路径读 flag
+    # 改口否定写入：主路径读上游结构化 commit_deny（turn.structured_commit_deny／同族）；
+    # 仅无结构时才扫 COMMIT_DENY_MARKS 兜底（见 should_set_commitment_deny_pending）。
     _STORE.set_commitment_deny_pending(False)
-    if _STORE.pending_commitments() and user_marks_commitment_deny(user_text):
+    if should_set_commitment_deny_pending(
+        commit_deny=structured_commit_deny,
+        user_text=user_text,
+        has_pending=bool(_STORE.pending_commitments()),
+    ):
         _STORE.set_commitment_deny_pending(True)
 
     context = _STORE.snapshot()

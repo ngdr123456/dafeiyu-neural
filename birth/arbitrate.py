@@ -119,6 +119,7 @@ def arbitrate(
     commit_deliverable = False
     commit_deliver_intent = False
     commit_hold_with_drive = False
+    commit_deny = False
     if conflicts:
         dominant = "org"
         say_intent = _org_say_intent(conflicts)
@@ -130,6 +131,7 @@ def arbitrate(
         # 意义：守住自己出口的承诺（可与 commitment 分支合并）
         dominant = "meaning"
         say_intent = "先守住同场自己说过的话，不跟着改口否定；再接眼前这句"
+        commit_deny = True
     elif stance.posture == "needs_clarify":
         dominant = "meaning"
         say_intent = "不空壳升华：先澄清这一轮能讲清的直径，没有根据就不装人生答案"
@@ -207,5 +209,6 @@ def arbitrate(
         commit_deliverable=commit_deliverable,
         commit_deliver_intent=commit_deliver_intent,
         commit_hold_with_drive=commit_hold_with_drive,
+        commit_deny=commit_deny,
         org_conflicts=list(conflicts),
     )

@@ -87,6 +87,8 @@ class ThoughtBrief:
     press_commit: bool = False
     # 结构化：用户示意约定已兑现 → 开口后 resolve
     commit_resolve: bool = False
+    # 结构化：本轮用户改口／否认同场承诺（arbitrate 写；pipeline／commit_extract 读；勿主靠 COMMIT_DENY_MARKS）
+    commit_deny: bool = False
     # 结构化：本轮守着 pending 承诺，台上开口可交付主题则 resolve
     commit_deliverable: bool = False
     # 用户话已点到 pending 主题（可检验「接着交付」意图，非仅守诺）
