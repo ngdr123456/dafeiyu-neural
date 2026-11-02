@@ -69,6 +69,12 @@ class ThinContext:
     drive_curiosity_pending: bool = False
     # 结构化：本轮打开话题 pursue（pipeline／上游写；drive 非 S3 主路径读；勿主靠 OPEN_TOPIC_PREFIXES）
     drive_open_topic_pending: bool = False
+    # 结构化：本轮失望／空追 guard（pipeline／上游写；drive 非 S3 主路径读；勿主靠 DISAPPOINT_MARKS）
+    drive_disappoint_pending: bool = False
+    # 结构化：本轮空追钝化 hold（pipeline／上游写；drive 非 S3 主路径读；勿主靠 _EMPTY_STAGE_MARKS）
+    drive_empty_stage_pending: bool = False
+    # 结构化：本轮话题延续 pursue（pipeline／上游写；drive 非 S3 主路径读；勿主靠话题词扫 facts）
+    drive_topic_continue_pending: bool = False
 
 
 @dataclass

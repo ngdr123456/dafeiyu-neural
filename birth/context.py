@@ -38,6 +38,9 @@ class ThinContextStore:
             drive_hold_pending=ctx.drive_hold_pending,
             drive_curiosity_pending=ctx.drive_curiosity_pending,
             drive_open_topic_pending=ctx.drive_open_topic_pending,
+            drive_disappoint_pending=ctx.drive_disappoint_pending,
+            drive_empty_stage_pending=ctx.drive_empty_stage_pending,
+            drive_topic_continue_pending=ctx.drive_topic_continue_pending,
         )
 
     def new_session(self) -> None:
@@ -112,6 +115,30 @@ class ThinContextStore:
         new_session／回合末清 False，防漏到下一轮。
         """
         self._context.drive_open_topic_pending = pending
+
+    def set_drive_disappoint_pending(self, pending: bool) -> None:
+        """pipeline 显式标记本轮失望／空追 guard（上游结构化／写入侧）。
+
+        drive 非 S3 主路径读该布尔；DISAPPOINT_MARKS 仅无 flag 时兜底。
+        new_session／回合末清 False，防漏到下一轮。
+        """
+        self._context.drive_disappoint_pending = pending
+
+    def set_drive_empty_stage_pending(self, pending: bool) -> None:
+        """pipeline 显式标记本轮空追钝化 hold（上游结构化／写入侧）。
+
+        drive 非 S3 主路径读该布尔；_EMPTY_STAGE_MARKS／近两轮空台接话判定仅无 flag 时兜底。
+        new_session／回合末清 False，防漏到下一轮。
+        """
+        self._context.drive_empty_stage_pending = pending
+
+    def set_drive_topic_continue_pending(self, pending: bool) -> None:
+        """pipeline 显式标记本轮话题延续 pursue（上游结构化／写入侧）。
+
+        drive 非 S3 主路径读该布尔；话题词扫 facts 仅无 flag 时兜底。
+        new_session／回合末清 False，防漏到下一轮。
+        """
+        self._context.drive_topic_continue_pending = pending
 
     def resolve_open_question(self) -> str | None:
         """接完第一条悬问：弹出并返回它；没有悬问时返回 None。
