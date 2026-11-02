@@ -73,8 +73,10 @@ def test_open_topic_turn_writes_openq_clear_flag():
     _seed_openq()
     r = turn("我想聊月亮", stub=True)
     assert r.brief.openq_clear is True
-    # 开题后可能挂新台上问句；旧「待接的话头：…月亮…」应被 clear
+    # 开题后可能挂新台上问句；默认路径不再写「待接的话头：」，旧前缀亦不得残留
     assert not any("待接的话头" in q for q in active_store().pending_questions())
+    # 旧好奇挂起 clip（为什么月亮…）已 clear；新 stub 悬问可含「月亮」话题词
+    assert not any(q.startswith("为什么月亮") for q in active_store().pending_questions())
 
 
 def test_idle_deny_identity_do_not_set_openq_clear():
@@ -127,7 +129,7 @@ def test_resolve_uses_brief_flag_not_say_intent():
 
 
 def test_curiosity_hang_flag_writes_pending_topic():
-    """为什么会闪 → 标记 True＋待接的话头；不靠 pipeline 再扫词表。"""
+    """为什么会闪 → flag True＋挂 clip 文案；默认不写「待接的话头：」前缀。"""
     from birth.pipeline import active_store, turn
     from birth.articulate import set_stub_mode
 
@@ -135,7 +137,26 @@ def test_curiosity_hang_flag_writes_pending_topic():
     clear_llm_hook()
     r = turn("为什么会闪", new_session=True, stub=True)
     assert r.brief.openq_curiosity_hang is True
-    assert any("待接的话头" in q and "为什么会闪" in q for q in active_store().pending_questions())
+    pending = active_store().pending_questions()
+    assert any("为什么会闪" in q for q in pending)
+    assert not any("待接的话头" in q for q in pending)
+    assert active_store().snapshot().curiosity_hang_pending is True
+
+
+def test_curiosity_hang_flag_no_prefix_filler_still_resolves():
+    """有 flag 无前缀：filler 仍可捡起／resolve（不依赖「待接的话头：」文案载体）。"""
+    from birth.articulate import set_stub_mode
+    from birth.pipeline import active_store, turn
+
+    set_stub_mode(True)
+    clear_llm_hook()
+    turn("为什么会闪", new_session=True, stub=True)
+    assert active_store().snapshot().curiosity_hang_pending is True
+    assert not any("待接的话头" in q for q in active_store().pending_questions())
+    r = turn("嗯", stub=True)
+    assert r.brief.dominant == "meaning"
+    assert active_store().snapshot().curiosity_hang_pending is False
+    assert active_store().pending_questions() == []
 
 
 def test_curiosity_hang_flag_true_on_context_after_hang():

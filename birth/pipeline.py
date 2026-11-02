@@ -253,9 +253,11 @@ def turn(
         # 新好奇挂起替换旧悬问（可检验的「新话头」，避免只进不出堆黏）
         if _STORE.pending_questions():
             _STORE.clear_open_questions()
-        # 结构化标记：drive 主路径读该布尔；「待接的话头：」前缀仅作文案载体＋兜底
+        # 结构化标记：drive／stub 主路径读该布尔。默认只置 flag＋挂 clip 文案，
+        # 不强制写「待接的话头：」前缀（drive/stub 已读 flag）。前缀仅无 flag 时的
+        # 人类可读／旧快照兜底（drive_cues_from_context），本路径不写。
         _STORE.set_curiosity_hang_pending(True)
-        _STORE.append_open_question(f"待接的话头：{_clip(user_text)}")
+        _STORE.append_open_question(_clip(user_text))
     else:
         open_q = extract_open_question(utterance)
         if open_q:

@@ -78,9 +78,11 @@ def test_curiosity_is_legit_drive():
     assert result.brief.drive.direction == "pursue"
     assert "好奇" in result.brief.drive.why
     assert result.brief.openq_curiosity_hang is True
-    # 动力层的悬起回流薄情境
+    # 动力层的悬起回流薄情境：flag＋openq clip（默认无「待接的话头：」前缀）
     assert active_store().context.open_questions
-    assert any("待接的话头" in q for q in active_store().context.open_questions)
+    assert active_store().snapshot().curiosity_hang_pending is True
+    assert any("月亮" in q or "为什么" in q for q in active_store().context.open_questions)
+    assert not any("待接的话头" in q for q in active_store().context.open_questions)
 
 
 # -- 3. must_not_pretend 进 Brief；org 只收粒度，不否决动力 ----------------
@@ -227,10 +229,11 @@ def test_topic_switch_puts_down_open_questions():
 
 
 def test_open_topic_does_not_curiosity_hang():
-    """非好奇 pursue（开话题）→ openq_curiosity_hang False，不挂「待接的话头」。"""
+    """非好奇 pursue（开话题）→ openq_curiosity_hang False，不置好奇挂起 flag。"""
     r = turn("我想聊星空", new_session=True, stub=True)
     assert r.brief.drive.direction == "pursue"
     assert r.brief.openq_curiosity_hang is False
+    assert active_store().snapshot().curiosity_hang_pending is False
     assert not any("待接的话头" in q for q in active_store().pending_questions())
 
 

@@ -404,7 +404,7 @@ def infer_drive(
     S2 改口否定主路径读 ThinContext.commitment_deny_pending 结构化布尔
     （pipeline 经 store 在 turn 开头置位）；兜底范围见 S2 注释。
     S3 好奇挂起主路径读 ThinContext.curiosity_hang_pending 结构化布尔
-    （pipeline 写 store flag）；「待接的话头：」前缀仅兜底兼容旧快照。
+    （pipeline 写 store flag＋挂 openq clip，不强制前缀）；「待接的话头：」前缀仅兜底兼容旧快照。
     S4／S5 招呼／收束 hold 主路径读 drive_greet_pending／drive_hold_pending；
     GREETINGS／SATISFIED_MARKS 仅无结构时兜底（不扩词表）。
     S6／S7 打开话题／好奇 pursue 主路径读 drive_open_topic_pending／drive_curiosity_pending；

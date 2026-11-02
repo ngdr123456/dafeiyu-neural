@@ -97,7 +97,7 @@ class ThoughtBrief:
     org_conflicts: List[str] = field(default_factory=list)
     # 结构化：本轮因悬问说过话，开口后应 resolve（勿靠 say_intent 中文子串）
     openq_resolve: bool = False
-    # 结构化：本轮好奇挂起 → pipeline 写「待接的话头」（勿再扫 CURIOSITY_MARKS）
+    # 结构化：本轮好奇挂起 → pipeline 置 curiosity_hang_pending＋挂 openq（勿强制「待接的话头：」前缀；勿再扫 CURIOSITY_MARKS）
     openq_curiosity_hang: bool = False
     # 结构化：本轮用户明示放下／真开新话头 → 开口后 clear 悬问（pipeline 勿再扫放下词表）
     openq_clear: bool = False
