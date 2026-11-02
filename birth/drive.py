@@ -350,6 +350,7 @@ def infer_drive(
     GREETINGS／SATISFIED_MARKS 仅无结构时兜底（不扩词表）。
     S6／S7 打开话题／好奇 pursue 主路径读 drive_open_topic_pending／drive_curiosity_pending；
     OPEN_TOPIC_PREFIXES／CURIOSITY_MARKS 仅无结构时兜底（不扩词表）。
+    §6 同场承诺在场 → guard 须先于 S8／S9／S10（空追／话题延续不得压过已有要护）。
     S8／S9／S10 失望 guard／空台 hold／话题延续 pursue 主路径读
     drive_disappoint_pending／drive_empty_stage_pending／drive_topic_continue_pending；
     DISAPPOINT_MARKS／_EMPTY_STAGE_MARKS／话题词扫 facts 仅无结构时兜底（不扩词表）。
@@ -422,6 +423,16 @@ def infer_drive(
             direction="pursue",
             salience="high",
             why="用户问出了『为什么』类问题，好奇本身就是够格的推力，顺着看清楚",
+        )
+
+    # §6) 同场承诺在场 → guard（DRIVE_V1：须先于 §8 空追／§9 话题延续；
+    # S8–S10 不得压过已有要护。写入侧亦不应在有 last_commitments 时置空台／话题 flag。）
+    if cues.commitments_present and context.last_commitments:
+        first = context.last_commitments[0]
+        return DriveSignal(
+            direction="guard",
+            salience="mid",
+            why=f"同场有没兑现的话（{first}），已有要护，这轮不能当没说过",
         )
 
     # S8) 结构化失望／空追 → guard mid（主路径读 flag；DISAPPOINT_MARKS 仅无结构时兜底）

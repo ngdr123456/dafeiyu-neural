@@ -170,20 +170,23 @@ def turn(
         _STORE.set_drive_curiosity_pending(True)
     # empty_stage／topic_continue 兜底需同场 facts；先用当前 snapshot 作 context
     ctx_for_drive_write = _STORE.snapshot()
-    if should_set_drive_disappoint_pending(
+    # DRIVE_V1 §6：同场承诺在场时，写入侧不置 S8–S10 flag，避免压过 guard
+    # （drive 内亦有 §6 先于 S8–S10；此处双保险，使 turn 路径与直调 infer_drive 对齐）。
+    _commitments_block_s8_s10 = bool(ctx_for_drive_write.last_commitments)
+    if not _commitments_block_s8_s10 and should_set_drive_disappoint_pending(
         disappoint_cue=structured_drive_disappoint,
         user_text=user_text,
         marks_fallback=not bool(structured_drive_disappoint),
     ):
         _STORE.set_drive_disappoint_pending(True)
-    if should_set_drive_empty_stage_pending(
+    if not _commitments_block_s8_s10 and should_set_drive_empty_stage_pending(
         empty_stage_cue=structured_drive_empty_stage,
         user_text=user_text,
         context=ctx_for_drive_write,
         marks_fallback=not bool(structured_drive_empty_stage),
     ):
         _STORE.set_drive_empty_stage_pending(True)
-    if should_set_drive_topic_continue_pending(
+    if not _commitments_block_s8_s10 and should_set_drive_topic_continue_pending(
         topic_continue_cue=structured_drive_topic_continue,
         user_text=user_text,
         context=ctx_for_drive_write,

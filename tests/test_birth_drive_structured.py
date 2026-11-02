@@ -11,6 +11,8 @@
    drive_open_topic_pending／drive_curiosity_pending 有结构时 pursue，不依赖 OPEN_TOPIC_PREFIXES／CURIOSITY_MARKS；
    drive_disappoint_pending／drive_empty_stage_pending／drive_topic_continue_pending 有结构时
    分别 guard／hold／pursue，不依赖 DISAPPOINT_MARKS／_EMPTY_STAGE_MARKS／话题词扫 facts。
+6) DRIVE_V1 §6：同场 last_commitments 非空时，空台／话题延续（含 structured_* 与 pipeline 兜底写 flag）
+   不得压过 guard；turn 路径与直调 infer_drive 对齐。
 """
 
 from __future__ import annotations
@@ -482,3 +484,78 @@ def test_pipeline_structured_disappoint_empty_topic_without_marks():
     assert r3.brief.drive.salience == "mid"
     assert "顺着" in r3.brief.drive.why or "想要继续" in r3.brief.drive.why
 
+
+def test_turn_empty_stage_with_commitments_stays_guard():
+    """钉1：同场 last_commitments 非空 + 近两轮空台＋话题仍在；turn 无 structured_*
+    仍须 guard（不得因 pipeline 兜底写 drive_empty_stage_pending 后 S9 变 hold）。
+    直调 infer_drive 无 flag 时已是 guard——turn 路径对齐。
+    """
+    from birth.articulate import set_stub_mode, clear_llm_hook
+    from birth.pipeline import active_store, turn
+
+    set_stub_mode(True)
+    clear_llm_hook()
+    active_store().new_session()
+    store = active_store()
+    store.append_commitment("同场说好晚点再聊星空")
+    store.append_fact("用户说：我想聊星空")
+    store.append_fact("台上说：嗯，听着")
+    store.append_fact("台上说：听着呢")
+
+    ctx = store.snapshot()
+    assert ctx.last_commitments
+    direct = infer_drive("再说星空", ctx)
+    assert direct.direction == "guard", direct
+    assert "要护" in direct.why and "没兑现" in direct.why, direct.why
+
+    r = turn("再说星空", stub=True)
+    assert r.brief.drive.direction == "guard", (
+        f"want guard got {r.brief.drive.direction}: {r.brief.drive.why}"
+    )
+    assert r.brief.drive.salience == "mid"
+    assert "要护" in r.brief.drive.why and "没兑现" in r.brief.drive.why, r.brief.drive.why
+
+
+def test_structured_topic_continue_with_commitments_stays_guard():
+    """钉2：structured_drive_topic_continue=True＋承诺在场 → 不得 S10 pursue 压过 §6；须仍 guard。"""
+    from birth.articulate import set_stub_mode, clear_llm_hook
+    from birth.pipeline import active_store, turn
+
+    set_stub_mode(True)
+    clear_llm_hook()
+    active_store().new_session()
+    active_store().append_commitment("同场说好晚点再聊星空")
+
+    r = turn("星空那边怎样", stub=True, structured_drive_topic_continue=True)
+    assert r.brief.drive.direction == "guard", (
+        f"want guard got {r.brief.drive.direction}: {r.brief.drive.why}"
+    )
+    assert r.brief.drive.salience == "mid"
+    assert "要护" in r.brief.drive.why and "没兑现" in r.brief.drive.why, r.brief.drive.why
+
+
+def test_infer_drive_empty_or_topic_flag_with_commitments_guards():
+    """§6 先于 S9／S10：flag 已置＋承诺在场 → 直调 infer_drive 仍 guard（不 hold／pursue）。"""
+    ctx_empty = ThinContext(
+        session_ok=True,
+        last_commitments=["同场说好晚点再聊星空"],
+        drive_empty_stage_pending=True,
+        facts_this_session=[
+            "用户说：我想聊星空",
+            "台上说：嗯，听着",
+            "台上说：听着呢",
+        ],
+    )
+    sig_e = infer_drive("再说星空", ctx_empty)
+    assert sig_e.direction == "guard", sig_e
+    assert "要护" in sig_e.why, sig_e.why
+
+    ctx_topic = ThinContext(
+        session_ok=True,
+        last_commitments=["同场说好晚点再聊星空"],
+        drive_topic_continue_pending=True,
+        facts_this_session=["用户说：我想聊星空", "台上说：星空挺好看的"],
+    )
+    sig_t = infer_drive("星空那边怎样", ctx_topic)
+    assert sig_t.direction == "guard", sig_t
+    assert "要护" in sig_t.why, sig_t.why
