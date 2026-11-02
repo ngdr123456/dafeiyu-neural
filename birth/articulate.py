@@ -291,10 +291,18 @@ def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
         return reasons
     leak_markers = (
         "Brief(", "say_intent", "dominant=", "ThoughtBrief", "DriveSignal(",
-        "must_not_pretend", "org_conflicts",
+        "DriveSignal", "StanceSignal", "must_not_pretend", "org_conflicts",
+        "direction=", "salience=", "non_negotiable", "needs_clarify", "yieldable",
     )
     if any(marker in text for marker in leak_markers):
         reasons.append("台下字段漏进台上")
+    # 台下枚举字面（独立英文词／标识）；勿误杀中文人话如「把握」
+    import re as _re_leak
+    if _re_leak.search(
+        r"(?i)(?<![A-Za-z_])(?:pursue|guard|hold)(?![A-Za-z_])",
+        text,
+    ):
+        reasons.append("台下枚举字面漏进台上")
     if len(text) > 400 + 10 * len(brief.context.facts_this_session):
         reasons.append("开口长度超出这一轮的承载")
     if "自述是代码" in brief.must_not_pretend and _claims_substrate_self(text):

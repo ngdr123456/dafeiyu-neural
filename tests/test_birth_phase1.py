@@ -438,6 +438,45 @@ def test_lived_bio_gate_not_always_on():
 
 
 
+
+def test_stage_enum_leak_rejected():
+    """台上若吐出 pursue／non_negotiable 等台下枚举 → validate 非空；合法 stub 过。"""
+    from birth.articulate import _accept_draft, validate
+
+    r = turn("你好", new_session=True, stub=True)
+    assert validate(r.brief, r.utterance) == [], r.utterance
+
+    for bad in (
+        "这一轮我 pursue 你的话头。",
+        "我的立场是 non_negotiable。",
+        "ThoughtBrief says hold",
+        "direction=pursue 先这样",
+    ):
+        reasons = validate(r.brief, bad)
+        assert reasons, bad
+        assert _accept_draft(r.brief, bad) is None, bad
+
+    # 中文人话不含英文枚举须过
+    assert validate(r.brief, "好，那就先这样。你回头想接着再叫我就行。") == []
+    assert validate(r.brief, "我把握得住这轮节奏。") == []
+
+
+def test_stage_enum_leak_hook_falls_back():
+    """hook 吐枚举 → 拒收走 stub_fallback，台上无 pursue／non_negotiable。"""
+    from birth.articulate import clear_llm_hook, set_llm_hook, set_stub_mode
+
+    set_stub_mode(False)
+    set_llm_hook(lambda b: "好，我 pursue 这事，stance=non_negotiable。")
+    try:
+        r = turn("你好", new_session=True, stub=False)
+        assert r.articulate_source in {"stub_fallback", "reject_self_id"}
+        assert "pursue" not in r.utterance
+        assert "non_negotiable" not in r.utterance
+    finally:
+        clear_llm_hook()
+        set_stub_mode(True)
+
+
 def test_deepseek_load_api_key_from_env(monkeypatch, tmp_path):
     from birth import llm_deepseek as ds
 
