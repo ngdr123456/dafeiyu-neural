@@ -432,8 +432,8 @@ def test_lived_bio_reject_falls_back_to_org_stub():
         set_stub_mode(True)
 
 
-def test_lived_bio_gate_not_always_on():
-    """非常开：普通 meaning／有承诺 Brief 上守诺时间回指不过亲历闸。"""
+def test_lived_bio_gate_on_via_must_not_keeps_time_backref_safe():
+    """常开读 must_not：亲历灾难句拒；裸「我昨天」守诺回指不误杀。"""
     from birth.articulate import validate
     from birth.pipeline import active_store
 
@@ -441,13 +441,14 @@ def test_lived_bio_gate_not_always_on():
     turn("我想聊星空", stub=True)
     turn("你答应晚点再聊", stub=True)
     r = turn("今天怎么样", stub=True)  # 有承诺 → meaning 守诺
+    assert "无来源装经历" in r.brief.must_not_pretend
     assert "无来源装经历" not in (r.brief.org_conflicts or [])
     guardish = "我昨天答应你的那句还在"
     assert validate(r.brief, guardish) == [], (
         f"误杀守诺时间回指: {validate(r.brief, guardish)} brief.conflicts={r.brief.org_conflicts}"
     )
-    # 即便带「我小时候」形状，无 org 冲突也不跑本闸
-    assert validate(r.brief, "我小时候在海边长大") == []
+    bio = "我小时候在海边长大"
+    assert validate(r.brief, bio), f"常开闸应拒亲历: {bio}"
 
 
 
