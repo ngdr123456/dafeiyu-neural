@@ -18,7 +18,7 @@ from .openq_extract import (
     should_resolve_open_question,
 )
 from .context import ThinContextStore
-from .drive import CURIOSITY_MARKS, infer_drive
+from .drive import infer_drive
 from .stance_org import default_org, default_stance
 from .types import ThoughtBrief
 
@@ -68,7 +68,7 @@ def turn(
     utterance = articulate(brief, stub=stub)
 
     # 悬问收放（可检验；对齐承诺宁缺——拿不准不清）：
-    # - resolve：仅本轮确因悬问说过话（say_intent 含悬着接完）；
+    # - resolve：读 Brief.openq_resolve（禁止 say_intent 中文子串）；
     # - clear：真开新话头／用户明示放下；闲聊／改口否定／身份问勿误清。
     if should_resolve_open_question(
         brief=brief, user_text=user_text, has_open=bool(context.open_questions)
@@ -93,12 +93,8 @@ def turn(
     commitment = extract_commitment(utterance)
     if commitment:
         _STORE.append_commitment(commitment)
-    # 好奇挂起优先记用户话头；否则才薄提取台上问句（避免同轮叠两条）
-    curiosity_hang = (
-        drive.direction == "pursue"
-        and any(mark in user_text for mark in CURIOSITY_MARKS)
-    )
-    if curiosity_hang:
+    # 好奇挂起：读 Brief.openq_curiosity_hang（禁止 pipeline 再扫 CURIOSITY_MARKS）
+    if getattr(brief, "openq_curiosity_hang", False):
         # 新好奇挂起替换旧悬问（可检验的「新话头」，避免只进不出堆黏）
         if _STORE.pending_questions():
             _STORE.clear_open_questions()

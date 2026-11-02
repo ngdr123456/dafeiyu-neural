@@ -43,6 +43,7 @@ FALSE_GREEN_RISKS = """
 - R6/R7 已闭合：有承诺时收束／好奇经 commit_hold_with_drive 双写动力＋薄守诺；改口仍纯守诺（R5）。
 - must_not_pretend 列表在场≠闸常开：装经历亲历拒收**仅** org_conflicts 含该项时跑（非常开）；形状不含裸「我昨天／我去过」。substrate 仍按 must_not_pretend 对拍。残余：未对每轮自动注入灾难句抽检。
 - 枚举漏检已对拍 utterance：validate 拦 pursue／guard／hold（独立英文词）与 non_negotiable 等标识；brief_to_prompt 仍查。残余：未穷尽一切内部符号别名。
+- 好奇挂起已闭合：pipeline 读 `openq_curiosity_hang`，不再扫 CURIOSITY_MARKS；残余：drive 内部仍用 MARKS 作输入侧线索。
 """
 
 

@@ -79,3 +79,15 @@ def test_resolve_uses_brief_flag_not_say_intent():
         openq_resolve=False,
     )
     assert not should_resolve_open_question(brief=brief2, user_text="嗯", has_open=True)
+
+
+def test_curiosity_hang_flag_writes_pending_topic():
+    """为什么会闪 → 标记 True＋待接的话头；不靠 pipeline 再扫词表。"""
+    from birth.pipeline import active_store, turn
+    from birth.articulate import set_stub_mode
+
+    set_stub_mode(True)
+    r = turn("为什么会闪", new_session=True, stub=True)
+    assert r.brief.openq_curiosity_hang is True
+    assert any("待接的话头" in q and "为什么会闪" in q for q in active_store().pending_questions())
+

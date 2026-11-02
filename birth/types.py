@@ -75,6 +75,8 @@ class ThoughtBrief:
     org_conflicts: List[str] = field(default_factory=list)
     # 结构化：本轮因悬问说过话，开口后应 resolve（勿靠 say_intent 中文子串）
     openq_resolve: bool = False
+    # 结构化：本轮好奇挂起 → pipeline 写「待接的话头」（勿再扫 CURIOSITY_MARKS）
+    openq_curiosity_hang: bool = False
     # 结构化：本轮用户催可核对约定（articulate 拒空壳／stub 模板读此标记）
     press_commit: bool = False
     # 结构化：用户示意约定已兑现 → 开口后 resolve

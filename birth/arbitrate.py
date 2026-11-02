@@ -99,6 +99,12 @@ def arbitrate(
             must_not_pretend.append(item)
 
     openq_resolve = False
+    # 对齐 drive 已判定的好奇 pursue/high；写标记供 pipeline，不在此再扫词表
+    openq_curiosity_hang = (
+        drive.direction == "pursue"
+        and drive.salience == "high"
+        and "好奇" in (drive.why or "")
+    )
     press_commit = False
     commit_resolve = False
     commit_deliverable = False
@@ -185,6 +191,7 @@ def arbitrate(
         say_intent=say_intent,
         must_not_pretend=must_not_pretend,
         openq_resolve=openq_resolve,
+        openq_curiosity_hang=openq_curiosity_hang,
         press_commit=press_commit,
         commit_resolve=commit_resolve,
         commit_deliverable=commit_deliverable,

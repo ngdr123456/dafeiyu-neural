@@ -21,4 +21,4 @@
 
 - **resolve**：读 Brief 结构化字段 `openq_resolve`（arbitrate 在 filler+悬问 路径置 True；与 `OPENQ_RESOLVE_FLAG` 同义）。**禁止**只靠 say_intent 中文子串；改口文案不静默失效
 - **clear**：仅可检验的换题——真开新话头（`我想聊…` 等）或用户明示放下（`先搁下／换个话题…`）；**闲聊／改口否定／身份问勿误清**
-- **好奇新挂起**：新「待接的话头」写入前 `clear` 旧悬问（替换，防堆黏）
+- **好奇新挂起**：读 Brief.`openq_curiosity_hang`（arbitrate 对齐 drive 好奇 pursue/high 置位）；新「待接的话头」写入前 `clear` 旧悬问（替换，防堆黏）。**禁止** pipeline 再扫 `CURIOSITY_MARKS` 中文词表

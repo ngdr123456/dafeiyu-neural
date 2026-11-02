@@ -77,8 +77,10 @@ def test_curiosity_is_legit_drive():
     result = turn("为什么月亮老跟着人走？", new_session=True)
     assert result.brief.drive.direction == "pursue"
     assert "好奇" in result.brief.drive.why
+    assert result.brief.openq_curiosity_hang is True
     # 动力层的悬起回流薄情境
     assert active_store().context.open_questions
+    assert any("待接的话头" in q for q in active_store().context.open_questions)
 
 
 # -- 3. must_not_pretend 进 Brief；org 只收粒度，不否决动力 ----------------
@@ -222,6 +224,14 @@ def test_topic_switch_puts_down_open_questions():
     # 开题 stub 可能写入新「哪头」悬问；旧月亮好奇不得残留
     assert not any("月亮" in q or "为什么" in q for q in active_store().pending_questions())
     assert "先把" not in r.brief.say_intent
+
+
+def test_open_topic_does_not_curiosity_hang():
+    """非好奇 pursue（开话题）→ openq_curiosity_hang False，不挂「待接的话头」。"""
+    r = turn("我想聊星空", new_session=True, stub=True)
+    assert r.brief.drive.direction == "pursue"
+    assert r.brief.openq_curiosity_hang is False
+    assert not any("待接的话头" in q for q in active_store().pending_questions())
 
 
 def test_curiosity_does_not_pile_up_open_questions():
