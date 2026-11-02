@@ -137,8 +137,18 @@ def _pending_topic_tokens(commitment: str) -> list[str]:
     return [t for t in tokens if len(t) >= 2]
 
 
+# 守诺口径指纹（stub／守着未接上）；用于排除「只提主题未交付」，不是禁词堵嘴
+_GUARD_COMMIT_UTTER = (
+    "先守着那句",
+    "不当没说过",
+    "同场里说过的还在",
+    "不跟着改口否定",
+    "把住的判断不顺势放下",
+)
+
+
 def utterance_covers_pending_commitment(utterance: str, commitment: str) -> bool:
-    """台上开口是否命中 pending 主题（结构化主题重叠；不靠交付中文词表）。"""
+    """台上开口是否命中 pending 主题（主题重叠；尚不足以单独 resolve）。"""
     utt = (utterance or "").strip()
     if not utt:
         return False
@@ -148,24 +158,35 @@ def utterance_covers_pending_commitment(utterance: str, commitment: str) -> bool
     return any(tok in utt for tok in tokens)
 
 
+def utterance_is_commit_delivery(*, brief, utterance: str, commitment: str) -> bool:
+    """可检验接上：主题重叠 + deliver 意图 + 非守诺口径。"""
+    utt = (utterance or "").strip()
+    if not utt or not utterance_covers_pending_commitment(utt, commitment):
+        return False
+    if any(m in utt for m in _GUARD_COMMIT_UTTER):
+        return False  # 守诺只提主题／守着 → 承诺仍在
+    if not getattr(brief, "commit_deliver_intent", False):
+        return False
+    return True
+
+
 def should_resolve_commitment(
     *,
     brief,
     utterance: str,
     pending_first: str | None,
 ) -> bool:
-    """只读 Brief 结构化标记 + 可检验主题交付；拿不准不清。
+    """结构化才 resolve；勿「凡 pending＋主题 bigram 就清」。
 
-    - commit_resolve：用户侧线索已由 arbitrate 置位（宁缺既有词，勿扩、勿进 validate）
-    - commit_deliverable + 开口命中 pending 主题 → resolve
-    禁止只靠散落中文兑现词表在 pipeline 里判。
+    - commit_resolve：用户兑现线索（arbitrate 置位）
+    - commit_deliverable + commit_deliver_intent + 开口可检验接上（非守诺）
     """
     if not pending_first:
         return False
     if bool(getattr(brief, "commit_resolve", False)) is COMMIT_RESOLVE_FLAG:
         return True
-    if getattr(brief, "commit_deliverable", False) and utterance_covers_pending_commitment(
-        utterance, pending_first
+    if getattr(brief, "commit_deliverable", False) and utterance_is_commit_delivery(
+        brief=brief, utterance=utterance, commitment=pending_first
     ):
         return True
     return False

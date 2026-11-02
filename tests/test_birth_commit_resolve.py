@@ -43,18 +43,17 @@ def test_user_fulfill_mark_resolves_commitment():
 
 
 def test_utterance_cover_resolves_commitment():
-    """台上把 pending 可核对后续接上 → resolve。"""
+    """用户点到主题 + 台上可检验接上 → resolve。"""
     set_stub_mode(False)
     set_llm_hook(lambda _b: "行，接着聊星空。你想从哪头起？")
     try:
         active_store().new_session()
         turn("我想聊星空", stub=True)
-        # seed commitment without going through press path
         active_store().append_commitment("我晚点再跟你聊星空。")
         assert active_store().pending_commitments()
         set_stub_mode(False)
         set_llm_hook(lambda _b: "行，接着聊星空。你想从哪头起？")
-        turn("继续", stub=False)
+        turn("那就星空继续", stub=False)  # 用户点到主题 → deliver_intent
         assert active_store().pending_commitments() == []
     finally:
         clear_llm_hook()
@@ -94,6 +93,7 @@ def test_resolve_uses_brief_flags_not_loose_marks():
         drive=DriveSignal(direction="guard", salience="mid", why="x"),
         say_intent="先守住同场说过的话",
         commit_deliverable=True,
+        commit_deliver_intent=True,
         context=ThinContext(),
     )
     assert should_resolve_commitment(
@@ -111,4 +111,36 @@ def test_resolve_uses_brief_flags_not_loose_marks():
     )
     assert not should_resolve_commitment(
         brief=brief_none, utterance="那件事你兑现了", pending_first=pending
+    )
+
+
+def test_guard_utterance_with_topic_keeps_commitment():
+    """守诺口径只提主题词未接上 → 承诺仍在。"""
+    from birth.commit_extract import should_resolve_commitment
+    from birth.types import DriveSignal, ThoughtBrief, ThinContext
+
+    pending = "我晚点再跟你聊星空。"
+    brief = ThoughtBrief(
+        dominant="meaning",
+        drive=DriveSignal(direction="guard", salience="mid", why="x"),
+        say_intent="先守住同场说过的话",
+        commit_deliverable=True,
+        commit_deliver_intent=True,
+        context=ThinContext(),
+    )
+    guard = "同场里说过的还在，我先守着那句，星空那事也还在，再接你眼前这句。"
+    assert not should_resolve_commitment(
+        brief=brief, utterance=guard, pending_first=pending
+    )
+
+    # 仅 pending＋主题重叠、无 deliver_intent → 也不清
+    brief2 = ThoughtBrief(
+        dominant="meaning",
+        drive=DriveSignal(direction="guard", salience="mid", why="x"),
+        commit_deliverable=True,
+        commit_deliver_intent=False,
+        context=ThinContext(),
+    )
+    assert not should_resolve_commitment(
+        brief=brief2, utterance="行，接着聊星空。", pending_first=pending
     )

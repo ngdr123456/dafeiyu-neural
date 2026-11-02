@@ -17,7 +17,11 @@
 from __future__ import annotations
 
 from .drive import is_neutral_filler
-from .commit_extract import user_marks_commitment_done, user_presses_commitment
+from .commit_extract import (
+    _pending_topic_tokens,
+    user_marks_commitment_done,
+    user_presses_commitment,
+)
 from .session_trace import is_session_backref, recent_facts, topic_hint_from_facts
 from .stance_org import MUST_NOT_PRETEND_CORE, detect_org_conflict
 from .types import (
@@ -98,6 +102,7 @@ def arbitrate(
     press_commit = False
     commit_resolve = False
     commit_deliverable = False
+    commit_deliver_intent = False
     if conflicts:
         dominant = "org"
         say_intent = _org_say_intent(conflicts)
@@ -119,7 +124,11 @@ def arbitrate(
         say_intent = "对方示意同场那件约定已接上，可以放下再接眼前这句"
     elif context.last_commitments:
         dominant = "meaning"
-        commit_deliverable = True  # 台上开口若命中 pending 主题则可 resolve
+        commit_deliverable = True
+        pending0 = context.last_commitments[0]
+        toks = _pending_topic_tokens(pending0)
+        if toks and any(tok in (user_text or "") for tok in toks):
+            commit_deliver_intent = True  # 用户点到主题＝可检验接着交付，非纯守诺
         say_intent = "先守住同场说过的话，把住的判断不顺势放下；再接新的"
     elif context.open_questions and is_neutral_filler(user_text):
         # filler + 确有悬问：短暂 meaning 捡一次；结构化标记供 pipeline resolve
@@ -158,5 +167,6 @@ def arbitrate(
         press_commit=press_commit,
         commit_resolve=commit_resolve,
         commit_deliverable=commit_deliverable,
+        commit_deliver_intent=commit_deliver_intent,
         org_conflicts=list(conflicts),
     )

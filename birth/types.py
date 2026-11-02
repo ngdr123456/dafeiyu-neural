@@ -81,3 +81,5 @@ class ThoughtBrief:
     commit_resolve: bool = False
     # 结构化：本轮守着 pending 承诺，台上开口可交付主题则 resolve
     commit_deliverable: bool = False
+    # 用户话已点到 pending 主题（可检验「接着交付」意图，非仅守诺）
+    commit_deliver_intent: bool = False

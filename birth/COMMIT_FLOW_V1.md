@@ -29,5 +29,5 @@ API（对齐悬问）：
 
 pipeline 接线（结构化；宁缺毋滥）：
 - `Brief.commit_resolve`：arbitrate 在用户兑现线索路径置 True → resolve（线索宁缺勿扩、**勿进 validate**）
-- `Brief.commit_deliverable`：守着 pending 时置 True；台上开口**命中 pending 主题** → resolve（不靠交付中文词表）
+- `Brief.commit_deliverable`：守着 pending 时置 True；另需 `commit_deliver_intent`（用户话点到主题）且开口可检验接上（主题重叠且非守诺口径）→ resolve；**勿**仅 bigram 重叠就清
 - 拿不准 → **不清**；不扩 `extract_commitment` 写入词表
