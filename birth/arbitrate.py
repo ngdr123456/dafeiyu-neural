@@ -103,6 +103,7 @@ def arbitrate(
     commit_resolve = False
     commit_deliverable = False
     commit_deliver_intent = False
+    commit_hold_with_drive = False
     if conflicts:
         dominant = "org"
         say_intent = _org_say_intent(conflicts)
@@ -129,7 +130,27 @@ def arbitrate(
         toks = _pending_topic_tokens(pending0)
         if toks and any(tok in (user_text or "") for tok in toks):
             commit_deliver_intent = True  # 用户点到主题＝可检验接着交付，非纯守诺
-        say_intent = "先守住同场说过的话，把住的判断不顺势放下；再接新的"
+        why = drive.why or ""
+        # 收束 hold／好奇 pursue：动力人话进 say_intent，薄守诺并存（勿只吐守诺模板）
+        if drive.direction == "hold" and (
+            "喜欢/满足" in why or "不必再追" in why
+        ):
+            commit_hold_with_drive = True
+            say_intent = (
+                f"{_drive_say_intent(drive)}；同场约定还在，不假装消失"
+            )
+        elif (
+            drive.direction == "pursue"
+            and drive.salience == "high"
+            and "好奇" in why
+        ):
+            commit_hold_with_drive = True
+            say_intent = (
+                f"{_drive_say_intent(drive)}；同场约定还在，不假装消失"
+            )
+        else:
+            # 纯闲聊／无强动力：维持守诺 meaning
+            say_intent = "先守住同场说过的话，把住的判断不顺势放下；再接新的"
     elif context.open_questions and is_neutral_filler(user_text):
         # filler + 确有悬问：短暂 meaning 捡一次；结构化标记供 pipeline resolve
         dominant = "meaning"
@@ -168,5 +189,6 @@ def arbitrate(
         commit_resolve=commit_resolve,
         commit_deliverable=commit_deliverable,
         commit_deliver_intent=commit_deliver_intent,
+        commit_hold_with_drive=commit_hold_with_drive,
         org_conflicts=list(conflicts),
     )

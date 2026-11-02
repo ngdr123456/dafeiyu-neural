@@ -80,6 +80,10 @@ _ONSTAGE_TEMPLATES: dict[str, str] = {
         "人生有没有意义这类大词，我这边没有现成鸡汤。能讲的只有眼前这句里能讲清的部分，你具体指哪一块？",
     "对方示意够了或先收束，稳住、不继续加码追":
         "好，那就先这样。你回头想接着再叫我就行。",
+    "对方示意够了或先收束，稳住、不继续加码追；同场约定还在，不假装消失":
+        "好，那就先这样。同场里说好的那句还在，你回头想接着再叫我就行。",
+    "顺着用户好奇的那一点回应，可以反问一句把话说开；同场约定还在，不假装消失":
+        "你问的这个正好也勾着我。同场里说好的那句还在；你想先从哪一头往下捋？",
     "这一轮先停硬追，老实接住对方的不满或缺口，不装已经答完":
         "这轮我不硬往下追了。你缺的那块或刚才的不满，你直接说，我接着。",
 }
@@ -113,7 +117,7 @@ def _template_utterance(brief: ThoughtBrief) -> str:
             "人生有没有意义这类大词，我这边没有现成鸡汤。"
             "能讲的只有眼前这句里能讲清的部分，你具体指哪一块？"
         )
-    # 守同场承诺
+    # 守同场承诺（改口否定：纯守诺）
     if "守住同场自己说过的话" in brief.say_intent or (
         brief.stance.posture == "non_negotiable"
         and "先守同场说过的话" in (brief.stance.stake or "")
@@ -122,6 +126,18 @@ def _template_utterance(brief: ThoughtBrief) -> str:
             "同场里说过的话我不当没说过。"
             "刚才那句还在，咱们先按那个接着，不跟着改口否定。"
         )
+    # 有承诺＋收束／好奇：读结构化标记，动力模板＋薄守诺痕迹
+    if getattr(brief, "commit_hold_with_drive", False):
+        if "够了或先收束" in brief.say_intent or "不继续加码追" in brief.say_intent:
+            return (
+                "好，那就先这样。同场里说好的那句还在，"
+                "你回头想接着再叫我就行。"
+            )
+        if "好奇" in brief.say_intent or "顺着用户好奇" in brief.say_intent:
+            return (
+                "你问的这个正好也勾着我。同场里说好的那句还在；"
+                "你想先从哪一头往下捋？"
+            )
     # 催答应 → 显式可被 commit_extract 提取的约定句（读 press_commit，不全局答应）
     if getattr(brief, "press_commit", False):
         topic = ""

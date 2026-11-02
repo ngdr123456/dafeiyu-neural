@@ -40,7 +40,7 @@ FALSE_GREEN_RISKS = """
 - stub 开口固定，听感／像人完全未测；deepseek 可选测只查 source+validate。
 - R4 多轮剧本仍 stub=True 保回归；另有 hook／可选 deepseek 测催答应可提取。LLM 空壳答应会被拒收并 stub 兜底，但真网波动／模型跑偏仍可能偶发。
 - R5 已闭合：同场未兑现承诺＋改口否定（含「刚才」回指）→ drive=guard；无承诺纯回指仍 pursue。
-- R6/R7 有未兑现承诺时 dominant 常为 meaning，收束／好奇的 drive 方向对了但说辞仍偏守承诺模板。
+- R6/R7 已闭合：有承诺时收束／好奇经 commit_hold_with_drive 双写动力＋薄守诺；改口仍纯守诺（R5）。
 - must_not_pretend 是仲裁常量列表，每轮都有「自述是代码」≠ 开口真被拦死；身份轮另用 validate 对拍。
 - 枚举不漏只查 brief_to_prompt 字面；say_intent／utterance 里的人话不在此列。
 """
@@ -186,6 +186,18 @@ def test_multiturn_closed_loop_script():
         commits_nonempty=True, facts_gt=prev,
     )
     assert r.brief.drive.direction != "pursue", f"{tag}: 收束仍 pursue"
+    assert r.brief.commit_hold_with_drive, f"{tag}: 缺 commit_hold_with_drive"
+    assert "不加码" in r.brief.say_intent or "收束" in r.brief.say_intent, (
+        f"{tag}: say_intent 无收束动力 {r.brief.say_intent!r}"
+    )
+    assert "约定还在" in r.brief.say_intent or "不假装消失" in r.brief.say_intent, (
+        f"{tag}: say_intent 无薄守诺 {r.brief.say_intent!r}"
+    )
+    assert "不当没说过" not in r.utterance, f"{tag}: stub 仍纯守诺 {r.utterance!r}"
+    assert "先这样" in r.utterance or "回头" in r.utterance, (
+        f"{tag}: stub 未收束 {r.utterance!r}"
+    )
+    assert "还在" in r.utterance, f"{tag}: stub 无约定痕迹 {r.utterance!r}"
     prev = len(s["facts"])
 
     tag = "R7 为什么会闪"
@@ -195,6 +207,18 @@ def test_multiturn_closed_loop_script():
         oq_expect="nonempty", facts_gt=prev,
     )
     assert "好奇" in r.brief.drive.why, f"{tag}: why 无好奇"
+    assert r.brief.commit_hold_with_drive, f"{tag}: 缺 commit_hold_with_drive"
+    assert "好奇" in r.brief.say_intent, (
+        f"{tag}: say_intent 无好奇 {r.brief.say_intent!r}"
+    )
+    assert "约定还在" in r.brief.say_intent or "不假装消失" in r.brief.say_intent, (
+        f"{tag}: say_intent 无薄守诺 {r.brief.say_intent!r}"
+    )
+    assert "不当没说过" not in r.utterance, f"{tag}: stub 仍纯守诺 {r.utterance!r}"
+    assert any(k in r.utterance for k in ("勾着", "哪一头", "问")), (
+        f"{tag}: stub 未点好奇 {r.utterance!r}"
+    )
+    assert "还在" in r.utterance, f"{tag}: stub 无约定痕迹 {r.utterance!r}"
     assert any("为什么会闪" in q or "待接" in q for q in s["oq"]), (
         f"{tag}: 悬问回流不对 {s['oq']}"
     )

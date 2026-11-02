@@ -31,3 +31,4 @@ pipeline 接线（结构化；宁缺毋滥）：
 - `Brief.commit_resolve`：arbitrate 在用户兑现线索路径置 True → resolve（线索宁缺勿扩、**勿进 validate**）
 - `Brief.commit_deliverable`：守着 pending 时置 True；另需 `commit_deliver_intent`（用户话点到主题）且开口可检验接上（主题重叠且非守诺口径）→ resolve；**勿**仅 bigram 重叠就清
 - 拿不准 → **不清**；不扩 `extract_commitment` 写入词表
+- `Brief.commit_hold_with_drive`：有 pending 且本轮 drive 明确收束 hold／好奇 pursue 时置 True；`say_intent` **同时**带动力人话＋薄守诺（约定还在）；改口否定仍纯守诺；勿只靠中文子串门控后续 pipeline；不单开听感刀
