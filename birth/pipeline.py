@@ -15,6 +15,7 @@ from .commit_extract import (
     extract_commitment,
     should_resolve_commitment,
     should_set_commitment_deny_pending,
+    structured_deny_from_stance,
 )
 from .openq_extract import (
     extract_open_question,
@@ -59,25 +60,58 @@ def turn(
     debug 只是让工程师通道外显得更方便（CLI 用它打印 Brief）；管线行为不受影响。
     stub=True 强制模板开口；None 跟随 articulate 全局/环境（默认可走 LLM）。
     structured_commit_deny: 上游结构化 deny Brief-family 标记（如 ThoughtBrief.commit_deny）；
-    为 True 时优先使用结构化信号；为 False（默认）时回退至现有
-    COMMIT_DENY_MARKS 词表兜底——兼容旧路径但不扩词表，不改台上话术。
+    为 True 时优先使用结构化信号。live 本轮无 kwarg 时，写入前先跑 early stance，
+    从其守诺结构（与 Brief.commit_deny 同条件）前移置 flag；COMMIT_DENY_MARKS
+    仅真无结构时兜底——兼容旧路径但不扩词表，不改台上话术；勿误伤
+    PRESS_COMMIT／交付／放下。
     """
     if new_session:
         _STORE.new_session()
 
-    # 改口否定写入：主路径读上游结构化 commit_deny（turn.structured_commit_deny／同族）；
-    # 仅无结构时才扫 COMMIT_DENY_MARKS 兜底（见 should_set_commitment_deny_pending）。
+    # 改口否定写入（前移结构化检测；有结构时本轮不必再扫 COMMIT_DENY_MARKS）：
+    # 1) 上游 kwarg／同族结构化；2) early stance 守诺结构（与 arbitrate 置
+    #    Brief.commit_deny 同条件）同轮回灌；3) 仅真无结构时词表兜底。
+    has_pending = bool(_STORE.pending_commitments())
     _STORE.set_commitment_deny_pending(False)
     if should_set_commitment_deny_pending(
         commit_deny=structured_commit_deny,
         user_text=user_text,
-        has_pending=bool(_STORE.pending_commitments()),
+        has_pending=has_pending,
+        marks_fallback=False,
     ):
         _STORE.set_commitment_deny_pending(True)
 
     context = _STORE.snapshot()
+    # 前移：先跑 stance，从守诺结构得到本轮结构化 deny（不经写入侧词表）
+    early_stance = default_stance(user_text, context)
+    if (
+        not _STORE.context.commitment_deny_pending
+        and structured_deny_from_stance(
+            early_stance, has_commitments=bool(context.last_commitments)
+        )
+    ):
+        # 同轮结构化：early 守诺 → commit_deny=True，写入不扫词表
+        if should_set_commitment_deny_pending(
+            commit_deny=True,
+            user_text=user_text,
+            has_pending=has_pending,
+            marks_fallback=False,
+        ):
+            _STORE.set_commitment_deny_pending(True)
+            context = _STORE.snapshot()
+    elif not _STORE.context.commitment_deny_pending:
+        # 真无结构：COMMIT_DENY_MARKS 词表兜底（见 should_set_commitment_deny_pending）
+        if should_set_commitment_deny_pending(
+            commit_deny=False,
+            user_text=user_text,
+            has_pending=has_pending,
+            marks_fallback=True,
+        ):
+            _STORE.set_commitment_deny_pending(True)
+            context = _STORE.snapshot()
 
     drive = infer_drive(user_text, context)
+    # 旗标可能刚被 early 守诺结构置位：重算 stance，使主路径读 flag（结构路径）
     stance = default_stance(user_text, context)
     org = default_org(context, drive=drive, stance=stance, user_text=user_text)
     brief = arbitrate(drive=drive, stance=stance, org=org, context=context,

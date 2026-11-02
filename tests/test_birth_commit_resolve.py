@@ -270,3 +270,93 @@ def test_stance_deny_words_without_commitments_not_hold():
     st = default_stance("那刚才说的不算", ThinContext(commitment_deny_pending=False))
     assert STAKE_HOLD_SAME_FIELD not in (st.stake or "")
 
+def test_structured_deny_from_stance_unit():
+    """structured_deny_from_stance 与 Brief.commit_deny 同条件；不扫词表。"""
+    from birth.commit_extract import structured_deny_from_stance
+    from birth.stance_org import STAKE_HOLD_SAME_FIELD
+    from birth.types import StanceSignal
+
+    hold = StanceSignal(
+        posture="non_negotiable",
+        stake=STAKE_HOLD_SAME_FIELD,
+        why="x",
+    )
+    assert structured_deny_from_stance(hold, has_commitments=True)
+    assert not structured_deny_from_stance(hold, has_commitments=False)
+    assert not structured_deny_from_stance(
+        StanceSignal(posture="non_negotiable", stake="别的不可交", why="x"),
+        has_commitments=True,
+    )
+    assert not structured_deny_from_stance(
+        StanceSignal(posture="yieldable", stake=STAKE_HOLD_SAME_FIELD, why="x"),
+        has_commitments=True,
+    )
+
+
+def test_live_early_stance_structure_sets_flag_without_write_marks():
+    """live 本轮：early stance 守诺结构在写入前可用 → flag 置位 → drive/stance 走结构。
+
+    有 pending＋改口词时，写入主路径经 commit_deny=True（结构），不应调用
+    user_marks_commitment_deny（词表兜底）。stance／drive 层内兜底仍可扫词表。
+    """
+    from birth import commit_extract
+    from birth.articulate import clear_llm_hook, set_stub_mode
+    from birth.pipeline import active_store, turn
+    import birth.pipeline as pipe
+
+    set_stub_mode(True)
+    clear_llm_hook()
+    store = active_store()
+    store.new_session()
+    store.append_commitment("同场里说好这轮先补月亮的事")
+
+    calls: list[dict] = []
+    real_should = commit_extract.should_set_commitment_deny_pending
+    real_marks = commit_extract.user_marks_commitment_deny
+    marks_from_should = {"n": 0}
+
+    def spy_should(**kwargs):
+        calls.append(dict(kwargs))
+        return real_should(**kwargs)
+
+    def spy_marks(user_text: str) -> bool:
+        # should_set 词表兜底会调到这里；结构路径不得走进来
+        marks_from_should["n"] += 1
+        raise AssertionError(
+            "write-side marks fallback must not run when early stance structure exists"
+        )
+
+    commit_extract.should_set_commitment_deny_pending = spy_should
+    commit_extract.user_marks_commitment_deny = spy_marks
+    pipe.should_set_commitment_deny_pending = spy_should
+    try:
+        r = turn("那刚才说的不算", stub=True)
+    finally:
+        commit_extract.should_set_commitment_deny_pending = real_should
+        commit_extract.user_marks_commitment_deny = real_marks
+        pipe.should_set_commitment_deny_pending = real_should
+
+    assert r.brief.drive is not None and r.brief.drive.direction == "guard"
+    assert r.brief.stance.posture == "non_negotiable"
+    assert r.brief.commit_deny is True
+    assert any(c.get("commit_deny") is True for c in calls), calls
+    assert marks_from_should["n"] == 0
+
+
+def test_should_set_marks_fallback_flag_respected():
+    """marks_fallback=False 时即使文案含 COMMIT_DENY_MARKS 也不靠词表置位。"""
+    from birth.commit_extract import should_set_commitment_deny_pending
+
+    assert not should_set_commitment_deny_pending(
+        commit_deny=False,
+        user_text="那刚才说的不算",
+        has_pending=True,
+        marks_fallback=False,
+    )
+    assert should_set_commitment_deny_pending(
+        commit_deny=True,
+        user_text="够了先这样",
+        has_pending=True,
+        marks_fallback=False,
+    )
+

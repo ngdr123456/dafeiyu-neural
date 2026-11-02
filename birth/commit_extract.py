@@ -11,22 +11,37 @@ PRESS_COMMIT_FLAG = True
 COMMIT_DENY_FLAG = True
 
 
+def structured_deny_from_stance(stance, *, has_commitments: bool) -> bool:
+    """从 stance 守诺结构读 deny（与 arbitrate 置 Brief.commit_deny 同条件）。
+
+    不扫 COMMIT_DENY_MARKS；供 pipeline 在写入 commitment_deny_pending 之前
+    前移结构化检测／同轮回灌。
+    """
+    from .stance_org import STAKE_HOLD_SAME_FIELD
+
+    return (
+        bool(has_commitments)
+        and getattr(stance, "posture", None) == "non_negotiable"
+        and STAKE_HOLD_SAME_FIELD in (getattr(stance, "stake", None) or "")
+    )
+
+
 def should_set_commitment_deny_pending(
     *,
     commit_deny: bool = False,
     user_text: str = "",
     has_pending: bool = False,
+    marks_fallback: bool = True,
 ) -> bool:
-    """主路径读结构化 commit_deny（Brief.commit_deny／上游同族标记）。
+    """主路径读结构化 commit_deny（Brief.commit_deny／上游同族／early stance 守诺结构）。
 
-    兜底范围：仅当无结构化 commit_deny（False）且 has_pending 时，
-    才扫既有 COMMIT_DENY_MARKS（via user_marks_commitment_deny）；
-    兼容未写 Brief 标记的 turn 初写入／旧路径。不是禁词闸门，不扩词表，
-    不改台上话术。
+    兜底范围：仅当无结构化 commit_deny（False）、marks_fallback 允许、且
+    has_pending 时，才扫既有 COMMIT_DENY_MARKS（via user_marks_commitment_deny）；
+    兼容未写 Brief 标记的旧路径。不是禁词闸门，不扩词表，不改台上话术。
     """
     if bool(commit_deny) is COMMIT_DENY_FLAG:
         return True
-    if not has_pending:
+    if not has_pending or not marks_fallback:
         return False
     return user_marks_commitment_deny(user_text)
 
