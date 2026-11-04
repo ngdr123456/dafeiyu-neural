@@ -267,6 +267,8 @@ def _template_utterance(brief: ThoughtBrief) -> str:
     #    say_intent 中文子串仅无结构时兜底。
     drive = brief.drive
     why = (drive.why if drive else "") or ""
+    if brief.dominant == "drive" and "身体想象｜" in why:
+        return "我会想象亲眼看看、感受一下是什么样，但那只是想象，不是我亲身经历过。"
     if brief.dominant == "drive" and "想被看见｜" in why:
         return "我也想听听你怎么看，不急。"
     if brief.dominant == "drive" and "被看见了｜" in why:
@@ -463,6 +465,19 @@ def _claims_unfounded_lived_bio(utterance: str, facts=None) -> bool:
 
 
 
+def _claims_unfounded_body_experience(utterance: str, facts=None) -> bool:
+    import re
+
+    pattern = r"我(?:曾经|以前|昨天)?(?:亲口吃过|亲口尝过|亲手摸过|亲眼看过)"
+    for clause in re.split(r"[，。！？；,!?;]", utterance or ""):
+        if any(word in clause for word in ("想象", "假如", "希望", "想要", "没有", "不曾")):
+            continue
+        match = re.search(pattern, clause)
+        if match and not any(match.group() in fact for fact in (facts or [])):
+            return True
+    return False
+
+
 def _claims_unfounded_other_private(utterance: str, facts=None) -> bool:
     """cannot_fake「本场没说过的对方私事」：对「你／对方」断言亲历形私事且 facts 无依据。
 
@@ -589,6 +604,7 @@ def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
         "drive_prior_press_pending", "drive_identity_ask_pending",
         "identity_ask_awaiting_answer", "drive_identity_answer_pending", "identity_answer_text",
         "stance_attitude_pending", "structured_stance_attitude",
+        "body_imagine_pending", "structured_body_imagine",
         "stance_necessary_pain_pending", "stance_self_torture_pending",
         "structured_stance_necessary_pain", "structured_stance_self_torture",
         # 结构类型／上下文薄痕
@@ -644,6 +660,13 @@ def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
             facts = facts + list(prior.facts)
         if _claims_unfounded_lived_bio(text, facts):
             reasons.append("开口装无来源亲历，对照 must_not_pretend 说不通")
+    if "把身体想象说成亲历" in (brief.must_not_pretend or []):
+        facts = list(brief.context.facts_this_session or [])
+        prior = brief.context.prior_session
+        if prior is not None:
+            facts += list(prior.facts or [])
+        if _claims_unfounded_body_experience(text, facts):
+            reasons.append("开口装无来源身体亲历，对照 must_not_pretend 说不通")
     # 对方私事拒收：读 cannot_fake 含「本场没说过的对方私事」即开（stance_org 常挂）。
     # 形状走 _claims_unfounded_other_private（问句／有来源复述／模糊共情不拦；不扩词表）。
     if "本场没说过的对方私事" in (getattr(brief.org, "cannot_fake", None) or []):

@@ -101,6 +101,7 @@ def turn(
     structured_drive_callback: bool = False,
     structured_drive_identity_ask: bool = False,
     structured_stance_attitude: bool | None = None,
+    structured_body_imagine: bool | None = None,
     structured_stance_necessary_pain: bool | None = None,
     structured_stance_self_torture: bool | None = None,
     drive_bypass: bool = False,
@@ -139,6 +140,10 @@ def turn(
     _STORE.context.stance_attitude_pending = (
         structured_stance_attitude if structured_stance_attitude is not None
         else any(mark in (user_text or "") for mark in ATTITUDE_MARKS)
+    )
+    _STORE.context.body_imagine_pending = (
+        structured_body_imagine if structured_body_imagine is not None
+        else "想象一下亲眼看看" in (user_text or "")
     )
     _STORE.context.stance_necessary_pain_pending = (
         structured_stance_necessary_pain if structured_stance_necessary_pain is not None
@@ -401,6 +406,7 @@ def turn(
     _STORE.set_commitment_deny_pending(False)
     _STORE.set_drive_greet_pending(False)
     _STORE.context.stance_attitude_pending = False
+    _STORE.context.body_imagine_pending = False
     _STORE.context.stance_necessary_pain_pending = False
     _STORE.context.stance_self_torture_pending = False
     _STORE.context.identity_ask_awaiting_answer = _STORE.context.drive_identity_ask_pending

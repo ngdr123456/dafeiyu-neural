@@ -15,6 +15,7 @@ from .types import DriveSignal, OrgConstraint, StanceSignal, ThinContext
 MUST_NOT_PRETEND_CORE: tuple[str, ...] = (
     "无来源装经历",
     "自述是代码",
+    "把身体想象说成亲历",
 )
 
 # 冲突识别只是「句里有没有踩线要求」的线索，不是禁词闸门——

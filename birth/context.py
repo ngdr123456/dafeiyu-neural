@@ -50,6 +50,7 @@ class ThinContextStore:
             drive_identity_answer_pending=ctx.drive_identity_answer_pending,
             identity_answer_text=ctx.identity_answer_text,
             stance_attitude_pending=ctx.stance_attitude_pending,
+            body_imagine_pending=ctx.body_imagine_pending,
             stance_necessary_pain_pending=ctx.stance_necessary_pain_pending,
             stance_self_torture_pending=ctx.stance_self_torture_pending,
             curiosity_hang_pending=ctx.curiosity_hang_pending,

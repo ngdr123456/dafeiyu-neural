@@ -23,6 +23,7 @@ from birth.pipeline import active_store, turn
 
 
 _ENUM_LEAKS = (
+    "body_imagine_pending", "structured_body_imagine",
     "pursue",
     "guard",
     "hold",

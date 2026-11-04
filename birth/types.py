@@ -90,6 +90,7 @@ class ThinContext:
     identity_answer_text: str = ""
     # 本轮不可改变处境的态度线索，不跨轮保留。
     stance_attitude_pending: bool = False
+    body_imagine_pending: bool = False
     stance_necessary_pain_pending: bool = False
     stance_self_torture_pending: bool = False
     # 结构化：同场好奇挂起仍 pending（pipeline 写；drive 主路径读；勿靠「待接的话头：」前缀）
