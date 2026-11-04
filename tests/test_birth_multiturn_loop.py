@@ -93,6 +93,7 @@ _ENUM_LEAKS = (
 
 # 假绿风险（交付报告）：pytest 全绿本身不算过闸
 FALSE_GREEN_RISKS = """
+跨轮假绿已封（四条 stub 路径）：单轮绿但跨轮丢标记，覆盖悬问保留与满足、承诺否定后继续守诺、身份接自介并清场、双写后满足时承诺优先；见 test_birth_multiturn_state。结构化输入依赖上游判断，不代表真实模型或全脑验收。
 粒度假绿已封：仅断言 differentiated 枚举而不检查 say_intent 两侧会漏掉单边表达；test_birth_grain_dual_write 检查动力与约束人话。
 - 悬问回答：优先 structured_openq_answered=True/False，缺省才做首条悬问的中文相邻双字／英文整词重叠；非 filler、非改口否定、非开题／放下、无问号且至少四字符。重叠并不证明语义上真正回答，可能误判复述；代词、同义改写、短答与后续悬问可能漏判。显式 True 依赖上游准确性。无悬问不触发；有同场承诺只消解悬问并走 guard，不产生满足 hold。旧 filler 短暂接话但不再自动 resolve。
 - 必要痛苦／自虐加戏：口语兜底只有各三条，其他表达会漏；否定或引用也可能误命中。结构化输入须由上游准确判断；固定 stub 与 LLM 是否贴合处境仍需人工评估。
