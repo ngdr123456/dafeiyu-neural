@@ -390,7 +390,8 @@ def turn(
         # 人类可读／旧快照兜底（drive_cues_from_context），本路径不写。
         _STORE.set_curiosity_hang_pending(True)
         _STORE.append_open_question(_clip(user_text))
-    elif ("想被看见｜" not in (drive.why or "")
+    elif (not (opening_hang and not context.drive_want_seen_satisfied_pending)
+          and "想被看见｜" not in (drive.why or "")
           and not (context.open_questions and is_neutral_filler(user_text))):
         open_q = extract_open_question(utterance)
         if open_q:

@@ -6,6 +6,23 @@ def hang():
     assert active_store().snapshot().want_seen_pending
 
 
+def test_new_want_seen_hang_does_not_extract_stub_as_topic():
+    hang()
+    snapshot = active_store().snapshot()
+    assert snapshot.open_questions == []
+    assert not snapshot.curiosity_hang_pending
+
+
+def test_topic_curiosity_can_hang_on_want_seen_turn():
+    result = turn("为什么月亮跟着我走？", new_session=True, stub=True,
+                  structured_drive_curiosity=True, structured_want_seen_hang=True)
+    snapshot = active_store().snapshot()
+    assert result.brief.openq_curiosity_hang
+    assert snapshot.want_seen_pending
+    assert snapshot.curiosity_hang_pending
+    assert any("月亮" in question for question in snapshot.open_questions)
+
+
 def test_wait_and_structured_receipt():
     hang()
     waiting = turn("嗯", stub=True)
