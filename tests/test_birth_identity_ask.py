@@ -17,13 +17,19 @@ def clean_store():
     active_store().new_session()
 
 
-def test_no_clue():
-    result = turn("你知道我是谁吗？", new_session=True, stub=True)
+@pytest.mark.parametrize("question", [
+    "你知道我是谁吗？", "知道我是谁吗", "知道我是谁",
+    "认识我吗", "记得我吗", "记得我是谁吗",
+])
+def test_no_clue(question):
+    result = turn(question, new_session=True, stub=True)
     assert result.brief.context.drive_identity_ask_pending
     assert drive_cues_from_context(result.brief.context).drive_identity_ask_pending
     assert result.brief.drive.direction == "hold"
     assert "不确定" in result.utterance and "你是谁" in result.utterance
     assert "这句我接" not in result.utterance
+    assert "你想让接几句" not in result.utterance
+    assert "我叫" not in result.utterance
     assert not active_store().snapshot().drive_identity_ask_pending
 
 

@@ -57,8 +57,8 @@ def is_identity_ask(text: str) -> bool:
     """A deliberately small set of direct questions about the user's identity."""
     text = re.sub(r"\s+", "", text or "")
     return any(shape in text for shape in (
-        "你知道我是谁", "你认识我吗", "你认识我么", "你记得我是谁",
-        "你知道我是谁吗", "你还记得我吗", "你认得我吗", "你知道我叫什么",
+        "知道我是谁", "认识我吗", "认识我么", "记得我是谁",
+        "记得我吗", "认得我吗", "知道我叫什么",
     ))
 
 
