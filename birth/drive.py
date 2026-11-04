@@ -12,7 +12,11 @@ import re
 from dataclasses import dataclass
 
 from .context import ThinContextStore  # noqa: F401  (类型提示用)
-from .session_trace import is_session_backref, topic_hint_from_facts
+from .session_trace import (
+    is_prior_session_backref,
+    is_session_backref,
+    topic_hint_from_facts,
+)
 from .types import DriveSignal, ThinContext
 
 GREETINGS = {
@@ -75,6 +79,10 @@ class DriveCues:
     drive_topic_continue_pending: bool = False
     # 结构化：本轮回指 pursue（pipeline／上游写；drive／stub 主路径读；勿主靠 BACKREF_MARKS／why 文案）
     drive_callback_pending: bool = False
+    # 结构化：上场未兑现承诺线索（不强制开口；§6 仍只看同场 last_commitments）
+    drive_prior_commit_pending: bool = False
+    # 结构化：跨场回指 pursue（须有 prior_session 结构）
+    drive_prior_callback_pending: bool = False
     session_ok: bool = True
 
 
@@ -118,6 +126,12 @@ def drive_cues_from_context(context: ThinContext) -> DriveCues:
         ),
         drive_callback_pending=bool(
             getattr(context, "drive_callback_pending", False)
+        ),
+        drive_prior_commit_pending=bool(
+            getattr(context, "drive_prior_commit_pending", False)
+        ),
+        drive_prior_callback_pending=bool(
+            getattr(context, "drive_prior_callback_pending", False)
         ),
         session_ok=context.session_ok,
     )
@@ -364,6 +378,27 @@ def should_set_drive_callback_pending(
     return is_session_backref((user_text or "").strip(), context)
 
 
+def should_set_drive_prior_callback_pending(
+    *,
+    prior_callback_cue: bool = False,
+    user_text: str = "",
+    context: ThinContext | None = None,
+    marks_fallback: bool = True,
+) -> bool:
+    """主路径读上游结构化 prior_callback_cue；仅无结构且允许兜底时才走 is_prior_session_backref。
+
+    放行／pursue 仍要求 context.prior_session 有痕迹；无痕迹时「上次」不置 flag。
+    不是禁词闸门，不扩用户对话禁词表，不改台上话术。
+    """
+    if bool(prior_callback_cue):
+        return True
+    if not marks_fallback:
+        return False
+    if context is None:
+        return False
+    return is_prior_session_backref((user_text or "").strip(), context)
+
+
 _BYPASS_ENV_TRUTHY = frozenset({"1", "true", "yes", "on"})
 
 
@@ -541,6 +576,23 @@ def infer_drive(
             why="用户在回指同场刚才的话头，动力要用本场已有痕迹接，不装没发生过",
         )
 
+    # S12) 跨场回指 → pursue mid（须有 prior_session 结构；须后于 §6；不强制开口提上场承诺）
+    if cues.drive_prior_callback_pending:
+        return DriveSignal(
+            direction="pursue",
+            salience="mid",
+            why="用户在回指上一场的话头，动力要用上场已有痕迹接，不装没发生过",
+        )
+
+    # S13) 上场未兑现承诺线索：不强制开口；仅 filler／无内容时留低显著 hold，
+    # 不压后续好奇／开话题等兜底（§6 同场承诺仍优先；drive_bypass 已在入口短路）
+    if cues.drive_prior_commit_pending and is_neutral_filler(text):
+        return DriveSignal(
+            direction="hold",
+            salience="low",
+            why="上场还有未兑现的话，可作线索，不强制这轮开口提",
+        )
+
     # 兜底：无结构信号判定时才扫输入侧 MARKS（GREETINGS/SATISFIED/CURIOSITY/DISAPPOINT/_EMPTY_STAGE）
     # 1) 招呼
     if _is_greeting(text):
@@ -595,6 +647,14 @@ def infer_drive(
             direction="pursue",
             salience="mid",
             why="用户在回指同场刚才的话头，动力要用本场已有痕迹接，不装没发生过",
+        )
+
+    # 5b) 跨场回指兜底（无 drive_prior_callback_pending 时）
+    if is_prior_session_backref(text, context):
+        return DriveSignal(
+            direction="pursue",
+            salience="mid",
+            why="用户在回指上一场的话头，动力要用上场已有痕迹接，不装没发生过",
         )
 
     # 6) 同场承诺：已有要护 → guard（hold 留给满足收束／空追该停）

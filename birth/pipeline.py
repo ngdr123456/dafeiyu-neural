@@ -32,8 +32,10 @@ from .drive import (
     should_set_drive_greet_pending,
     should_set_drive_hold_pending,
     should_set_drive_open_topic_pending,
+    should_set_drive_prior_callback_pending,
     should_set_drive_topic_continue_pending,
 )
+from .memory import active_memory, memory_enabled
 from .stance_org import default_org, default_stance
 from .types import ThoughtBrief
 
@@ -43,6 +45,21 @@ _STORE: ThinContextStore = ThinContextStore()
 def active_store() -> ThinContextStore:
     """当前同场的存储（测试也用它检查回流）。"""
     return _STORE
+
+
+def _persist_and_reset_session() -> None:
+    """场结束：可选落盘 → 清场 → 读入上一场为 prior_session 结构。"""
+    mem = active_memory() if memory_enabled() else None
+    if mem is not None and _STORE.has_session_content():
+        trace = _STORE.export_session_trace()
+        mem.append_session(**trace)
+    _STORE.new_session()
+    if mem is not None:
+        prior = mem.latest_prior()
+        if prior is not None and prior.has_trace():
+            _STORE.set_prior_session(prior)
+            if prior.commitments_pending:
+                _STORE.set_drive_prior_commit_pending(True)
 
 
 @dataclass
@@ -98,7 +115,8 @@ def turn(
     或 ThinContext.drive_bypass）；默认 False，出生路径零行为变化；非听感验收。
     """
     if new_session:
-        _STORE.new_session()
+        # 跨场：先把本场薄痕迹落盘（若开启），再清场，再灌入上一场痕迹
+        _persist_and_reset_session()
 
     # 改口否定写入（前移结构化检测；有结构时本轮不必再扫 COMMIT_DENY_MARKS）：
     # 1) 上游 kwarg／同族结构化；2) early stance 守诺结构（与 arbitrate 置
@@ -152,6 +170,12 @@ def turn(
     _STORE.set_drive_empty_stage_pending(False)
     _STORE.set_drive_topic_continue_pending(False)
     _STORE.set_drive_callback_pending(False)
+    _STORE.set_drive_prior_callback_pending(False)
+    # prior_commit 线索：有 prior_session 未兑现则整场可作线索（每轮重申，不靠回合末残留）
+    _STORE.set_drive_prior_commit_pending(False)
+    prior = _STORE.context.prior_session
+    if prior is not None and prior.commitments_pending:
+        _STORE.set_drive_prior_commit_pending(True)
     _STORE.set_drive_bypass(False)
     if drive_bypass:
         _STORE.set_drive_bypass(True)
@@ -211,6 +235,13 @@ def turn(
         marks_fallback=not bool(structured_drive_callback),
     ):
         _STORE.set_drive_callback_pending(True)
+    # 跨场回指：须有 prior_session 结构；同场承诺在场时不置（对齐 §6）
+    if not _commitments_block_s8_s10 and should_set_drive_prior_callback_pending(
+        user_text=user_text,
+        context=ctx_for_drive_write,
+        marks_fallback=True,
+    ):
+        _STORE.set_drive_prior_callback_pending(True)
     context = _STORE.snapshot()
 
     drive = infer_drive(user_text, context, drive_bypass=drive_bypass or None)
@@ -273,6 +304,9 @@ def turn(
     _STORE.set_drive_empty_stage_pending(False)
     _STORE.set_drive_topic_continue_pending(False)
     _STORE.set_drive_callback_pending(False)
+    _STORE.set_drive_prior_callback_pending(False)
+    # drive_prior_commit_pending 下一轮开头按 prior_session 重申，此处清以免脏读
+    _STORE.set_drive_prior_commit_pending(False)
     _STORE.set_drive_bypass(False)
 
     return TurnResult(

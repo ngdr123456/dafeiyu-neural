@@ -50,10 +50,34 @@ class OrgConstraint:
 
 
 @dataclass
+class PriorSessionTrace:
+    """上一场薄痕迹（跨场读入；非长期人格／非意识海）。
+
+    由 memory 持久层在新场开局灌入 ThinContext.prior_session；
+    回指／drive 线索只读结构字段，不拼进 say_intent。
+    """
+
+    facts: List[str] = field(default_factory=list)
+    commitments_pending: List[str] = field(default_factory=list)
+    commitments_resolved: List[str] = field(default_factory=list)
+    open_questions: List[str] = field(default_factory=list)
+    ended_at: str = ""
+
+    def has_trace(self) -> bool:
+        return bool(
+            self.facts
+            or self.commitments_pending
+            or self.commitments_resolved
+            or self.open_questions
+        )
+
+
+@dataclass
 class ThinContext:
     """薄情境：同场（同一 session）可积累；显式 new session 才清空。
 
     不做每句改性格，也不顶置长期性格记忆——只放本轮要用的东西。
+    prior_session 为跨场读入的上一场薄痕迹（结构字段，可空）。
     """
 
     session_ok: bool = True
@@ -80,6 +104,12 @@ class ThinContext:
     drive_topic_continue_pending: bool = False
     # 结构化：本轮回指 pursue（pipeline／上游写；drive／stub 主路径读；勿主靠 BACKREF_MARKS／why 文案）
     drive_callback_pending: bool = False
+    # 跨场：上一场薄痕迹（memory 新场开局灌入；回指／亲历来源读结构，不拼 say_intent）
+    prior_session: Optional[PriorSessionTrace] = None
+    # 结构化：上场未兑现承诺作 drive 线索（不强制开口提；§6 仍只看同场 last_commitments）
+    drive_prior_commit_pending: bool = False
+    # 结构化：本轮跨场回指 pursue（有 prior_session 结构时写入；勿主靠「上次」词表放行）
+    drive_prior_callback_pending: bool = False
     # 工程师通道：强制动力中性 hold（pipeline／env／kwarg；非出生默认；默认 False）
     drive_bypass: bool = False
 

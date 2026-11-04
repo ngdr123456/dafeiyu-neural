@@ -10,7 +10,7 @@
 
 from __future__ import annotations
 
-from .types import ThinContext
+from .types import PriorSessionTrace, ThinContext
 
 
 class ThinContextStore:
@@ -18,6 +18,8 @@ class ThinContextStore:
 
     def __init__(self, context: ThinContext | None = None) -> None:
         self._context = context if context is not None else ThinContext()
+        # 本场已兑现承诺（resolve 弹出时累积；供跨场落盘；new_session 清）
+        self._resolved_commitments: list[str] = []
 
     @property
     def context(self) -> ThinContext:
@@ -27,6 +29,16 @@ class ThinContextStore:
     def snapshot(self) -> ThinContext:
         """给仲裁/Brief 用的副本，避免台下引用被外部改穿存储。"""
         ctx = self._context
+        prior = None
+        if ctx.prior_session is not None:
+            ps = ctx.prior_session
+            prior = PriorSessionTrace(
+                facts=list(ps.facts),
+                commitments_pending=list(ps.commitments_pending),
+                commitments_resolved=list(ps.commitments_resolved),
+                open_questions=list(ps.open_questions),
+                ended_at=ps.ended_at,
+            )
         return ThinContext(
             session_ok=ctx.session_ok,
             open_questions=list(ctx.open_questions),
@@ -42,12 +54,19 @@ class ThinContextStore:
             drive_empty_stage_pending=ctx.drive_empty_stage_pending,
             drive_topic_continue_pending=ctx.drive_topic_continue_pending,
             drive_callback_pending=ctx.drive_callback_pending,
+            prior_session=prior,
+            drive_prior_commit_pending=ctx.drive_prior_commit_pending,
+            drive_prior_callback_pending=ctx.drive_prior_callback_pending,
             drive_bypass=ctx.drive_bypass,
         )
 
     def new_session(self) -> None:
-        """唯一的清空入口：只有显式 new_session 才会清掉同场积累（含好奇挂起 flag）。"""
+        """唯一的清空入口：只有显式 new_session 才会清掉同场积累（含好奇挂起 flag）。
+
+        跨场 prior_session 由 pipeline 在清场后按需灌入；此处先置空。
+        """
         self._context = ThinContext()
+        self._resolved_commitments = []
 
     # -- 积累（只加不减，精确重复去重避免自我灌水） ----------------------
 
@@ -179,16 +198,64 @@ class ThinContextStore:
 
         对齐 resolve_open_question；态度上可守的对象，接完可放下。
         改口否定 flag 一并清 False（承诺已了，改口线索无对象）。
+        弹出的条目记入本场已兑现列表，供跨场落盘。
         """
         if self._context.last_commitments:
             self._context.commitment_deny_pending = False
-            return self._context.last_commitments.pop(0)
+            done = self._context.last_commitments.pop(0)
+            self._append_unique(self._resolved_commitments, done)
+            return done
         return None
 
     def clear_commitments(self) -> None:
         """放下同场所有承诺（仅明确整场放下时用；宁缺毋滥）；改口否定 flag 一并清。"""
         self._context.last_commitments.clear()
         self._context.commitment_deny_pending = False
+
+
+    def set_drive_prior_commit_pending(self, pending: bool) -> None:
+        """pipeline：上场未兑现承诺作 drive 线索（不强制开口；§6 仍看同场）。"""
+        self._context.drive_prior_commit_pending = pending
+
+    def set_drive_prior_callback_pending(self, pending: bool) -> None:
+        """pipeline：本轮跨场回指 pursue（须有 prior_session 结构；有同场承诺时不置）。"""
+        self._context.drive_prior_callback_pending = pending
+
+    def set_prior_session(self, prior: PriorSessionTrace | None) -> None:
+        """新场开局灌入上一场薄痕迹；None 表示无痕迹。"""
+        if prior is None:
+            self._context.prior_session = None
+            return
+        self._context.prior_session = PriorSessionTrace(
+            facts=list(prior.facts),
+            commitments_pending=list(prior.commitments_pending),
+            commitments_resolved=list(prior.commitments_resolved),
+            open_questions=list(prior.open_questions),
+            ended_at=prior.ended_at,
+        )
+
+    def has_session_content(self) -> bool:
+        """本场是否有可落盘的薄痕迹（空场不写）。"""
+        ctx = self._context
+        return bool(
+            ctx.facts_this_session
+            or ctx.last_commitments
+            or self._resolved_commitments
+            or ctx.open_questions
+        )
+
+    def export_session_trace(self) -> dict:
+        """导出本场薄痕迹字典（供 BirthMemoryStore.append_session）。"""
+        ctx = self._context
+        return {
+            "facts": list(ctx.facts_this_session),
+            "commitments_pending": list(ctx.last_commitments),
+            "commitments_resolved": list(self._resolved_commitments),
+            "open_questions": list(ctx.open_questions),
+        }
+
+    def resolved_commitments(self) -> list[str]:
+        return list(self._resolved_commitments)
 
     # -- 只读视图 ----------------------------------------------
 

@@ -1,0 +1,204 @@
+"""跨场薄记忆：本地 JSON 持久层（非长期人格、非意识海）。
+
+默认路径 ~/.dafeiyu/birth_memory.json；可用 BIRTH_MEMORY_PATH 或
+BirthMemoryStore(path=...) 覆盖。测试必须传 tmp_path，绝不写真实 home。
+
+场结束／new_session 时由 pipeline 写入本场薄痕迹；新场开局读入为
+ThinContext.prior_session（结构字段，不拼进 say_intent）。
+"""
+
+from __future__ import annotations
+
+import json
+import os
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import List, Optional
+
+from .types import PriorSessionTrace
+
+# 环境变量：覆盖默认路径
+ENV_MEMORY_PATH = "BIRTH_MEMORY_PATH"
+
+DEFAULT_MAX_SESSIONS = 5
+DEFAULT_MAX_FACTS = 40
+DEFAULT_MAX_COMMITS = 20
+DEFAULT_MAX_OPENQ = 10
+
+
+def default_memory_path() -> Path:
+    """生产默认路径；测试勿用，应显式传 tmp。"""
+    override = os.environ.get(ENV_MEMORY_PATH, "").strip()
+    if override:
+        return Path(override).expanduser()
+    return Path.home() / ".dafeiyu" / "birth_memory.json"
+
+
+@dataclass
+class SessionTraceRecord:
+    """一场结束时落盘的薄痕迹。"""
+
+    facts: List[str] = field(default_factory=list)
+    commitments_pending: List[str] = field(default_factory=list)
+    commitments_resolved: List[str] = field(default_factory=list)
+    open_questions: List[str] = field(default_factory=list)
+    ended_at: str = ""
+
+    def is_empty(self) -> bool:
+        return not (
+            self.facts
+            or self.commitments_pending
+            or self.commitments_resolved
+            or self.open_questions
+        )
+
+    def to_prior(self) -> PriorSessionTrace:
+        return PriorSessionTrace(
+            facts=list(self.facts),
+            commitments_pending=list(self.commitments_pending),
+            commitments_resolved=list(self.commitments_resolved),
+            open_questions=list(self.open_questions),
+            ended_at=self.ended_at,
+        )
+
+
+def _clip_list(items: List[str], limit: int) -> List[str]:
+    if limit <= 0:
+        return []
+    if len(items) <= limit:
+        return list(items)
+    return list(items[-limit:])
+
+
+class BirthMemoryStore:
+    """最小持久层：最近 N 场 JSON；容量上限＋老化。"""
+
+    def __init__(
+        self,
+        path: str | Path | None = None,
+        *,
+        max_sessions: int = DEFAULT_MAX_SESSIONS,
+        max_facts: int = DEFAULT_MAX_FACTS,
+        max_commits: int = DEFAULT_MAX_COMMITS,
+        max_openq: int = DEFAULT_MAX_OPENQ,
+    ) -> None:
+        self.path = Path(path) if path is not None else default_memory_path()
+        self.max_sessions = max(1, int(max_sessions))
+        self.max_facts = max(0, int(max_facts))
+        self.max_commits = max(0, int(max_commits))
+        self.max_openq = max(0, int(max_openq))
+
+    def _read_raw(self) -> list[dict]:
+        if not self.path.exists():
+            return []
+        try:
+            data = json.loads(self.path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return []
+        if isinstance(data, dict) and "sessions" in data:
+            sessions = data.get("sessions") or []
+        elif isinstance(data, list):
+            sessions = data
+        else:
+            sessions = []
+        return [s for s in sessions if isinstance(s, dict)]
+
+    def _write_raw(self, sessions: list[dict]) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {"version": 1, "sessions": sessions}
+        self.path.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+
+    def list_sessions(self) -> list[SessionTraceRecord]:
+        out: list[SessionTraceRecord] = []
+        for raw in self._read_raw():
+            out.append(
+                SessionTraceRecord(
+                    facts=list(raw.get("facts") or []),
+                    commitments_pending=list(raw.get("commitments_pending") or []),
+                    commitments_resolved=list(raw.get("commitments_resolved") or []),
+                    open_questions=list(raw.get("open_questions") or []),
+                    ended_at=str(raw.get("ended_at") or ""),
+                )
+            )
+        return out
+
+    def latest(self) -> SessionTraceRecord | None:
+        sessions = self.list_sessions()
+        return sessions[-1] if sessions else None
+
+    def latest_prior(self) -> PriorSessionTrace | None:
+        rec = self.latest()
+        return rec.to_prior() if rec is not None else None
+
+    def append_session(
+        self,
+        *,
+        facts: List[str] | None = None,
+        commitments_pending: List[str] | None = None,
+        commitments_resolved: List[str] | None = None,
+        open_questions: List[str] | None = None,
+        ended_at: str | None = None,
+    ) -> SessionTraceRecord | None:
+        """写入一场痕迹；空场跳过；超容量丢最旧。"""
+        rec = SessionTraceRecord(
+            facts=_clip_list(list(facts or []), self.max_facts),
+            commitments_pending=_clip_list(
+                list(commitments_pending or []), self.max_commits
+            ),
+            commitments_resolved=_clip_list(
+                list(commitments_resolved or []), self.max_commits
+            ),
+            open_questions=_clip_list(list(open_questions or []), self.max_openq),
+            ended_at=ended_at
+            or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        )
+        if rec.is_empty():
+            return None
+        sessions = self._read_raw()
+        sessions.append(asdict(rec))
+        if len(sessions) > self.max_sessions:
+            sessions = sessions[-self.max_sessions :]
+        self._write_raw(sessions)
+        return rec
+
+
+# 模块级：pipeline／CLI 配置（默认关，避免单测写 home）
+_ENABLED: bool = False
+_STORE: Optional[BirthMemoryStore] = None
+
+
+def memory_enabled() -> bool:
+    return _ENABLED
+
+
+def active_memory() -> BirthMemoryStore | None:
+    return _STORE if _ENABLED else None
+
+
+def configure_memory(
+    *,
+    enabled: bool,
+    path: str | Path | None = None,
+    max_sessions: int = DEFAULT_MAX_SESSIONS,
+    max_facts: int = DEFAULT_MAX_FACTS,
+    max_commits: int = DEFAULT_MAX_COMMITS,
+    max_openq: int = DEFAULT_MAX_OPENQ,
+) -> BirthMemoryStore | None:
+    """开／关跨场薄记忆。enabled=False 时不碰磁盘。"""
+    global _ENABLED, _STORE
+    _ENABLED = bool(enabled)
+    if not _ENABLED:
+        _STORE = None
+        return None
+    _STORE = BirthMemoryStore(
+        path=path,
+        max_sessions=max_sessions,
+        max_facts=max_facts,
+        max_commits=max_commits,
+        max_openq=max_openq,
+    )
+    return _STORE

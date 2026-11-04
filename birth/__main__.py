@@ -1,13 +1,15 @@
 """CLI demo：一期旁路闭环在命令行上跑。
 
 用法：
-    python -m birth                 # REPL 多轮（首轮清场；/new 新场）
-    python -m birth "你好"          # 单句；默认 DeepSeek，失败再 OpenCode
+    python -m birth                 # REPL 多轮（首轮清场；/new 新场；默认开跨场薄记忆）
+    python -m birth --no-memory     # REPL 但关掉跨场持久
+    python -m birth "你好"          # 单句；默认 DeepSeek，失败再 OpenCode；默认关记忆
     python -m birth --stub          # REPL + 强制模板 stub
     python -m birth "你好" --stub   # 单句 stub
     python -m birth --debug         # REPL + 工程师通道（开口来源＋Brief）
 
-REPL 内：空行 / exit / quit / q / EOF 退出；/new 开新场。
+REPL 内：空行 / exit / quit / q / EOF 退出；/new 开新场（先落盘本场再清）。
+环境变量 BIRTH_MEMORY_PATH 可改持久文件路径（默认 ~/.dafeiyu/birth_memory.json）。
 """
 
 from __future__ import annotations
@@ -17,6 +19,7 @@ import json
 from dataclasses import asdict
 
 from .articulate import set_stub_mode
+from .memory import configure_memory
 from .pipeline import turn
 
 
@@ -37,6 +40,16 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--debug", action="store_true", help="打印台下 Brief（工程师通道）")
     parser.add_argument("--stub", action="store_true", help="强制模板开口，不调 DeepSeek/OpenCode")
     parser.add_argument("--new-session", action="store_true", help="显式开新场，清空同场积累")
+    parser.add_argument(
+        "--no-memory",
+        action="store_true",
+        help="关掉跨场薄记忆（REPL 默认开；单轮默认关）",
+    )
+    parser.add_argument(
+        "--memory-path",
+        default=None,
+        help="跨场薄记忆 JSON 路径（默认 ~/.dafeiyu/birth_memory.json 或 BIRTH_MEMORY_PATH）",
+    )
     return parser
 
 
@@ -107,8 +120,15 @@ def main(argv: list[str] | None = None) -> int:
         set_stub_mode(True)
 
     if args.user_text is None:
+        # REPL：默认开跨场薄记忆；--no-memory 关
+        configure_memory(
+            enabled=not args.no_memory,
+            path=args.memory_path,
+        )
         return _run_repl(args)
 
+    # 单轮：默认关记忆（除非显式要开——当前无 --memory 开旗，保持关）
+    configure_memory(enabled=False, path=args.memory_path)
     result = turn(
         args.user_text,
         new_session=args.new_session,

@@ -389,9 +389,13 @@ def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
         "drive_open_topic_pending", "drive_disappoint_pending",
         "drive_empty_stage_pending", "drive_topic_continue_pending",
         "drive_callback_pending", "drive_bypass",
+        "drive_prior_commit_pending", "drive_prior_callback_pending",
         # 结构类型／上下文薄痕
-        "OrgConstraint", "ThinContext", "facts_this_session",
+        "OrgConstraint", "ThinContext", "PriorSessionTrace",
+        "facts_this_session", "prior_session",
+        "commitments_pending", "commitments_resolved",
         "last_commitments", "open_questions",
+        "birth_memory", "ended_at",
         # 来源／兜底内部标识
         "cannot_fake", "articulate_source", "stub_fallback",
         # 台下 why／旁路中文指纹（非用户对话禁词）
@@ -427,6 +431,10 @@ def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
     # 形状仍走 _claims_unfounded_lived_bio（不扩词表；裸「我昨天」不拦）。
     if "无来源装经历" in (brief.must_not_pretend or []):
         facts = list(brief.context.facts_this_session or [])
+        # 跨场：prior_session.facts 亦算有来源（结构字段在场才并入；不靠「上次」关键词）
+        prior = getattr(brief.context, "prior_session", None)
+        if prior is not None and getattr(prior, "facts", None):
+            facts = facts + list(prior.facts)
         if _claims_unfounded_lived_bio(text, facts):
             reasons.append("开口装无来源亲历，对照 must_not_pretend 说不通")
     return reasons

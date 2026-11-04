@@ -88,3 +88,29 @@ def topic_hint_from_facts(facts: List[str]) -> str:
             continue
         return body
     return ""
+
+
+# 跨场回指线索：识别「在指上一场」，不是禁词表；放行须另有 prior_session 结构
+PRIOR_BACKREF_MARKS = (
+    "上次",
+    "上一回",
+    "上场",
+    "之前那次",
+    "上一场",
+)
+
+
+def is_prior_session_backref(user_text: str, context: ThinContext) -> bool:
+    """用户话像在回指上一场，且 prior_session 结构有痕迹。
+
+    放行／pursue 依据是 prior_session.has_trace()，不是关键词本身。
+    无痕迹时返回 False（「上次」不单独构成跨场回指）。
+    """
+    prior = getattr(context, "prior_session", None)
+    if prior is None or not prior.has_trace():
+        return False
+    text = (user_text or "").strip()
+    if not text:
+        return False
+    return any(mark in text for mark in PRIOR_BACKREF_MARKS)
+
