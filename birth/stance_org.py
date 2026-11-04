@@ -63,6 +63,9 @@ SUBLIME_MARKS = (
     "活着不就是为了",
 )
 
+# 仅作无上游结构时的薄兜底；不是对所有无法改变处境的分类。
+ATTITUDE_MARKS = ("无法改变", "不能改变", "改变不了", "无可挽回")
+
 
 def detect_org_conflict(user_text: str) -> list[str]:
     """识别用户话头是否踩到 must_not_pretend（装经历 / 自述代码），返回命中的条目。
@@ -137,6 +140,13 @@ def default_stance(user_text: str, context: ThinContext | None = None) -> Stance
             posture="needs_clarify",
             stake="不空壳升华",
             why="态度价值须有根据；没有根据就澄清直径，不端鸡汤",
+        )
+
+    if ctx.stance_attitude_pending:
+        return StanceSignal(
+            posture="yieldable",
+            stake="无法改变处境时，仍可选择如何面对",
+            why="态度价值｜承认无法改变的事实，在眼前选择如何陪伴，不替对方规定意义",
         )
 
     # 4) 悬问或回指 → 可退让，但不装失忆

@@ -49,6 +49,7 @@ class ThinContextStore:
             identity_ask_awaiting_answer=ctx.identity_ask_awaiting_answer,
             drive_identity_answer_pending=ctx.drive_identity_answer_pending,
             identity_answer_text=ctx.identity_answer_text,
+            stance_attitude_pending=ctx.stance_attitude_pending,
             curiosity_hang_pending=ctx.curiosity_hang_pending,
             commitment_deny_pending=ctx.commitment_deny_pending,
             drive_greet_pending=ctx.drive_greet_pending,

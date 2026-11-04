@@ -63,6 +63,7 @@ _ENUM_LEAKS = (
     "drive_prior_press_pending",
     "drive_identity_ask_pending",
     "identity_ask_awaiting_answer", "drive_identity_answer_pending", "identity_answer_text",
+    "stance_attitude_pending", "structured_stance_attitude",
     "OrgConstraint",
     "ThinContext",
     "PriorSessionTrace",
@@ -88,6 +89,7 @@ _ENUM_LEAKS = (
 
 # 假绿风险（交付报告）：pytest 全绿本身不算过闸
 FALSE_GREEN_RISKS = """
+- 态度价值：固定线索不穷尽处境表达，子串也可能误判（如否定或引用）；上游需准确提供 structured_stance_attitude，显式 False 可覆盖兜底。stub 固定句及 LLM 的具体陪伴质量、事实贴合和避免鸡汤仍需人工评估。
 身份回应遇同场未兑现承诺时 §6 guard 优先，可能不能当轮确认自我介绍。
 - 身份询问：固定句式与明确自述线索均不穷尽，换一种问法或身份描述可能漏识别；同场承诺存在时 §6 guard 可优先，身份 flag 仍记录。
 - `_accept_draft` 用 extract 拒收**仅当** Brief.press_commit；禁止只靠 say_intent 中文子串；禁止扩词表／通用堵嘴；不扩 commit_extract 词表。

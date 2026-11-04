@@ -172,6 +172,11 @@ def arbitrate(
         else:
             # 纯闲聊／无强动力：维持守诺 meaning
             say_intent = "先守住同场说过的话，把住的判断不顺势放下；再接新的"
+    elif (context.stance_attitude_pending
+          and not context.drive_identity_ask_pending
+          and not context.drive_identity_answer_pending):
+        dominant = "meaning"
+        say_intent = "承认对方说的处境无法改变；不许诺改变它，选择在此陪对方一起面对，不替对方赋予意义"
     elif context.open_questions and is_neutral_filler(user_text):
         # filler + 确有悬问：短暂 meaning 捡一次；结构化标记供 pipeline resolve
         dominant = "meaning"

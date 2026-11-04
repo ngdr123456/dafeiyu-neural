@@ -40,7 +40,7 @@ from .drive import (
     should_set_drive_topic_continue_pending,
 )
 from .memory import active_memory, memory_enabled
-from .stance_org import default_org, default_stance
+from .stance_org import ATTITUDE_MARKS, default_org, default_stance
 from .types import ThoughtBrief
 
 _STORE: ThinContextStore = ThinContextStore()
@@ -94,6 +94,7 @@ def turn(
     structured_drive_topic_continue: bool = False,
     structured_drive_callback: bool = False,
     structured_drive_identity_ask: bool = False,
+    structured_stance_attitude: bool | None = None,
     drive_bypass: bool = False,
 ) -> TurnResult:
     """跑完一轮完整闭环。new_session=True 显式开新场（唯一清空入口）。
@@ -122,6 +123,12 @@ def turn(
     if new_session:
         # 跨场：先把本场薄痕迹落盘（若开启），再清场，再灌入上一场痕迹
         _persist_and_reset_session()
+
+    # None 才使用固定线索；显式 False 可由上游否决误命中。
+    _STORE.context.stance_attitude_pending = (
+        structured_stance_attitude if structured_stance_attitude is not None
+        else any(mark in (user_text or "") for mark in ATTITUDE_MARKS)
+    )
 
     # 改口否定写入（前移结构化检测；有结构时本轮不必再扫 COMMIT_DENY_MARKS）：
     # 1) 上游 kwarg／同族结构化；2) early stance 守诺结构（与 arbitrate 置
@@ -334,6 +341,7 @@ def turn(
     # 改口否定／非 S3 drive flags 只服务本轮 drive：回合末清，不漏到下一轮
     _STORE.set_commitment_deny_pending(False)
     _STORE.set_drive_greet_pending(False)
+    _STORE.context.stance_attitude_pending = False
     _STORE.context.identity_ask_awaiting_answer = _STORE.context.drive_identity_ask_pending
     _STORE.set_drive_identity_ask_pending(False)
     _STORE.context.drive_identity_answer_pending = False
