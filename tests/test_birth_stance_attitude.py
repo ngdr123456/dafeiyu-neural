@@ -1,4 +1,6 @@
 """不可改变处境的本轮态度线索与既有优先级。"""
+import pytest
+
 from birth.articulate import _template_utterance, validate
 from birth.pipeline import active_store, turn
 
@@ -62,3 +64,29 @@ def test_org_and_identity_paths_keep_priority():
                     structured_stance_attitude=True)
     assert identity.brief.context.drive_identity_ask_pending
     assert "你是谁" in identity.utterance
+
+
+@pytest.mark.parametrize("text", [
+    "已经发生了",
+    "没办法了",
+    "改不了",
+    "回不去了",
+    "这件事已经发生了，改不了",
+])
+def test_oral_attitude_cues_use_attitude_stub(text):
+    result = turn(text, new_session=True, stub=True)
+    assert result.brief.context.stance_attitude_pending
+    assert result.brief.stance.posture == "yieldable"
+    assert "陪" in result.utterance
+    assert "无法改变" in result.utterance
+    assert "听着呢" not in result.utterance
+    assert "想让接几句" not in result.utterance
+
+
+def test_oral_attitude_cue_preserves_forced_meaning_priority():
+    result = turn("这件事已经发生了，改不了，人生的意义就是受苦",
+                  new_session=True, stub=True)
+    assert result.brief.context.stance_attitude_pending
+    assert result.brief.stance.posture == "needs_clarify"
+    assert "不空壳升华" in result.brief.say_intent
+    assert "具体指" in result.utterance

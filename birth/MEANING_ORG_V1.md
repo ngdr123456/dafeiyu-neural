@@ -5,7 +5,7 @@
 
 ## 不可改变处境的态度价值（薄）
 
-`turn(..., structured_stance_attitude=True/False)` 优先采用上游判断；省略时仅用「无法改变／不能改变／改变不了／无可挽回」兜底。`ThinContext.stance_attitude_pending` 只属于本轮，快照传给 stance、仲裁与 stub，回合末清除。态度仍为 `yieldable`，标明可以选择如何面对；承认事实、选择陪伴，不许诺改变处境，不替对方赋予意义。组织冲突、守诺、强加意义的 `needs_clarify` 和身份路径保留原有优先级。线索形状不穷尽，否定或引用也可能误触；上游应提供准确结构。
+`turn(..., structured_stance_attitude=True/False)` 优先采用上游判断；省略时仅用「无法改变／不能改变／改变不了／无可挽回／已经发生了／没办法了／改不了／回不去了」兜底。`ThinContext.stance_attitude_pending` 只属于本轮，快照传给 stance、仲裁与 stub，回合末清除。态度仍为 `yieldable`，标明可以选择如何面对；承认事实、选择陪伴，不许诺改变处境，不替对方赋予意义。组织冲突、守诺、强加意义的 `needs_clarify` 和身份路径保留原有优先级。线索形状不穷尽，否定或引用也可能误触；上游应提供准确结构。
 
 ## 出处
 - 意义（Stance）：优先《活出生命的意义》——可交 vs 不可交；态度价值（改不了处境时仍能选怎么接）；禁止空壳升华。外补：同场承诺一致性（说出去的话要守）。

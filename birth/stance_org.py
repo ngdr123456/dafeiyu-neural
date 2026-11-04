@@ -64,7 +64,10 @@ SUBLIME_MARKS = (
 )
 
 # 仅作无上游结构时的薄兜底；不是对所有无法改变处境的分类。
-ATTITUDE_MARKS = ("无法改变", "不能改变", "改变不了", "无可挽回")
+ATTITUDE_MARKS = (
+    "无法改变", "不能改变", "改变不了", "无可挽回",
+    "已经发生了", "没办法了", "改不了", "回不去了",
+)
 
 
 def detect_org_conflict(user_text: str) -> list[str]:
