@@ -34,6 +34,7 @@
 
 ## 仲裁衔接（arbitrate.py）
 - org 冲突 → dominant=org（不变）
+- 无 org 冲突且 grain=differentiated 时，仲裁在原主导与约束不变的前提下，say_intent 双写动力人话和承诺／不可交立场／需澄清的约束；承诺在场时复用 commit_hold_with_drive。simple 和 rule 不强制双写。needs_clarify 单独与 pursue 并存不会产生 differentiated，有承诺时才会。
 - 否则 stance.posture==non_negotiable 且因 commitment → dominant=meaning（可与现有 commitment 分支合并）
 - stance.needs_clarify → dominant=meaning；say_intent=不空壳升华、先澄清能讲清的直径
 - 否则回指 / drive 分支保持现体验通道刀

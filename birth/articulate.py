@@ -208,11 +208,17 @@ def _template_utterance(brief: ThoughtBrief) -> str:
         return f"好，我晚点再跟你聊{topic}。"
     # 3) 有承诺＋收束／好奇：读 drive.direction／drive.why，不靠 say_intent 子串选模板
     if getattr(brief, "commit_hold_with_drive", False):
+        if brief.commit_resolve:
+            return "好，那件说好的事已经接上了。眼前这句你想从哪一头接着说？"
+        if brief.stance.posture == "needs_clarify":
+            return "同场说好的事还在。你想接着说的这一点，具体指哪一块？我只说能讲清的部分。"
+        if brief.commit_deny or brief.hold_same_field:
+            return "同场说过的话我不当没说过，也不跟着改口否定。眼前这句你想从哪一头接着说？"
         direction = brief.drive.direction if brief.drive else None
         why = (brief.drive.why if brief.drive else "") or ""
         if direction == "pursue" or "好奇" in why:
             return (
-                "你问的这个正好也勾着我。同场里说好的那句还在；"
+                "同场里说好的那句还在；"
                 "你想先从哪一头往下捋？"
             )
         # 收束：含「喜欢/满足」「不必再追」→ 不继续加码追；drive 不够则薄兜底收束
@@ -226,6 +232,8 @@ def _template_utterance(brief: ThoughtBrief) -> str:
             "人生有没有意义这类大词，我这边没有现成鸡汤。"
             "能讲的只有眼前这句里能讲清的部分，你具体指哪一块？"
         )
+    if brief.org.grain == "differentiated" and brief.stance.posture == "non_negotiable":
+        return "这句我想接着听，也会守住刚才说过的立场，不跟着改口否定。你想从哪一头说起？"
     from .stance_org import stance_holds_same_field
     # 5) 守诺改口：主路径读 Brief.commit_deny／Brief.hold_same_field；
     #    或 posture=non_negotiable 且（stance.hold_same_field／承诺在场）。

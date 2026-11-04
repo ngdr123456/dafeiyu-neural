@@ -165,5 +165,5 @@ class ThoughtBrief:
     commit_deliverable: bool = False
     # 用户话已点到 pending 主题（可检验「接着交付」意图，非仅守诺）
     commit_deliver_intent: bool = False
-    # 有 pending 时本轮 drive 明确收束／好奇：say_intent 双写动力+薄守诺（勿靠中文子串门控）
+    # 承诺与动力并存时双写（含 differentiated）；勿靠中文子串门控。
     commit_hold_with_drive: bool = False

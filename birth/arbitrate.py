@@ -232,6 +232,18 @@ def arbitrate(
         else:
             say_intent = _drive_say_intent(drive)
 
+    # 粒度只读结构字段；保留先前分支的主导和具体约束，不靠人话子串判定。
+    if org.grain == "differentiated" and not conflicts:
+        if context.last_commitments:
+            if not commit_hold_with_drive:
+                say_intent = f"{_drive_say_intent(drive)}；{say_intent}"
+            commit_hold_with_drive = True
+        else:
+            say_intent = (
+                f"{_drive_say_intent(drive)}；"
+                "守住这一轮不可让出的立场，不跟着改口否定"
+            )
+
     return ThoughtBrief(
         dominant=dominant,
         drive=drive,
