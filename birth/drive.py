@@ -571,6 +571,15 @@ def infer_drive(
                 why=f"同场有没兑现的话（{first}），已有要护，这轮不能当没说过",
             )
 
+    # Relational receipt/wait is separate from topic questions and never beats §6.
+    if context.want_seen_pending or context.drive_want_seen_satisfied_pending:
+        if cues.commitments_present:
+            return DriveSignal(direction="guard", salience="mid", why="同场有没兑现的话，先守住承诺")
+        if context.drive_want_seen_satisfied_pending:
+            return DriveSignal(direction="hold", salience="low", why="被看见了｜接住这份回应，先停在这里")
+        if context.drive_want_seen_waiting or is_neutral_filler(text):
+            return DriveSignal(direction="pursue", salience="mid", why="想被看见｜还在等对方回应")
+
     if context.drive_openq_satisfied_pending:
         if cues.commitments_present:
             return DriveSignal(direction="guard", salience="mid", why="同场有没兑现的话，先守住承诺")

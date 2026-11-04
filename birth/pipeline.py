@@ -90,6 +90,9 @@ def turn(
     structured_drive_greet: bool = False,
     structured_drive_hold: bool = False,
     structured_openq_answered: bool | None = None,
+    structured_want_seen: bool | None = None,
+    structured_want_seen_answered: bool | None = None,
+    structured_want_seen_hang: bool | None = None,
     structured_drive_curiosity: bool = False,
     structured_drive_open_topic: bool = False,
     structured_drive_disappoint: bool = False,
@@ -104,6 +107,9 @@ def turn(
 ) -> TurnResult:
     """跑完一轮完整闭环。new_session=True 显式开新场（唯一清空入口）。
 
+    structured_want_seen=True 表示对方已接住，False 表示仍未接住；None 才用极薄口语兜底。
+    structured_want_seen_answered 如有值则覆盖上述判断；structured_want_seen_hang=True
+    标记本轮开口在等对方的看法，False 禁止开口指纹兜底。
     debug 只是让工程师通道外显得更方便（CLI 用它打印 Brief）；管线行为不受影响。
     stub=True 强制模板开口；None 跟随 articulate 全局/环境（默认可走 LLM）。
     structured_commit_deny: 上游结构化 deny Brief-family 标记（如 ThoughtBrief.commit_deny）；
@@ -194,6 +200,23 @@ def turn(
     _STORE.set_drive_identity_ask_pending(structured_drive_identity_ask or is_identity_ask(user_text))
     _STORE.set_drive_hold_pending(False)
     _STORE.context.drive_openq_satisfied_pending = False
+    _STORE.context.drive_want_seen_satisfied_pending = False
+    seen_signal = (structured_want_seen_answered if structured_want_seen_answered is not None
+                   else structured_want_seen)
+    text = (user_text or "").strip()
+    if seen_signal is None:
+        # A deliberately narrow response shape, not generic topic overlap.
+        seen_signal = (len(text) >= 4 and not is_neutral_filler(text)
+                       and not any(q in text for q in ("?", "？"))
+                       and ("我听到你" in text or "我理解你" in text))
+    if _STORE.context.want_seen_pending and seen_signal:
+        _STORE.set_want_seen_pending(False)
+        _STORE.context.drive_want_seen_satisfied_pending = True
+    _STORE.context.drive_want_seen_waiting = bool(
+        _STORE.context.want_seen_pending and
+        (seen_signal is False and (structured_want_seen is not None or structured_want_seen_answered is not None)
+         or is_neutral_filler(user_text))
+    )
     pending_openq = _STORE.snapshot()
     has_hang = bool(pending_openq.curiosity_hang_pending or pending_openq.open_questions)
     answered = has_hang and (
@@ -305,6 +328,14 @@ def turn(
 
     utterance = articulate(brief, stub=stub)
 
+    # Only a concrete opening asking for the other's side creates a wait.
+    opening_hang = structured_want_seen_hang
+    if opening_hang is None:
+        opening_hang = any(mark in (brief.say_intent + utterance)
+                           for mark in ("想听听你的看法", "想听听你怎么看"))
+    if opening_hang and not context.drive_want_seen_satisfied_pending:
+        _STORE.set_want_seen_pending(True)
+
     # 开口拒收回流薄体验（工程师通道）：短标签进 ThinContext；不拼 say_intent；不落盘。
     # 策略：同场累加 articulate_reject_count；本轮曾拒但已出话 → recovered=True（不清 count）。
     reject_tags = take_reject_feedback()
@@ -359,7 +390,8 @@ def turn(
         # 人类可读／旧快照兜底（drive_cues_from_context），本路径不写。
         _STORE.set_curiosity_hang_pending(True)
         _STORE.append_open_question(_clip(user_text))
-    elif not (context.open_questions and is_neutral_filler(user_text)):
+    elif ("想被看见｜" not in (drive.why or "")
+          and not (context.open_questions and is_neutral_filler(user_text))):
         open_q = extract_open_question(utterance)
         if open_q:
             _STORE.append_open_question(open_q)
@@ -376,6 +408,8 @@ def turn(
     _STORE.context.identity_answer_text = ""
     _STORE.set_drive_hold_pending(False)
     _STORE.context.drive_openq_satisfied_pending = False
+    _STORE.context.drive_want_seen_satisfied_pending = False
+    _STORE.context.drive_want_seen_waiting = False
     _STORE.set_drive_open_topic_pending(False)
     _STORE.set_drive_curiosity_pending(False)
     _STORE.set_drive_disappoint_pending(False)

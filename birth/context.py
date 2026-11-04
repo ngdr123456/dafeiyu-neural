@@ -53,6 +53,9 @@ class ThinContextStore:
             stance_necessary_pain_pending=ctx.stance_necessary_pain_pending,
             stance_self_torture_pending=ctx.stance_self_torture_pending,
             curiosity_hang_pending=ctx.curiosity_hang_pending,
+            want_seen_pending=ctx.want_seen_pending,
+            drive_want_seen_satisfied_pending=ctx.drive_want_seen_satisfied_pending,
+            drive_want_seen_waiting=ctx.drive_want_seen_waiting,
             commitment_deny_pending=ctx.commitment_deny_pending,
             drive_greet_pending=ctx.drive_greet_pending,
             drive_hold_pending=ctx.drive_hold_pending,
@@ -105,6 +108,10 @@ class ThinContextStore:
     def append_open_question(self, question: str) -> None:
         """动力层留下的悬而未决，供后续轮次捡起。"""
         self._append_unique(self._context.open_questions, question)
+
+    def set_want_seen_pending(self, pending: bool) -> None:
+        """Set or clear the separate cross-turn relational wait."""
+        self._context.want_seen_pending = pending
 
     def set_curiosity_hang_pending(self, pending: bool) -> None:
         """pipeline 显式标记好奇挂起（读 Brief.openq_curiosity_hang）。

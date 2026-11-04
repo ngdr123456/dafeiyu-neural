@@ -267,6 +267,10 @@ def _template_utterance(brief: ThoughtBrief) -> str:
     #    say_intent 中文子串仅无结构时兜底。
     drive = brief.drive
     why = (drive.why if drive else "") or ""
+    if brief.dominant == "drive" and "想被看见｜" in why:
+        return "我也想听听你怎么看，不急。"
+    if brief.dominant == "drive" and "被看见了｜" in why:
+        return "嗯，你的回应我收到了。"
     if (brief.context.drive_openq_satisfied_pending and drive
             and drive.direction == "hold"):
         return "嗯，接到了。我们先停在这里。"
@@ -573,6 +577,8 @@ def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
         # 悬问内部标记
         "openq_resolve", "openq_curiosity_hang", "openq_clear",
         "curiosity_hang_pending", "commitment_deny_pending",
+        "want_seen_pending", "structured_want_seen", "structured_want_seen_hang",
+        "structured_want_seen_answered", "drive_want_seen_satisfied_pending", "drive_want_seen_waiting",
         "drive_openq_satisfied_pending", "structured_openq_answered",
         # 动力内部 flag／旁路
         "drive_greet_pending", "drive_hold_pending", "drive_curiosity_pending",

@@ -94,6 +94,9 @@ class ThinContext:
     stance_self_torture_pending: bool = False
     # 结构化：同场好奇挂起仍 pending（pipeline 写；drive 主路径读；勿靠「待接的话头：」前缀）
     curiosity_hang_pending: bool = False
+    want_seen_pending: bool = False
+    drive_want_seen_satisfied_pending: bool = False
+    drive_want_seen_waiting: bool = False
     # 结构化：本轮用户改口／否认同场承诺（pipeline／上游写；drive S2 主路径读；勿主靠 _denies_commitment 词表）
     commitment_deny_pending: bool = False
     # 结构化：本轮招呼 hold（pipeline／上游写；drive 非 S3 主路径读；勿主靠 GREETINGS 词表）
