@@ -19,6 +19,7 @@ from .commit_extract import (
     structured_deny_from_stance,
 )
 from .openq_extract import (
+    answered_open_question,
     extract_open_question,
     should_clear_open_questions,
     should_resolve_open_question,
@@ -28,6 +29,7 @@ from .drive import (
     infer_drive,
     should_set_drive_callback_pending,
     is_identity_ask,
+    is_neutral_filler,
     identity_self_introduction,
     should_set_drive_curiosity_pending,
     should_set_drive_disappoint_pending,
@@ -87,6 +89,7 @@ def turn(
     structured_commit_deny: bool = False,
     structured_drive_greet: bool = False,
     structured_drive_hold: bool = False,
+    structured_openq_answered: bool | None = None,
     structured_drive_curiosity: bool = False,
     structured_drive_open_topic: bool = False,
     structured_drive_disappoint: bool = False,
@@ -190,6 +193,19 @@ def turn(
     _STORE.context.drive_identity_answer_pending = bool(answer)
     _STORE.set_drive_identity_ask_pending(structured_drive_identity_ask or is_identity_ask(user_text))
     _STORE.set_drive_hold_pending(False)
+    _STORE.context.drive_openq_satisfied_pending = False
+    pending_openq = _STORE.snapshot()
+    has_hang = bool(pending_openq.curiosity_hang_pending or pending_openq.open_questions)
+    answered = has_hang and (
+        structured_openq_answered if structured_openq_answered is not None
+        else answered_open_question(user_text, pending_openq.open_questions)
+    )
+    if answered:
+        if pending_openq.open_questions:
+            _STORE.resolve_open_question()
+        else:
+            _STORE.set_curiosity_hang_pending(False)
+        _STORE.context.drive_openq_satisfied_pending = True
     _STORE.set_drive_open_topic_pending(False)
     _STORE.set_drive_curiosity_pending(False)
     _STORE.set_drive_disappoint_pending(False)
@@ -343,7 +359,7 @@ def turn(
         # 人类可读／旧快照兜底（drive_cues_from_context），本路径不写。
         _STORE.set_curiosity_hang_pending(True)
         _STORE.append_open_question(_clip(user_text))
-    else:
+    elif not (context.open_questions and is_neutral_filler(user_text)):
         open_q = extract_open_question(utterance)
         if open_q:
             _STORE.append_open_question(open_q)
@@ -359,6 +375,7 @@ def turn(
     _STORE.context.drive_identity_answer_pending = False
     _STORE.context.identity_answer_text = ""
     _STORE.set_drive_hold_pending(False)
+    _STORE.context.drive_openq_satisfied_pending = False
     _STORE.set_drive_open_topic_pending(False)
     _STORE.set_drive_curiosity_pending(False)
     _STORE.set_drive_disappoint_pending(False)

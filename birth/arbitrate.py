@@ -37,6 +37,8 @@ from .types import (
 
 def _drive_say_intent(drive: DriveSignal) -> str:
     why = drive.why or ""
+    if "悬问被接住|" in why:
+        return "接住对方给出的回答，稳住这一轮，不再追问同一个悬问"
     # DRIVE_V1：按 why 形状分流（开口人话，不上台播报追守停）
     if "喜欢/满足" in why or "不必再追" in why:
         return "对方示意够了或先收束，稳住、不继续加码追"
@@ -186,10 +188,12 @@ def arbitrate(
         dominant = "meaning"
         say_intent = "承认对方说的处境无法改变；不许诺改变它，选择在此陪对方一起面对，不替对方赋予意义"
     elif context.open_questions and is_neutral_filler(user_text):
-        # filler + 确有悬问：短暂 meaning 捡一次；结构化标记供 pipeline resolve
+        # filler + 确有悬问：短暂接话，但不当作用户已经回答。
         dominant = "meaning"
-        openq_resolve = True
-        say_intent = "就着眼前这句把同场悬着的那一点接完，不拖到下一轮"
+        say_intent = "先接住这声回应，悬问仍留着，不把它当作已经回答"
+    elif context.drive_openq_satisfied_pending and drive.direction == "hold":
+        dominant = "drive"
+        say_intent = _drive_say_intent(drive)
     elif bool(getattr(context, "drive_prior_press_pending", False)) or (
         "上场承诺｜" in ((drive.why or "") if drive else "")
     ):
@@ -218,7 +222,7 @@ def arbitrate(
         )
     else:
         dominant = "drive"
-        if is_session_backref(user_text, context):
+        if is_session_backref(user_text, context) and not context.drive_openq_satisfied_pending:
             digest = "；".join(recent_facts(context, 3))
             say_intent = (
                 "接住对方对同场刚才话题的回指，用本场已有痕迹接话，"

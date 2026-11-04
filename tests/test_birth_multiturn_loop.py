@@ -51,6 +51,8 @@ _ENUM_LEAKS = (
     "commitment_deny_pending",
     "drive_greet_pending",
     "drive_hold_pending",
+    "drive_openq_satisfied_pending",
+    "structured_openq_answered",
     "drive_curiosity_pending",
     "drive_open_topic_pending",
     "drive_disappoint_pending",
@@ -91,6 +93,7 @@ _ENUM_LEAKS = (
 
 # 假绿风险（交付报告）：pytest 全绿本身不算过闸
 FALSE_GREEN_RISKS = """
+- 悬问回答：优先 structured_openq_answered=True/False，缺省才做首条悬问的中文相邻双字／英文整词重叠；非 filler、非改口否定、非开题／放下、无问号且至少四字符。重叠并不证明语义上真正回答，可能误判复述；代词、同义改写、短答与后续悬问可能漏判。显式 True 依赖上游准确性。无悬问不触发；有同场承诺只消解悬问并走 guard，不产生满足 hold。旧 filler 短暂接话但不再自动 resolve。
 - 必要痛苦／自虐加戏：口语兜底只有各三条，其他表达会漏；否定或引用也可能误命中。结构化输入须由上游准确判断；固定 stub 与 LLM 是否贴合处境仍需人工评估。
 - 态度价值：固定线索不穷尽处境表达，子串也可能误判（如否定或引用）；上游需准确提供 structured_stance_attitude，显式 False 可覆盖兜底。stub 固定句及 LLM 的具体陪伴质量、事实贴合和避免鸡汤仍需人工评估。
 身份回应遇同场未兑现承诺时 §6 guard 优先，可能不能当轮确认自我介绍。

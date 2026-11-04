@@ -192,18 +192,16 @@ def test_detect_org_conflict_reports_probes():
 
 # -- 5. 悬问要接完/放下，不得永远 meaning 占领（抽检失败点 2） --------------
 
-def test_filler_pickup_resolves_open_question():
+def test_filler_pickup_keeps_open_question_until_answered():
     turn("为什么月亮老跟着人走？", new_session=True)
     assert active_store().pending_questions()  # 好奇挂起一条
 
     # filler + 悬问：短暂 meaning 捡一次
     r1 = turn("嗯")
     assert r1.brief.dominant == "meaning"
-    # 说过就接完：不再留着长期占领下一轮
-    assert active_store().pending_questions() == []
-
-    # 悬问已清：不再卡「先把悬着的捋完」
-    r2 = turn("嗯")
+    assert active_store().pending_questions()
+    r2 = turn("月亮离我们很远", stub=True)
+    assert not active_store().pending_questions()
     assert r2.brief.dominant != "meaning"
     assert "先把" not in r2.brief.say_intent
 
@@ -1194,4 +1192,3 @@ def test_tampered_say_intent_backref_via_callback_flag():
     out = _template_utterance(brief)
     assert "星空" in out, out
     assert "记得" in out, out
-

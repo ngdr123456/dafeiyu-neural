@@ -571,6 +571,11 @@ def infer_drive(
                 why=f"同场有没兑现的话（{first}），已有要护，这轮不能当没说过",
             )
 
+    if context.drive_openq_satisfied_pending:
+        if cues.commitments_present:
+            return DriveSignal(direction="guard", salience="mid", why="同场有没兑现的话，先守住承诺")
+        return DriveSignal(direction="hold", salience="low", why="悬问被接住|喜欢/满足侧到了，不必再追")
+
     # S3) 好奇挂起（读 ThinContext flag，「待接的话头：」前缀仅兜底）+ filler → 适时捡起悬问
     if cues.curiosity_hang_pending and context.open_questions:
         if is_neutral_filler(text):

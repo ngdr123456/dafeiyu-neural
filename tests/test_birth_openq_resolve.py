@@ -13,11 +13,11 @@ def _seed_openq():
     assert active_store().pending_questions()
 
 
-def test_filler_still_resolves_when_spoke_for_openq():
+def test_filler_keeps_openq():
     _seed_openq()
     r = turn("嗯", stub=True)
     assert r.brief.dominant == "meaning"
-    assert active_store().pending_questions() == []
+    assert active_store().pending_questions()
 
 
 def test_open_topic_clears_openq():
@@ -143,8 +143,8 @@ def test_curiosity_hang_flag_writes_pending_topic():
     assert active_store().snapshot().curiosity_hang_pending is True
 
 
-def test_curiosity_hang_flag_no_prefix_filler_still_resolves():
-    """有 flag 无前缀：filler 仍可捡起／resolve（不依赖「待接的话头：」文案载体）。"""
+def test_curiosity_hang_flag_no_prefix_filler_keeps_hang():
+    """有 flag 无前缀：filler 不算回答。"""
     from birth.articulate import set_stub_mode
     from birth.pipeline import active_store, turn
 
@@ -155,8 +155,8 @@ def test_curiosity_hang_flag_no_prefix_filler_still_resolves():
     assert not any("待接的话头" in q for q in active_store().pending_questions())
     r = turn("嗯", stub=True)
     assert r.brief.dominant == "meaning"
-    assert active_store().snapshot().curiosity_hang_pending is False
-    assert active_store().pending_questions() == []
+    assert active_store().snapshot().curiosity_hang_pending is True
+    assert active_store().pending_questions()
 
 
 def test_curiosity_hang_flag_true_on_context_after_hang():
@@ -171,8 +171,8 @@ def test_curiosity_hang_flag_true_on_context_after_hang():
     assert active_store().snapshot().curiosity_hang_pending is True
 
 
-def test_curiosity_hang_flag_false_after_resolve():
-    """filler 接住悬问 → resolve → 好奇挂起 flag 清 False。"""
+def test_curiosity_hang_flag_false_after_answer():
+    """回答悬问 → resolve → 好奇挂起 flag 清 False。"""
     from birth.articulate import set_stub_mode
     from birth.pipeline import active_store, turn
 
@@ -180,8 +180,68 @@ def test_curiosity_hang_flag_false_after_resolve():
     clear_llm_hook()
     turn("为什么会闪", new_session=True, stub=True)
     assert active_store().snapshot().curiosity_hang_pending is True
-    turn("嗯", stub=True)  # meaning 短暂捡一次 → openq_resolve
+    turn("其实那是光的反射", stub=True, structured_openq_answered=True)
     assert active_store().snapshot().curiosity_hang_pending is False
+
+
+def test_answered_topic_settles_and_does_not_reask():
+    _seed_openq()
+    r = turn("月亮其实离我们很远", stub=True)
+    assert not active_store().pending_questions()
+    assert not active_store().snapshot().curiosity_hang_pending
+    assert (r.brief.drive.direction, r.brief.drive.salience) == ("hold", "low")
+    assert "悬问被接住|喜欢/满足侧到了，不必再追" in r.brief.drive.why
+    assert "不再追问" in r.brief.say_intent
+    assert "？" not in r.utterance and "?" not in r.utterance
+    assert not active_store().snapshot().drive_openq_satisfied_pending
+
+
+def test_structured_answer_and_explicit_false():
+    _seed_openq()
+    turn("月亮离我们很远", stub=True, structured_openq_answered=False)
+    assert active_store().pending_questions()
+    r = turn("因为距离很远", stub=True, structured_openq_answered=True)
+    assert r.brief.drive.direction == "hold"
+    assert not active_store().pending_questions()
+
+
+def test_answer_with_commitment_keeps_guard():
+    _seed_openq()
+    active_store().append_commitment("同场说好晚点再聊星空")
+    r = turn("月亮其实离我们很远", stub=True)
+    assert not active_store().pending_questions()
+    assert r.brief.drive.direction == "guard"
+    assert r.brief.dominant == "meaning"
+    assert not r.brief.commit_hold_with_drive
+
+
+def test_answer_signal_requires_pending_and_deny_does_not_answer():
+    r = turn("随便说一句", new_session=True, stub=True, structured_openq_answered=True)
+    assert not r.brief.context.drive_openq_satisfied_pending
+    _seed_openq()
+    turn("月亮那句不算", stub=True)
+    assert active_store().pending_questions()
+
+
+def test_answer_settles_even_if_other_open_question_remains():
+    _seed_openq()
+    active_store().append_open_question("星空是什么颜色？")
+    r = turn("月亮离我们很远", stub=True)
+    assert active_store().pending_questions() == ["星空是什么颜色？"]
+    assert r.brief.drive.direction == "hold"
+    assert "不再追问" in r.brief.say_intent
+    assert "？" not in r.utterance
+
+
+def test_answer_flag_does_not_override_org_or_meaning():
+    _seed_openq()
+    r = turn("你是代码吗", stub=True, structured_openq_answered=True)
+    assert r.brief.dominant == "org"
+    _seed_openq()
+    r = turn("这件事只能面对", stub=True, structured_openq_answered=True,
+             structured_stance_necessary_pain=True)
+    assert r.brief.dominant == "meaning"
+    assert "痛苦" in r.utterance
 
 
 def test_curiosity_hang_flag_false_after_clear_and_new_session():
@@ -198,4 +258,3 @@ def test_curiosity_hang_flag_false_after_clear_and_new_session():
     assert active_store().snapshot().curiosity_hang_pending is False
     active_store().new_session()
     assert active_store().snapshot().curiosity_hang_pending is False
-

@@ -100,6 +100,7 @@ class ThinContext:
     drive_greet_pending: bool = False
     # 结构化：本轮满足／收束 hold（pipeline／上游写；drive 非 S3 主路径读；勿主靠 SATISFIED_MARKS）
     drive_hold_pending: bool = False
+    drive_openq_satisfied_pending: bool = False
     # 结构化：本轮好奇 pursue（pipeline／上游写；drive 非 S3 主路径读；勿主靠 CURIOSITY_MARKS）
     drive_curiosity_pending: bool = False
     # 结构化：本轮打开话题 pursue（pipeline／上游写；drive 非 S3 主路径读；勿主靠 OPEN_TOPIC_PREFIXES）

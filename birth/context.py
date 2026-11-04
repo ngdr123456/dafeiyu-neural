@@ -56,6 +56,7 @@ class ThinContextStore:
             commitment_deny_pending=ctx.commitment_deny_pending,
             drive_greet_pending=ctx.drive_greet_pending,
             drive_hold_pending=ctx.drive_hold_pending,
+            drive_openq_satisfied_pending=ctx.drive_openq_satisfied_pending,
             drive_curiosity_pending=ctx.drive_curiosity_pending,
             drive_open_topic_pending=ctx.drive_open_topic_pending,
             drive_disappoint_pending=ctx.drive_disappoint_pending,
