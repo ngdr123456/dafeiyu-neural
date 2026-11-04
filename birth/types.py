@@ -113,7 +113,7 @@ class ThinContext:
     # 工程师通道：强制动力中性 hold（pipeline／env／kwarg；非出生默认；默认 False）
     drive_bypass: bool = False
     # 工程师通道：开口拒收回流（同场累加；不拼 say_intent；不落盘跨场）
-    # articulate_reject_count：同场 LLM／hook 草稿被 validate／_accept_draft 拒的次数
+    # articulate_reject_count：同场 LLM／hook 被 validate／_accept_draft 拒，或空／抛错落入 stub 的次数
     articulate_reject_count: int = 0
     # last_reject_reasons：短标签／枚举码（非原文灾难句）；容量截断
     last_reject_reasons: List[str] = field(default_factory=list)

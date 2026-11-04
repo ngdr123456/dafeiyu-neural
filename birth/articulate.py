@@ -23,6 +23,10 @@ _LAST_SOURCE: str = "stub"  # deepseek|opencode|hook|stub|stub_fallback|reject_s
 # 本轮 articulate() 调用内被拒草稿的短标签（pipeline 取走写入 ThinContext；不存原文）
 _TURN_REJECT_TAGS: list[str] = []
 
+# 本轮后端空／抛错痕迹：仅在落入 stub 前落成短标签；成功开口不写入
+# empty_backend＝generate 空／None；llm_error＝generate 抛错（不存异常全文）
+_BACKEND_FAIL_KIND: str = ""
+
 _FORCE_STUB: bool = os.environ.get("BIRTH_ARTICULATE", "").strip().lower() in {
     "stub",
     "template",
@@ -502,7 +506,7 @@ _LAST_BACKEND: str = ""  # deepseek|opencode|hook（成功开口时写入）
 
 def _accept_draft(brief: ThoughtBrief, draft: Optional[str]) -> Optional[str]:
     if not isinstance(draft, str) or not draft.strip():
-        # 空稿不记拒收（后端失败／无输出 ≠ validate 拒）
+        # 空稿此处不记：级联可能后续成功。落入 stub 前由 articulate 记 empty_backend／llm_error。
         return None
     draft = draft.strip()
     reasons = validate(brief, draft)
@@ -522,6 +526,27 @@ def _accept_draft(brief: ThoughtBrief, draft: Optional[str]) -> Optional[str]:
     return draft
 
 
+def _mark_backend_fail(kind: str) -> None:
+    """记录本轮后端失败种类；llm_error 优先于 empty_backend。成功开口前不落 tags。"""
+    global _BACKEND_FAIL_KIND
+    k = (kind or "").strip()
+    if k == "llm_error" or not _BACKEND_FAIL_KIND:
+        _BACKEND_FAIL_KIND = k or "empty_backend"
+
+
+def _call_generate(generate, brief: ThoughtBrief) -> Optional[str]:
+    """调用 generate；空／None 标 empty_backend；抛错标 llm_error（不存异常全文）。"""
+    try:
+        draft = generate(brief)
+    except Exception:
+        _mark_backend_fail("llm_error")
+        return None
+    if not isinstance(draft, str) or not draft.strip():
+        _mark_backend_fail("empty_backend")
+        return None
+    return draft
+
+
 def _try_builtin_cascade(brief: ThoughtBrief) -> Optional[str]:
     """有密钥 → DeepSeek；失败 → OpenCode；都失败 → None。"""
     global _LAST_BACKEND
@@ -533,7 +558,7 @@ def _try_builtin_cascade(brief: ThoughtBrief) -> Optional[str]:
         ds_available = None  # type: ignore
         ds_generate = None  # type: ignore
     if ds_available is not None and ds_available():
-        accepted = _accept_draft(brief, ds_generate(brief))
+        accepted = _accept_draft(brief, _call_generate(ds_generate, brief))
         if accepted:
             _LAST_BACKEND = "deepseek"
             return accepted
@@ -541,8 +566,9 @@ def _try_builtin_cascade(brief: ThoughtBrief) -> Optional[str]:
     try:
         from .llm_opencode import generate_utterance as oc_generate
     except Exception:
+        _mark_backend_fail("empty_backend")
         return None
-    accepted = _accept_draft(brief, oc_generate(brief))
+    accepted = _accept_draft(brief, _call_generate(oc_generate, brief))
     if accepted:
         _LAST_BACKEND = "opencode"
         return accepted
@@ -552,7 +578,7 @@ def _try_builtin_cascade(brief: ThoughtBrief) -> Optional[str]:
 def _try_llm_once(brief: ThoughtBrief) -> Optional[str]:
     global _LAST_BACKEND
     if _LLM_HOOK is not None:
-        accepted = _accept_draft(brief, _LLM_HOOK(brief))
+        accepted = _accept_draft(brief, _call_generate(_LLM_HOOK, brief))
         if accepted:
             _LAST_BACKEND = "hook"
             return accepted
@@ -592,14 +618,18 @@ def _safe_stub(brief: ThoughtBrief) -> str:
 
 def articulate(brief: ThoughtBrief, *, stub: bool | None = None) -> str:
     """brief -> 台上口语。默认 LLM；stub=True 或全局 stub 模式则模板。失败回退 stub。"""
-    global _LAST_SOURCE, _TURN_REJECT_TAGS
+    global _LAST_SOURCE, _TURN_REJECT_TAGS, _BACKEND_FAIL_KIND
     _TURN_REJECT_TAGS = []  # 每轮开口重置；pipeline 在返回后 take_reject_feedback
+    _BACKEND_FAIL_KIND = ""
     use_stub = _FORCE_STUB if stub is None else stub
     if not use_stub:
         spoken = _try_llm(brief)
         if spoken:
             _LAST_SOURCE = _LAST_BACKEND or ("hook" if _LLM_HOOK is not None else "llm")
             return spoken
+        # 落入 stub 前：无 validate 拒收标签时，记空后端／抛错短标签（不拼异常全文）
+        if not _TURN_REJECT_TAGS:
+            _note_reject(_BACKEND_FAIL_KIND or "empty_backend")
         _LAST_SOURCE = "reject_self_id" if _REJECTED_SELF_ID else "stub_fallback"
         return _safe_stub(brief)
 

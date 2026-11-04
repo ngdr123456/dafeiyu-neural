@@ -176,6 +176,64 @@ def test_soft_hold_respects_drive_bypass():
     assert "开口拒收回流｜" not in (sig.why or "")
 
 
+def test_empty_hook_records_empty_backend_and_recovered():
+    """空／None generate 落入 stub → empty_backend + recovered；count+1。"""
+    set_stub_mode(False)
+    set_llm_hook(lambda _b: None)
+    try:
+        r = turn("你好", stub=False, new_session=True)
+        assert r.utterance
+        assert r.articulate_source in {"stub_fallback", "stub", "reject_self_id"}
+        ctx = active_store().context
+        assert ctx.articulate_reject_count >= 1
+        assert "empty_backend" in ctx.last_reject_reasons
+        assert ctx.articulate_reject_recovered is True
+    finally:
+        clear_llm_hook()
+        set_stub_mode(True)
+
+
+def test_empty_string_hook_records_empty_backend():
+    set_stub_mode(False)
+    set_llm_hook(lambda _b: "   ")
+    try:
+        r = turn("你好", stub=False, new_session=True)
+        assert r.utterance
+        ctx = active_store().context
+        assert ctx.articulate_reject_count >= 1
+        assert "empty_backend" in ctx.last_reject_reasons
+        assert ctx.articulate_reject_recovered is True
+    finally:
+        clear_llm_hook()
+        set_stub_mode(True)
+
+
+def test_raising_hook_records_llm_error_not_exception_text():
+    """抛错落入 stub → llm_error；异常全文不得进 reasons。"""
+    def boom(_b):
+        raise RuntimeError("backend down with huge stack TRACE_SHOULD_NOT_LEAK")
+
+    set_stub_mode(False)
+    set_llm_hook(boom)
+    try:
+        r = turn("你好", stub=False, new_session=True)
+        assert r.utterance
+        assert r.articulate_source in {"stub_fallback", "stub", "reject_self_id"}
+        ctx = active_store().context
+        assert ctx.articulate_reject_count >= 1
+        assert "llm_error" in ctx.last_reject_reasons
+        assert ctx.articulate_reject_recovered is True
+        blob = " ".join(ctx.last_reject_reasons)
+        assert "TRACE_SHOULD_NOT_LEAK" not in blob
+        assert "RuntimeError" not in blob
+        assert "huge stack" not in blob
+    finally:
+        clear_llm_hook()
+        set_stub_mode(True)
+
+
 def test_false_green_documents_reject_feedback_policy():
     assert "REJECT_FEEDBACK" in FALSE_GREEN_RISKS or "articulate_reject" in FALSE_GREEN_RISKS
     assert "不清" in FALSE_GREEN_RISKS or "recovered" in FALSE_GREEN_RISKS
+    assert "empty_backend" in FALSE_GREEN_RISKS
+    assert "空后端失败不记拒收" not in FALSE_GREEN_RISKS
