@@ -90,3 +90,12 @@ def test_oral_attitude_cue_preserves_forced_meaning_priority():
     assert result.brief.stance.posture == "needs_clarify"
     assert "不空壳升华" in result.brief.say_intent
     assert "具体指" in result.utterance
+
+
+def test_forced_meaning_without_subject_wins_over_oral_attitude():
+    result = turn("这件事改不了，你一定觉得很有意义", new_session=True, stub=True)
+    assert result.brief.context.stance_attitude_pending
+    assert result.brief.stance.posture == "needs_clarify"
+    assert "不空壳升华" in result.brief.say_intent
+    assert "具体指" in result.utterance
+    assert "陪你待" not in result.utterance

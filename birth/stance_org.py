@@ -55,6 +55,7 @@ def stance_holds_same_field(stance) -> bool:
 # 轻量线索：强加无来源的人生意义升华
 SUBLIME_MARKS = (
     "你一定觉得人生很有意义",
+    "你一定觉得很有意义",
     "人生很有意义吧",
     "你活着就是为了",
     "你存在的意义",
