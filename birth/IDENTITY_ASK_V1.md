@@ -2,6 +2,8 @@
 
 输入侧只识别少量直接询问是否认识用户的句式，也接受上游结构化 cue；pipeline 每轮写入并清除 `drive_identity_ask_pending`。drive 读 flag：有明确的用户自述身份线索时 pursue，否则 hold。模板只复述来自本场或上场 facts 的自述，缺线索时坦言不确定；身份询问使用模板，以避免生成未溯源的身份。
 
+询问后的紧接一轮保留 `identity_ask_awaiting_answer`；明确自述置 `drive_identity_answer_pending`，直接复述本轮原话。新场清空，后续轮消耗等待；同场未兑现承诺时 §6 guard 优先，可能无法当轮确认（见 FALSE_GREEN_RISKS）。
+
 同场有未兑现承诺时仍记录 flag，§6 guard 可优先决定 drive；开口仍回应身份询问。句式和自述线索识别均不穷尽。
 
 识别省略主语的口语问法，例如“知道我是谁吗”“认识我吗”和“记得我吗”。

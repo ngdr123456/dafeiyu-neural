@@ -174,6 +174,9 @@ def _template_utterance(brief: ThoughtBrief) -> str:
         回指：drive_callback_pending／why「回指同场｜本场已有痕迹接」+ facts）；
     say_intent 中文子串仅作无结构时打开话题／收束／空追／回指的兜底。
     """
+    if (getattr(brief.context, "drive_identity_answer_pending", False)
+            and brief.drive and brief.drive.direction == "pursue"):
+        return f"收到，你说『{brief.context.identity_answer_text}』。"
     if getattr(brief.context, "drive_identity_ask_pending", False):
         from .drive import identity_clue
         clue = identity_clue(brief.context)
@@ -557,6 +560,7 @@ def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
         "drive_callback_pending", "drive_bypass",
         "drive_prior_commit_pending", "drive_prior_callback_pending",
         "drive_prior_press_pending", "drive_identity_ask_pending",
+        "identity_ask_awaiting_answer", "drive_identity_answer_pending", "identity_answer_text",
         # 结构类型／上下文薄痕
         "OrgConstraint", "ThinContext", "PriorSessionTrace",
         "facts_this_session", "prior_session",
@@ -747,7 +751,9 @@ def articulate(brief: ThoughtBrief, *, stub: bool | None = None) -> str:
     global _LAST_SOURCE, _TURN_REJECT_TAGS, _BACKEND_FAIL_KIND
     _TURN_REJECT_TAGS = []  # 每轮开口重置；pipeline 在返回后 take_reject_feedback
     _BACKEND_FAIL_KIND = ""
-    if getattr(brief.context, "drive_identity_ask_pending", False):
+    if (getattr(brief.context, "drive_identity_ask_pending", False)
+            or (getattr(brief.context, "drive_identity_answer_pending", False)
+                and brief.drive and brief.drive.direction == "pursue")):
         _LAST_SOURCE = "stub"
         return _safe_stub(brief)
     use_stub = _FORCE_STUB if stub is None else stub

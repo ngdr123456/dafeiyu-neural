@@ -28,6 +28,7 @@ from .drive import (
     infer_drive,
     should_set_drive_callback_pending,
     is_identity_ask,
+    identity_self_introduction,
     should_set_drive_curiosity_pending,
     should_set_drive_disappoint_pending,
     should_set_drive_empty_stage_pending,
@@ -167,6 +168,9 @@ def turn(
     # 非 S3：招呼／收束／打开话题／好奇／失望／空台／话题延续／回指 写入
     # （有结构 cue 不扫词表；真无结构时各 MARKS／facts 兜底）
     _STORE.set_drive_greet_pending(False)
+    answer = identity_self_introduction(user_text) if _STORE.context.identity_ask_awaiting_answer else ""
+    _STORE.context.identity_answer_text = answer
+    _STORE.context.drive_identity_answer_pending = bool(answer)
     _STORE.set_drive_identity_ask_pending(structured_drive_identity_ask or is_identity_ask(user_text))
     _STORE.set_drive_hold_pending(False)
     _STORE.set_drive_open_topic_pending(False)
@@ -330,7 +334,10 @@ def turn(
     # 改口否定／非 S3 drive flags 只服务本轮 drive：回合末清，不漏到下一轮
     _STORE.set_commitment_deny_pending(False)
     _STORE.set_drive_greet_pending(False)
+    _STORE.context.identity_ask_awaiting_answer = _STORE.context.drive_identity_ask_pending
     _STORE.set_drive_identity_ask_pending(False)
+    _STORE.context.drive_identity_answer_pending = False
+    _STORE.context.identity_answer_text = ""
     _STORE.set_drive_hold_pending(False)
     _STORE.set_drive_open_topic_pending(False)
     _STORE.set_drive_curiosity_pending(False)

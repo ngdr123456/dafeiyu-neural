@@ -78,3 +78,43 @@ def test_structured_flag_without_matching_words():
     assert result.brief.context.drive_identity_ask_pending
     assert result.brief.drive.direction == "hold"
     assert infer_drive("其他", result.brief.context).direction == "hold"
+
+
+def test_answer_received_in_same_turn():
+    first = turn("你知道我是谁吗？", new_session=True, stub=True)
+    assert first.brief.context.drive_identity_ask_pending
+    result = turn("我叫Mark", stub=True)
+    assert result.brief.context.identity_ask_awaiting_answer
+    assert result.brief.context.drive_identity_answer_pending
+    assert drive_cues_from_context(result.brief.context).drive_identity_answer_pending
+    assert result.brief.drive.direction == "pursue"
+    assert "Mark" in result.utterance
+    assert "你想让接几句" not in result.utterance
+    assert "这句我接" not in result.utterance
+    for flag in ("identity_ask_awaiting_answer", "drive_identity_answer_pending", "identity_answer_text"):
+        assert flag in _ENUM_LEAKS
+        assert validate(result.brief, f"{flag} 真")
+    assert not validate(result.brief, result.utterance)
+    assert not active_store().snapshot().drive_identity_answer_pending
+
+
+def test_answer_requires_immediately_preceding_ask_and_same_session():
+    assert not turn("我叫Mark", new_session=True, stub=True).brief.context.drive_identity_answer_pending
+    turn("你认识我吗", stub=True)
+    turn("嗯", stub=True)
+    assert not turn("我叫Mark", stub=True).brief.context.drive_identity_answer_pending
+    turn("你认识我吗", stub=True)
+    assert not turn("我叫Mark", new_session=True, stub=True).brief.context.drive_identity_answer_pending
+
+
+def test_identity_answer_respects_commitment_guard():
+    turn("你认识我吗", new_session=True, stub=True)
+    active_store().append_commitment("晚点补一句月亮的事")
+    result = turn("我叫Mark", stub=True)
+    assert result.brief.context.drive_identity_answer_pending
+    assert result.brief.drive.direction == "guard"
+
+
+def test_question_is_not_an_introduction():
+    turn("你认识我吗", new_session=True, stub=True)
+    assert not turn("我叫Mark吗？", stub=True).brief.context.drive_identity_answer_pending

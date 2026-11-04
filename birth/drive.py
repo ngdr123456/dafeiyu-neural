@@ -62,6 +62,16 @@ def is_identity_ask(text: str) -> bool:
     ))
 
 
+def identity_self_introduction(text: str) -> str:
+    """Accept a complete explicit self-introduction from this turn."""
+    text = (text or "").strip()
+    if any(mark in text for mark in ("?", "？")):
+        return ""
+    if re.fullmatch(r"(?:我叫|我的名字是|我名叫|我是)[^，。！？；\n]{1,40}[。！]?", text):
+        return text.rstrip("。！")
+    return ""
+
+
 def identity_clue(context: ThinContext) -> str:
     """Return a sourced, explicit self-description, never an assistant turn or a question."""
     prior = context.prior_session
@@ -85,6 +95,7 @@ class DriveCues:
 
     commitments_present: bool = False
     drive_identity_ask_pending: bool = False
+    drive_identity_answer_pending: bool = False
     # 改口否定挂起：主路径读 ThinContext.commitment_deny_pending 结构化布尔
     commitment_deny_pending: bool = False
     open_question_pending: bool = False
@@ -132,6 +143,7 @@ def drive_cues_from_context(context: ThinContext) -> DriveCues:
     return DriveCues(
         commitments_present=bool(context.last_commitments),
         drive_identity_ask_pending=bool(getattr(context, "drive_identity_ask_pending", False)),
+        drive_identity_answer_pending=bool(getattr(context, "drive_identity_answer_pending", False)),
         commitment_deny_pending=bool(
             getattr(context, "commitment_deny_pending", False)
         ),
@@ -536,6 +548,11 @@ def infer_drive(
         if identity_clue(context):
             return DriveSignal(direction="pursue", salience="mid", why="身份询问｜已有对方线索，接着确认")
         return DriveSignal(direction="hold", salience="low", why="身份询问｜没有可识别的对方线索，先听对方介绍")
+
+    if cues.drive_identity_answer_pending:
+        if cues.commitments_present:
+            return DriveSignal(direction="guard", salience="mid", why="同场有没兑现的话，先守住承诺")
+        return DriveSignal(direction="pursue", salience="mid", why="身份回应｜接住对方的自我介绍")
 
     # S2) 承诺在场 + 本轮改口否定 → guard
     # 主路径：读 cues.commitment_deny_pending（ThinContext 结构化布尔，pipeline／上游置位）。
