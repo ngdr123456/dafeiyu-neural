@@ -84,6 +84,7 @@ class ThinContext:
     open_questions: List[str] = field(default_factory=list)
     last_commitments: List[str] = field(default_factory=list)
     facts_this_session: List[str] = field(default_factory=list)
+    drive_identity_ask_pending: bool = False
     # 结构化：同场好奇挂起仍 pending（pipeline 写；drive 主路径读；勿靠「待接的话头：」前缀）
     curiosity_hang_pending: bool = False
     # 结构化：本轮用户改口／否认同场承诺（pipeline／上游写；drive S2 主路径读；勿主靠 _denies_commitment 词表）

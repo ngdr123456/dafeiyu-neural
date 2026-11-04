@@ -53,11 +53,38 @@ DISAPPOINT_MARKS = (
 _EMPTY_STAGE_MARKS = ("嗯，听着", "你想让接几句", "这句我接", "听着呢")
 
 
+def is_identity_ask(text: str) -> bool:
+    """A deliberately small set of direct questions about the user's identity."""
+    text = re.sub(r"\s+", "", text or "")
+    return any(shape in text for shape in (
+        "你知道我是谁", "你认识我吗", "你认识我么", "你记得我是谁",
+        "你知道我是谁吗", "你还记得我吗", "你认得我吗", "你知道我叫什么",
+    ))
+
+
+def identity_clue(context: ThinContext) -> str:
+    """Return a sourced, explicit self-description, never an assistant turn or a question."""
+    prior = context.prior_session
+    facts = list(context.facts_this_session or []) + list(prior.facts if prior else [])
+    for fact in facts:
+        fact = fact.strip()
+        if fact.startswith("台上说："):
+            continue
+        if fact.startswith("用户说："):
+            fact = fact[len("用户说："):].strip()
+        if not fact or any(mark in fact for mark in ("?", "？")):
+            continue
+        if re.match(r"^(?:我叫|我的名字是|我名叫|我是)[^，。！？；\n]{1,40}[。！]?$", fact):
+            return fact.rstrip("。！")
+    return ""
+
+
 @dataclass
 class DriveCues:
     """结构化线索：主路径先读上下文结构，不再先扫输入侧词表。"""
 
     commitments_present: bool = False
+    drive_identity_ask_pending: bool = False
     # 改口否定挂起：主路径读 ThinContext.commitment_deny_pending 结构化布尔
     commitment_deny_pending: bool = False
     open_question_pending: bool = False
@@ -104,6 +131,7 @@ def drive_cues_from_context(context: ThinContext) -> DriveCues:
     )
     return DriveCues(
         commitments_present=bool(context.last_commitments),
+        drive_identity_ask_pending=bool(getattr(context, "drive_identity_ask_pending", False)),
         commitment_deny_pending=bool(
             getattr(context, "commitment_deny_pending", False)
         ),
@@ -501,6 +529,13 @@ def infer_drive(
     # S1) 新场未接上 → 不推
     if not cues.session_ok:
         return DriveSignal(direction=None, salience="low", why="新场未接上，先不推")
+
+    # Identity questions do not enter the neutral-filler path. §6 still wins
+    # when a same-session commitment is present.
+    if cues.drive_identity_ask_pending and not cues.commitments_present:
+        if identity_clue(context):
+            return DriveSignal(direction="pursue", salience="mid", why="身份询问｜已有对方线索，接着确认")
+        return DriveSignal(direction="hold", salience="low", why="身份询问｜没有可识别的对方线索，先听对方介绍")
 
     # S2) 承诺在场 + 本轮改口否定 → guard
     # 主路径：读 cues.commitment_deny_pending（ThinContext 结构化布尔，pipeline／上游置位）。

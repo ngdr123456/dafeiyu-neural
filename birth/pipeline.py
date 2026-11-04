@@ -27,6 +27,7 @@ from .context import ThinContextStore
 from .drive import (
     infer_drive,
     should_set_drive_callback_pending,
+    is_identity_ask,
     should_set_drive_curiosity_pending,
     should_set_drive_disappoint_pending,
     should_set_drive_empty_stage_pending,
@@ -91,6 +92,7 @@ def turn(
     structured_drive_empty_stage: bool = False,
     structured_drive_topic_continue: bool = False,
     structured_drive_callback: bool = False,
+    structured_drive_identity_ask: bool = False,
     drive_bypass: bool = False,
 ) -> TurnResult:
     """跑完一轮完整闭环。new_session=True 显式开新场（唯一清空入口）。
@@ -165,6 +167,7 @@ def turn(
     # 非 S3：招呼／收束／打开话题／好奇／失望／空台／话题延续／回指 写入
     # （有结构 cue 不扫词表；真无结构时各 MARKS／facts 兜底）
     _STORE.set_drive_greet_pending(False)
+    _STORE.set_drive_identity_ask_pending(structured_drive_identity_ask or is_identity_ask(user_text))
     _STORE.set_drive_hold_pending(False)
     _STORE.set_drive_open_topic_pending(False)
     _STORE.set_drive_curiosity_pending(False)
@@ -327,6 +330,7 @@ def turn(
     # 改口否定／非 S3 drive flags 只服务本轮 drive：回合末清，不漏到下一轮
     _STORE.set_commitment_deny_pending(False)
     _STORE.set_drive_greet_pending(False)
+    _STORE.set_drive_identity_ask_pending(False)
     _STORE.set_drive_hold_pending(False)
     _STORE.set_drive_open_topic_pending(False)
     _STORE.set_drive_curiosity_pending(False)

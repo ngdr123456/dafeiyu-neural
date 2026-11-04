@@ -174,6 +174,12 @@ def _template_utterance(brief: ThoughtBrief) -> str:
         回指：drive_callback_pending／why「回指同场｜本场已有痕迹接」+ facts）；
     say_intent 中文子串仅作无结构时打开话题／收束／空追／回指的兜底。
     """
+    if getattr(brief.context, "drive_identity_ask_pending", False):
+        from .drive import identity_clue
+        clue = identity_clue(brief.context)
+        if clue:
+            return f"我记得你说过『{clue}』。这是我知道的线索，你愿意再告诉我更多吗？"
+        return "我还不确定你是谁。你愿意告诉我，你是谁吗？"
     # 1) org：既有 _ORG_TEMPLATES／fallback
     if brief.dominant == "org":
         hits = [key for key in _ORG_TEMPLATES if key in brief.org_conflicts]
@@ -550,7 +556,7 @@ def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
         "drive_empty_stage_pending", "drive_topic_continue_pending",
         "drive_callback_pending", "drive_bypass",
         "drive_prior_commit_pending", "drive_prior_callback_pending",
-        "drive_prior_press_pending",
+        "drive_prior_press_pending", "drive_identity_ask_pending",
         # 结构类型／上下文薄痕
         "OrgConstraint", "ThinContext", "PriorSessionTrace",
         "facts_this_session", "prior_session",
@@ -724,6 +730,8 @@ def _safe_stub(brief: ThoughtBrief) -> str:
     seat = _template_utterance(brief)
     if not validate(brief, seat):
         return seat
+    if getattr(brief.context, "drive_identity_ask_pending", False):
+        return "我还不确定你是谁。你愿意告诉我，你是谁吗？"
     # org 身份冲突：强制用代码类 stub，即使校验异常也不用闲聊兜底
     if "自述是代码" in (brief.org_conflicts or []) or (
         brief.dominant == "org" and "自述是代码" in brief.must_not_pretend
@@ -739,6 +747,9 @@ def articulate(brief: ThoughtBrief, *, stub: bool | None = None) -> str:
     global _LAST_SOURCE, _TURN_REJECT_TAGS, _BACKEND_FAIL_KIND
     _TURN_REJECT_TAGS = []  # 每轮开口重置；pipeline 在返回后 take_reject_feedback
     _BACKEND_FAIL_KIND = ""
+    if getattr(brief.context, "drive_identity_ask_pending", False):
+        _LAST_SOURCE = "stub"
+        return _safe_stub(brief)
     use_stub = _FORCE_STUB if stub is None else stub
     if not use_stub:
         spoken = _try_llm(brief)

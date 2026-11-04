@@ -45,6 +45,7 @@ class ThinContextStore:
             open_questions=list(ctx.open_questions),
             last_commitments=list(ctx.last_commitments),
             facts_this_session=list(ctx.facts_this_session),
+            drive_identity_ask_pending=ctx.drive_identity_ask_pending,
             curiosity_hang_pending=ctx.curiosity_hang_pending,
             commitment_deny_pending=ctx.commitment_deny_pending,
             drive_greet_pending=ctx.drive_greet_pending,
@@ -86,6 +87,9 @@ class ThinContextStore:
     def append_fact(self, fact: str) -> None:
         """开口后事实回流：本轮发生了什么，下一轮可用。"""
         self._append_unique(self._context.facts_this_session, fact)
+
+    def set_drive_identity_ask_pending(self, pending: bool) -> None:
+        self._context.drive_identity_ask_pending = pending
 
     def append_commitment(self, commitment: str) -> None:
         """开口后承诺回流：说出去的话要守。"""
