@@ -6,6 +6,7 @@
   例外：悬问 resolve_open_question／clear_open_questions；承诺
   resolve_commitment／clear_commitments（兑现或明确放下时，只动承诺列表）。
 - 回流入口：append_fact / append_commitment；append_open_question 供动力层挂悬而未决。
+- 开口拒收：record_articulate_rejects／mark_articulate_uttered（同场结构字段；不落盘 JSON）。
 """
 
 from __future__ import annotations
@@ -58,12 +59,17 @@ class ThinContextStore:
             drive_prior_commit_pending=ctx.drive_prior_commit_pending,
             drive_prior_callback_pending=ctx.drive_prior_callback_pending,
             drive_bypass=ctx.drive_bypass,
+            articulate_reject_count=ctx.articulate_reject_count,
+            last_reject_reasons=list(ctx.last_reject_reasons),
+            articulate_reject_recovered=ctx.articulate_reject_recovered,
         )
 
     def new_session(self) -> None:
         """唯一的清空入口：只有显式 new_session 才会清掉同场积累（含好奇挂起 flag）。
 
         跨场 prior_session 由 pipeline 在清场后按需灌入；此处先置空。
+        开口拒收痕迹（articulate_reject_count／last_reject_reasons／recovered）一并清，
+        不持久化到跨场 JSON。
         """
         self._context = ThinContext()
         self._resolved_commitments = []
@@ -245,7 +251,10 @@ class ThinContextStore:
         )
 
     def export_session_trace(self) -> dict:
-        """导出本场薄痕迹字典（供 BirthMemoryStore.append_session）。"""
+        """导出本场薄痕迹字典（供 BirthMemoryStore.append_session）。
+
+        不含 articulate_reject_*／last_reject_reasons（拒收不跨场持久化）。
+        """
         ctx = self._context
         return {
             "facts": list(ctx.facts_this_session),
@@ -253,6 +262,45 @@ class ThinContextStore:
             "commitments_resolved": list(self._resolved_commitments),
             "open_questions": list(ctx.open_questions),
         }
+
+
+    # -- 开口拒收回流（工程师通道；同场；不落盘） ----------------------
+
+    _REJECT_REASON_CAP = 8
+
+    def record_articulate_rejects(self, tags: list[str]) -> None:
+        """LLM／hook 草稿被拒：累加 count，写入短标签（不存原文灾难句）。"""
+        cleaned: list[str] = []
+        for t in tags:
+            s = (t or "").strip()
+            if s and s not in cleaned:
+                cleaned.append(s)
+        if not cleaned:
+            return
+        self._context.articulate_reject_count += len(cleaned)
+        merged = list(self._context.last_reject_reasons)
+        for s in cleaned:
+            if s not in merged:
+                merged.append(s)
+        # 只留最近 N 条
+        if len(merged) > self._REJECT_REASON_CAP:
+            merged = merged[-self._REJECT_REASON_CAP :]
+        self._context.last_reject_reasons = merged
+        # 拒收发生后本轮尚未最终上台
+        self._context.articulate_reject_recovered = False
+
+    def mark_articulate_uttered(self, *, rejected_this_turn: bool) -> None:
+        """本轮最终接受（含 stub 兜底上台）。
+
+        策略选定：不清算 articulate_reject_count（跨轮累加）；
+        若本轮曾拒 → articulate_reject_recovered=True（「本轮曾拒但已出话」）。
+        """
+        if rejected_this_turn:
+            self._context.articulate_reject_recovered = True
+        # 无拒收的干净接受：不改 count；recovered 保持原状（或显式 False 亦可）
+        # 选定：干净接受将 recovered 置 False，避免「上轮 recovered」脏读误导。
+        else:
+            self._context.articulate_reject_recovered = False
 
     def resolved_commitments(self) -> list[str]:
         return list(self._resolved_commitments)

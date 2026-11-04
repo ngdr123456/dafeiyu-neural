@@ -450,6 +450,8 @@ def infer_drive(
     DISAPPOINT_MARKS／_EMPTY_STAGE_MARKS／话题词扫 facts 仅无结构时兜底（不扩词表）。
     S11 回指 pursue 主路径读 drive_callback_pending；须后于 §6（有承诺时不得压过 guard）；
     is_session_backref／BACKREF_MARKS 仅无结构时兜底（不扩词表）。
+    S14 开口拒收回流 soft hold：articulate_reject_count≥2 且 filler、无 commitment_deny、
+    无催答应 → hold/low；why「开口拒收回流｜同场多次」；不扩词表、不改台上话术。
     """
     text = (user_text or "").strip()
     if cues is None:
@@ -592,6 +594,23 @@ def infer_drive(
             salience="low",
             why="上场还有未兑现的话，可作线索，不强制这轮开口提",
         )
+
+    # S14) 开口拒收回流 soft hold（可选读）：同场 reject_count≥2 且无改口否定、
+    # 无催答应 → filler 时 hold/low；why 用结构指纹，不逼台上自述「我被闸了」。
+    # §6／drive_bypass 已在前；不压后续好奇／开话题 MARKS 兜底。
+    reject_n = int(getattr(context, "articulate_reject_count", 0) or 0)
+    if (
+        reject_n >= 2
+        and is_neutral_filler(text)
+        and not bool(getattr(context, "commitment_deny_pending", False))
+    ):
+        from .commit_extract import user_presses_commitment
+        if not user_presses_commitment(text):
+            return DriveSignal(
+                direction="hold",
+                salience="low",
+                why="开口拒收回流｜同场多次",
+            )
 
     # 兜底：无结构信号判定时才扫输入侧 MARKS（GREETINGS/SATISFIED/CURIOSITY/DISAPPOINT/_EMPTY_STAGE）
     # 1) 招呼

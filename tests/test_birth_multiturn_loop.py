@@ -74,6 +74,12 @@ _ENUM_LEAKS = (
     "cannot_fake",
     "articulate_source",
     "stub_fallback",
+    "articulate_reject_count",
+    "last_reject_reasons",
+    "articulate_reject_recovered",
+    "articulate_reject",
+    "reject_count",
+    "开口拒收回流｜",
 )
 
 # 假绿风险（交付报告）：pytest 全绿本身不算过闸
@@ -94,6 +100,7 @@ FALSE_GREEN_RISKS = """
 - 动力工程师旁路（BIRTH_DRIVE_BYPASS／NEUTRAL、turn(drive_bypass=True)、ThinContext.drive_bypass）强制 hold；旁路非听感验收；默认关＝现网一致。
 - CLI REPL：无参进多轮；首轮 new_session=True，/new 清场；默认 LLM，--stub 全程模板。残余：REPL 非听感验收；真 LLM 多轮波动未测；input EOF／中断仅工程师通道。
 - 跨场薄记忆（MEMORY_V1）：本地 JSON（默认 ~/.dafeiyu/birth_memory.json／BIRTH_MEMORY_PATH）；REPL 默认开、`--no-memory` 关、单轮默认关；新场读入 `ThinContext.prior_session`；`drive_prior_commit_pending`（filler soft hold，不强制开口）／`drive_prior_callback_pending`（有痕迹才 pursue）；validate 亲历并入 prior.facts；字段名进漏检。残余：跨场回指输入侧仍用固定 PRIOR_BACKREF_MARKS（上次／上一回…）作线索、放行依据是结构；未声称穷尽一切「上次」同义；容量 N／条数截断策略固定；落盘不含语气／人格；多进程共写同一 JSON 无锁；不上场承诺进同场 last_commitments（§6 不自动跨场 guard）。
+- 开口拒收回流（REJECT_FEEDBACK_V1）：validate／`_accept_draft` 拒收写 ThinContext.`articulate_reject_count`／`last_reject_reasons`（短标签，非原文）／`articulate_reject_recovered`；**选定策略**：同场累加 count，本轮曾拒但已出话（含 stub 兜底）→ recovered=True，**不**清 count；new_session／跨场 JSON 不含拒收痕迹。Drive S14：count≥2 且 filler、无 commitment_deny、无催答应 → hold/low，why「开口拒收回流｜同场多次」；不逼台上自述「我被闸了」；§6／drive_bypass 优先不变。字段名进漏检。残余：短标签映射未声称穷尽一切 validate 文案变体；同轮同标签去重后 count+1（要 ≥2 通常需跨轮或多样标签）；soft hold 仅 filler，不抢招呼／开话题／§6；空后端失败不记拒收；拒收不落盘。
 """
 
 
@@ -511,6 +518,7 @@ def test_false_green_risks_documented():
     assert "must_not_pretend" in FALSE_GREEN_RISKS
     assert "openq_clear" in FALSE_GREEN_RISKS
     assert "say_intent" in FALSE_GREEN_RISKS
+    assert "REJECT_FEEDBACK" in FALSE_GREEN_RISKS or "articulate_reject" in FALSE_GREEN_RISKS
 
 
 def test_stub_main_path_reads_markers_and_posture():

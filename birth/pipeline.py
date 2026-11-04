@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .arbitrate import arbitrate
-from .articulate import articulate, last_articulate_source
+from .articulate import articulate, last_articulate_source, take_reject_feedback
 from .commit_extract import (
     extract_commitment,
     should_resolve_commitment,
@@ -252,6 +252,13 @@ def turn(
                       user_text=user_text)
 
     utterance = articulate(brief, stub=stub)
+
+    # 开口拒收回流薄体验（工程师通道）：短标签进 ThinContext；不拼 say_intent；不落盘。
+    # 策略：同场累加 articulate_reject_count；本轮曾拒但已出话 → recovered=True（不清 count）。
+    reject_tags = take_reject_feedback()
+    if reject_tags:
+        _STORE.record_articulate_rejects(reject_tags)
+    _STORE.mark_articulate_uttered(rejected_this_turn=bool(reject_tags))
 
     # 悬问收放（可检验；对齐承诺宁缺——拿不准不清）：
     # - resolve：读 Brief.openq_resolve（禁止 say_intent 中文子串）；

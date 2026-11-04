@@ -20,6 +20,9 @@ _LLM_HOOK: Optional[Callable[[ThoughtBrief], Optional[str]]] = None
 # 强制 stub：环境变量或 set_stub_mode(True) / CLI --stub
 _LAST_SOURCE: str = "stub"  # deepseek|opencode|hook|stub|stub_fallback|reject_self_id
 
+# 本轮 articulate() 调用内被拒草稿的短标签（pipeline 取走写入 ThinContext；不存原文）
+_TURN_REJECT_TAGS: list[str] = []
+
 _FORCE_STUB: bool = os.environ.get("BIRTH_ARTICULATE", "").strip().lower() in {
     "stub",
     "template",
@@ -52,6 +55,53 @@ def stub_mode() -> bool:
 def last_articulate_source() -> str:
     """上一轮开口来源：deepseek / opencode / hook / stub / stub_fallback / reject_self_id。"""
     return _LAST_SOURCE
+
+
+def _reason_to_tag(reason: str) -> str:
+    """validate／拒收原因 → 短标签（枚举码）；不回写原文灾难句。"""
+    r = (reason or "").strip()
+    if not r:
+        return "reject"
+    if "开口为空" in r:
+        return "empty"
+    if "台下字段" in r:
+        return "understage_leak"
+    if "枚举字面" in r:
+        return "enum_leak"
+    if "自述是代码" in r or "程序/模型产物" in r:
+        return "substrate_self"
+    if "无来源亲历" in r or "装无来源" in r:
+        return "lived_bio"
+    if "长度超出" in r:
+        return "too_long"
+    if "press_commit" in r or "约定形状" in r:
+        return "press_commit_shape"
+    # 截短兜底：只留短标签，勿把长中文原因当用户可见
+    return "reject:" + r[:24]
+
+
+def _note_reject(tags: list[str] | str) -> None:
+    """记入本轮拒收短标签（去重保序）。"""
+    global _TURN_REJECT_TAGS
+    if isinstance(tags, str):
+        tags = [tags]
+    for t in tags:
+        s = (t or "").strip()
+        if s and s not in _TURN_REJECT_TAGS:
+            _TURN_REJECT_TAGS.append(s)
+
+
+def take_reject_feedback() -> list[str]:
+    """取出并清空本轮 articulate 拒收短标签（供 pipeline 回流 ThinContext）。"""
+    global _TURN_REJECT_TAGS
+    out = list(_TURN_REJECT_TAGS)
+    _TURN_REJECT_TAGS = []
+    return out
+
+
+def peek_reject_feedback() -> list[str]:
+    """只读本轮拒收短标签（测试用）。"""
+    return list(_TURN_REJECT_TAGS)
 
 
 # say_intent → 台上人话 的最小模板映射（stub；接入 LLM 后由钩子/OpenCode 覆盖）
@@ -398,6 +448,10 @@ def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
         "birth_memory", "ended_at",
         # 来源／兜底内部标识
         "cannot_fake", "articulate_source", "stub_fallback",
+        # 开口拒收回流内部标识（工程师通道；不得上台）
+        "articulate_reject_count", "last_reject_reasons",
+        "articulate_reject_recovered", "articulate_reject",
+        "reject_count", "开口拒收回流｜",
         # 台下 why／旁路中文指纹（非用户对话禁词）
         "回指同场｜", "想要打开｜", "工程师旁路",
     )
@@ -448,6 +502,7 @@ _LAST_BACKEND: str = ""  # deepseek|opencode|hook（成功开口时写入）
 
 def _accept_draft(brief: ThoughtBrief, draft: Optional[str]) -> Optional[str]:
     if not isinstance(draft, str) or not draft.strip():
+        # 空稿不记拒收（后端失败／无输出 ≠ validate 拒）
         return None
     draft = draft.strip()
     reasons = validate(brief, draft)
@@ -455,12 +510,14 @@ def _accept_draft(brief: ThoughtBrief, draft: Optional[str]) -> Optional[str]:
         global _REJECTED_SELF_ID
         if any("自述是代码" in r or "模型" in r for r in reasons):
             _REJECTED_SELF_ID = True
+        _note_reject([_reason_to_tag(r) for r in reasons])
         return None
     # 闭合约束：仅当 Brief.press_commit（与 PRESS_COMMIT_FLAG 同义）才用 extract 拒收；
     # 禁止只靠 say_intent 中文子串；禁止扩词表、禁止当通用堵嘴；不扩 commit_extract 词表。
     from .commit_extract import PRESS_COMMIT_FLAG, extract_commitment
     if bool(getattr(brief, "press_commit", False)) is PRESS_COMMIT_FLAG:
         if not extract_commitment(draft):
+            _note_reject("press_commit_shape")
             return None
     return draft
 
@@ -535,7 +592,8 @@ def _safe_stub(brief: ThoughtBrief) -> str:
 
 def articulate(brief: ThoughtBrief, *, stub: bool | None = None) -> str:
     """brief -> 台上口语。默认 LLM；stub=True 或全局 stub 模式则模板。失败回退 stub。"""
-    global _LAST_SOURCE
+    global _LAST_SOURCE, _TURN_REJECT_TAGS
+    _TURN_REJECT_TAGS = []  # 每轮开口重置；pipeline 在返回后 take_reject_feedback
     use_stub = _FORCE_STUB if stub is None else stub
     if not use_stub:
         spoken = _try_llm(brief)

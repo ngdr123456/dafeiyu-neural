@@ -112,6 +112,14 @@ class ThinContext:
     drive_prior_callback_pending: bool = False
     # 工程师通道：强制动力中性 hold（pipeline／env／kwarg；非出生默认；默认 False）
     drive_bypass: bool = False
+    # 工程师通道：开口拒收回流（同场累加；不拼 say_intent；不落盘跨场）
+    # articulate_reject_count：同场 LLM／hook 草稿被 validate／_accept_draft 拒的次数
+    articulate_reject_count: int = 0
+    # last_reject_reasons：短标签／枚举码（非原文灾难句）；容量截断
+    last_reject_reasons: List[str] = field(default_factory=list)
+    # 选定策略：本轮曾拒但最终已出话（含 stub 兜底）→ True；不清算 articulate_reject_count
+    # （跨轮累加供 soft hold）；new_session／/new 清。另一选项「接受后清 count」未采用。
+    articulate_reject_recovered: bool = False
 
 
 @dataclass
