@@ -19,6 +19,7 @@ from __future__ import annotations
 from .drive import _extract_open_topic, is_neutral_filler
 from .commit_extract import (
     _pending_topic_tokens,
+    topic_from_pending_commitment,
     user_marks_commitment_done,
     user_presses_commitment,
 )
@@ -176,6 +177,24 @@ def arbitrate(
         dominant = "meaning"
         openq_resolve = True
         say_intent = "就着眼前这句把同场悬着的那一点接完，不拖到下一轮"
+    elif bool(getattr(context, "drive_prior_press_pending", False)) or (
+        "上场承诺｜" in ((drive.why or "") if drive else "")
+    ):
+        # 上场未兑现被催：复用 press_commit；承诺文案取自 prior.commitments_pending
+        # （不拼进 say_intent 当唯一闸；不并进 last_commitments）
+        dominant = "drive"
+        press_commit = True
+        prior = getattr(context, "prior_session", None)
+        pending0 = ""
+        if prior is not None and prior.commitments_pending:
+            pending0 = prior.commitments_pending[0]
+        topic = topic_from_pending_commitment(pending0) or pending0 or "这事"
+        # 截短话题，避免整句承诺塞进「」
+        if len(topic) > 12:
+            topic = topic[:12]
+        say_intent = (
+            f"对方催兑现上场未了的约定「{topic}」，应一句可核对的，不空口"
+        )
     elif user_presses_commitment(user_text):
         # 催答应：结构化 press_commit；人话 say_intent 可改口不失效
         dominant = "drive"

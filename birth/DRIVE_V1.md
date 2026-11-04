@@ -38,6 +38,9 @@
 ## 工程师旁路（非出生默认）
 `BIRTH_DRIVE_BYPASS`／`BIRTH_DRIVE_NEUTRAL`（1/true/yes/on）、`turn(..., drive_bypass=True)` 或 `ThinContext.drive_bypass` 可强制动力层固定 `hold`／low（why「工程师旁路」），用于拔掉动力接线看下游；默认关，出生路径零行为变化；旁路非听感验收。
 
+## 上场未兑现被催（S12a；MEMORY）
+用户话压到 `prior_session.commitments_pending`（主题 token 重叠，或跨场回指＋既有催答应／约定壳）→ `drive_prior_press_pending` → pursue／mid；why 指纹「上场承诺｜用户催兑现（…）」。须后于 §6；**不**把 prior pending 并进 `last_commitments`。arbitrate 复用 `press_commit`，stub 话题取自 prior pending。详见 `MEMORY_V1.md`／`COMMIT_FLOW_V1.md`。
+
 ## 开口拒收回流 soft hold（S14；可选读）
 同场 `ThinContext.articulate_reject_count ≥ 2` 且本轮 filler、无 `commitment_deny_pending`、无催答应 → `hold`／low；why 结构指纹「开口拒收回流｜同场多次」。详见 `REJECT_FEEDBACK_V1.md`。不逼台上自述系统受限；§6／drive_bypass 优先；不压后续好奇／开话题 MARKS 兜底。
 

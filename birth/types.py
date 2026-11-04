@@ -110,6 +110,8 @@ class ThinContext:
     drive_prior_commit_pending: bool = False
     # 结构化：本轮跨场回指 pursue（有 prior_session 结构时写入；勿主靠「上次」词表放行）
     drive_prior_callback_pending: bool = False
+    # 结构化：本轮用户催兑现上场未了承诺（有 prior.commitments_pending；§6 仍只看同场）
+    drive_prior_press_pending: bool = False
     # 工程师通道：强制动力中性 hold（pipeline／env／kwarg；非出生默认；默认 False）
     drive_bypass: bool = False
     # 工程师通道：开口拒收回流（同场累加；不拼 say_intent；不落盘跨场）

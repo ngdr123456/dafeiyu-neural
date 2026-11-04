@@ -22,8 +22,9 @@
 |------|------|
 | `drive_prior_commit_pending` | 上场有未兑现承诺 → 可作线索；filler 时 soft hold；**不强制开口提** |
 | `drive_prior_callback_pending` | 用户像在回指上场且 `prior_session` 有痕迹 → pursue（后于 §6） |
+| `drive_prior_press_pending` | 用户话压到上场未兑现承诺 → pursue／mid；复用 `Brief.press_commit`；文案取自 `prior.commitments_pending`；**不**并进同场 `last_commitments`（§6 不自动跨场 guard） |
 
-`drive_bypass` 与 §6（同场 `last_commitments`）优先顺序不变。
+`drive_bypass` 与 §6（同场 `last_commitments`）优先顺序不变。兑现：开口覆盖该 pending → `resolve_prior_commitment` 记入 `commitments_resolved`，避免反复催。
 
 ## 回指与亲历闸
 - 跨场回指 pursue **依据结构**（`prior_session.has_trace()`），不是「上次」关键词本身；无痕迹时说「上次」不构成跨场回指

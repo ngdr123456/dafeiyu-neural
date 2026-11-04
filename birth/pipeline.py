@@ -14,6 +14,7 @@ from .articulate import articulate, last_articulate_source, take_reject_feedback
 from .commit_extract import (
     extract_commitment,
     should_resolve_commitment,
+    utterance_covers_pending_commitment,
     should_set_commitment_deny_pending,
     structured_deny_from_stance,
 )
@@ -33,6 +34,7 @@ from .drive import (
     should_set_drive_hold_pending,
     should_set_drive_open_topic_pending,
     should_set_drive_prior_callback_pending,
+    should_set_drive_prior_press_pending,
     should_set_drive_topic_continue_pending,
 )
 from .memory import active_memory, memory_enabled
@@ -171,6 +173,7 @@ def turn(
     _STORE.set_drive_topic_continue_pending(False)
     _STORE.set_drive_callback_pending(False)
     _STORE.set_drive_prior_callback_pending(False)
+    _STORE.set_drive_prior_press_pending(False)
     # prior_commit 线索：有 prior_session 未兑现则整场可作线索（每轮重申，不靠回合末残留）
     _STORE.set_drive_prior_commit_pending(False)
     prior = _STORE.context.prior_session
@@ -242,6 +245,15 @@ def turn(
         marks_fallback=True,
     ):
         _STORE.set_drive_prior_callback_pending(True)
+    # 上场承诺被催：须有 prior.commitments_pending；同场承诺在场时不置（对齐 §6；
+    # 不把 prior pending 并进 last_commitments）
+    _STORE.set_drive_prior_press_pending(False)
+    if not _commitments_block_s8_s10 and should_set_drive_prior_press_pending(
+        user_text=user_text,
+        context=ctx_for_drive_write,
+        marks_fallback=True,
+    ):
+        _STORE.set_drive_prior_press_pending(True)
     context = _STORE.snapshot()
 
     drive = infer_drive(user_text, context, drive_bypass=drive_bypass or None)
@@ -279,6 +291,17 @@ def turn(
     ):
         _STORE.resolve_commitment()
 
+    # 上场未兑现被催后，开口覆盖该 pending → prior 侧 resolved（不并进 last_commitments）
+    prior_now = context.prior_session
+    if (
+        prior_now is not None
+        and prior_now.commitments_pending
+        and bool(getattr(context, "drive_prior_press_pending", False))
+    ):
+        prior_p0 = prior_now.commitments_pending[0]
+        if utterance_covers_pending_commitment(utterance, prior_p0):
+            _STORE.resolve_prior_commitment(match=prior_p0)
+
     # 开口后回流薄情境：本轮用户的话头 + 台上这句都 clip 进同场事实；
     # 动力层好奇追问入库；台上薄提取承诺/悬问（宁缺毋滥）
     _STORE.append_fact(f"用户说：{_clip(user_text)}")
@@ -312,6 +335,7 @@ def turn(
     _STORE.set_drive_topic_continue_pending(False)
     _STORE.set_drive_callback_pending(False)
     _STORE.set_drive_prior_callback_pending(False)
+    _STORE.set_drive_prior_press_pending(False)
     # drive_prior_commit_pending 下一轮开头按 prior_session 重申，此处清以免脏读
     _STORE.set_drive_prior_commit_pending(False)
     _STORE.set_drive_bypass(False)

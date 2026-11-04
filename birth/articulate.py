@@ -186,6 +186,14 @@ def _template_utterance(brief: ThoughtBrief) -> str:
         topic = ""
         if "「" in brief.say_intent and "」" in brief.say_intent:
             topic = brief.say_intent.split("「", 1)[1].split("」", 1)[0].strip()
+        # 上场催兑现：承诺文案取自 prior.commitments_pending（结构），不单靠 say_intent
+        if not topic or bool(getattr(brief.context, "drive_prior_press_pending", False)):
+            prior = getattr(brief.context, "prior_session", None)
+            if prior is not None and prior.commitments_pending:
+                from .commit_extract import topic_from_pending_commitment
+                prior_topic = topic_from_pending_commitment(prior.commitments_pending[0])
+                if prior_topic:
+                    topic = prior_topic
         if not topic:
             topic = topic_hint_from_facts(brief.context.facts_this_session) or "这事"
         return f"好，我晚点再跟你聊{topic}。"
@@ -542,6 +550,7 @@ def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
         "drive_empty_stage_pending", "drive_topic_continue_pending",
         "drive_callback_pending", "drive_bypass",
         "drive_prior_commit_pending", "drive_prior_callback_pending",
+        "drive_prior_press_pending",
         # 结构类型／上下文薄痕
         "OrgConstraint", "ThinContext", "PriorSessionTrace",
         "facts_this_session", "prior_session",

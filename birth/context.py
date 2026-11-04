@@ -58,6 +58,7 @@ class ThinContextStore:
             prior_session=prior,
             drive_prior_commit_pending=ctx.drive_prior_commit_pending,
             drive_prior_callback_pending=ctx.drive_prior_callback_pending,
+            drive_prior_press_pending=ctx.drive_prior_press_pending,
             drive_bypass=ctx.drive_bypass,
             articulate_reject_count=ctx.articulate_reject_count,
             last_reject_reasons=list(ctx.last_reject_reasons),
@@ -226,6 +227,33 @@ class ThinContextStore:
     def set_drive_prior_callback_pending(self, pending: bool) -> None:
         """pipeline：本轮跨场回指 pursue（须有 prior_session 结构；有同场承诺时不置）。"""
         self._context.drive_prior_callback_pending = pending
+
+    def set_drive_prior_press_pending(self, pending: bool) -> None:
+        """pipeline：本轮催兑现上场未了承诺（须有 prior.commitments_pending；有同场承诺时不置）。"""
+        self._context.drive_prior_press_pending = pending
+
+    def resolve_prior_commitment(self, match: str | None = None) -> str | None:
+        """兑现上场 pending：从 prior_session.commitments_pending 弹出并记入 resolved。
+
+        不并进同场 last_commitments（§6 仍只看同场）。match 若给则按主题覆盖挑一条，
+        否则弹第一条。无 prior／无 pending → None。
+        """
+        prior = self._context.prior_session
+        if prior is None or not prior.commitments_pending:
+            return None
+        done = None
+        if match is None:
+            done = prior.commitments_pending.pop(0)
+        else:
+            from .commit_extract import utterance_covers_pending_commitment
+            for i, p in enumerate(list(prior.commitments_pending)):
+                if p == match or utterance_covers_pending_commitment(match, p):
+                    done = prior.commitments_pending.pop(i)
+                    break
+            if done is None:
+                return None
+        self._append_unique(prior.commitments_resolved, done)
+        return done
 
     def set_prior_session(self, prior: PriorSessionTrace | None) -> None:
         """新场开局灌入上一场薄痕迹；None 表示无痕迹。"""

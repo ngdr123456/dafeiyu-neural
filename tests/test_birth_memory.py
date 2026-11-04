@@ -135,6 +135,7 @@ def test_memory_field_names_must_not_leak_on_stage():
         "PriorSessionTrace 在这",
         "drive_prior_commit_pending 真",
         "drive_prior_callback_pending 真",
+        "drive_prior_press_pending 真",
         "commitments_pending 列表",
         "commitments_resolved 了",
         "birth_memory 文件",
@@ -267,3 +268,89 @@ def test_resolved_commitments_exported(tmp_path: Path):
     trace = store.export_session_trace()
     assert trace["commitments_resolved"] == ["答应A"]
     assert trace["commitments_pending"] == ["答应B"]
+
+
+def test_prior_press_pursue_and_press_commit(tmp_path: Path):
+    """有 prior pending + 催问 → pursue／press_commit；话题取自 pending。"""
+    path = tmp_path / "press.json"
+    configure_memory(enabled=True, path=path)
+    turn("你好", new_session=True, stub=True)
+    active_store().append_commitment("同场说好晚点聊月亮")
+    turn("嗨", new_session=True, stub=True)
+    assert active_store().snapshot().prior_session.commitments_pending
+
+    r = turn("月亮的事呢", stub=True)
+    assert r.brief.drive is not None
+    assert r.brief.drive.direction == "pursue"
+    assert "上场承诺" in (r.brief.drive.why or "")
+    assert r.brief.press_commit is True
+    assert "月亮" in r.utterance
+    # 不并进 last_commitments 触发 §6：仲裁当时同场承诺仍空
+    assert r.brief.context.last_commitments == []
+
+
+def test_prior_press_last_time_promise(tmp_path: Path):
+    """「你上次答应的呢」+ prior pending → prior press。"""
+    path = tmp_path / "press2.json"
+    configure_memory(enabled=True, path=path)
+    turn("你好", new_session=True, stub=True)
+    active_store().append_commitment("同场说好晚点聊月亮")
+    turn("嗨", new_session=True, stub=True)
+
+    r = turn("你上次答应的呢", stub=True)
+    assert r.brief.drive.direction == "pursue"
+    assert "上场承诺" in (r.brief.drive.why or "")
+    assert r.brief.press_commit is True
+
+
+def test_prior_press_no_prior_no_trigger():
+    """无 prior 催「上次」不误触发 prior press／上场承诺 why。"""
+    configure_memory(enabled=False)
+    active_store().new_session()
+    r = turn("你上次答应的呢", new_session=True, stub=True)
+    why = (r.brief.drive.why or "") if r.brief.drive else ""
+    assert "上场承诺" not in why
+    assert not getattr(r.brief.context, "drive_prior_press_pending", False)
+
+
+def test_prior_press_fulfill_resolves_pending(tmp_path: Path):
+    """催问后开口覆盖 pending → prior 侧 resolved，避免反复催。"""
+    path = tmp_path / "resolve.json"
+    configure_memory(enabled=True, path=path)
+    turn("你好", new_session=True, stub=True)
+    active_store().append_commitment("同场说好晚点聊月亮")
+    turn("嗨", new_session=True, stub=True)
+    pending_before = list(active_store().snapshot().prior_session.commitments_pending)
+    assert pending_before
+
+    r = turn("月亮的事呢", stub=True)
+    assert "月亮" in r.utterance
+    prior = active_store().snapshot().prior_session
+    assert prior is not None
+    assert pending_before[0] not in prior.commitments_pending
+    assert pending_before[0] in prior.commitments_resolved
+
+    # 再催不应再走上场承诺 press（pending 已空）
+    r2 = turn("月亮的事呢", stub=True)
+    why2 = (r2.brief.drive.why or "") if r2.brief.drive else ""
+    assert "上场承诺" not in why2
+
+
+def test_prior_press_does_not_merge_into_section6(tmp_path: Path):
+    """同场有 last_commitments 时 §6 guard 仍优先；prior press 不抢。"""
+    prior = PriorSessionTrace(commitments_pending=["上场说好聊月亮"])
+    ctx = ThinContext(
+        last_commitments=["同场答应A"],
+        prior_session=prior,
+        drive_prior_press_pending=True,
+        drive_prior_commit_pending=True,
+    )
+    sig = infer_drive("月亮的事呢", ctx)
+    assert sig.direction == "guard"
+    assert "同场" in sig.why
+
+
+def test_prior_press_field_leak():
+    brief = _brief_with(ThinContext())
+    reasons = validate(brief, "drive_prior_press_pending 真")
+    assert any("漏" in r for r in reasons)

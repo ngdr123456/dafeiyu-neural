@@ -83,6 +83,8 @@ class DriveCues:
     drive_prior_commit_pending: bool = False
     # 结构化：跨场回指 pursue（须有 prior_session 结构）
     drive_prior_callback_pending: bool = False
+    # 结构化：催兑现上场未了承诺 → pursue（须有 prior.commitments_pending；后于 §6）
+    drive_prior_press_pending: bool = False
     session_ok: bool = True
 
 
@@ -132,6 +134,9 @@ def drive_cues_from_context(context: ThinContext) -> DriveCues:
         ),
         drive_prior_callback_pending=bool(
             getattr(context, "drive_prior_callback_pending", False)
+        ),
+        drive_prior_press_pending=bool(
+            getattr(context, "drive_prior_press_pending", False)
         ),
         session_ok=context.session_ok,
     )
@@ -399,6 +404,32 @@ def should_set_drive_prior_callback_pending(
     return is_prior_session_backref((user_text or "").strip(), context)
 
 
+
+def should_set_drive_prior_press_pending(
+    *,
+    prior_press_cue: bool = False,
+    user_text: str = "",
+    context: ThinContext | None = None,
+    marks_fallback: bool = True,
+) -> bool:
+    """主路径读上游结构化 prior_press_cue；仅无结构且允许兜底时才走 user_presses_prior_pending。
+
+    放行／pursue 仍要求 prior_session.commitments_pending 非空；无 pending 时不置 flag。
+    不是禁词闸门，不扩用户对话禁词表，不改台上话术；§6 同场 last_commitments 仍优先。
+    """
+    if bool(prior_press_cue):
+        return True
+    if not marks_fallback:
+        return False
+    if context is None:
+        return False
+    prior = getattr(context, "prior_session", None)
+    if prior is None or not getattr(prior, "commitments_pending", None):
+        return False
+    from .commit_extract import user_presses_prior_pending
+    return user_presses_prior_pending((user_text or "").strip(), prior)
+
+
 _BYPASS_ENV_TRUTHY = frozenset({"1", "true", "yes", "on"})
 
 
@@ -450,6 +481,7 @@ def infer_drive(
     DISAPPOINT_MARKS／_EMPTY_STAGE_MARKS／话题词扫 facts 仅无结构时兜底（不扩词表）。
     S11 回指 pursue 主路径读 drive_callback_pending；须后于 §6（有承诺时不得压过 guard）；
     is_session_backref／BACKREF_MARKS 仅无结构时兜底（不扩词表）。
+    S12a 上场承诺被催 pursue（drive_prior_press_pending；须后于 §6；不并进 last_commitments）。
     S14 开口拒收回流 soft hold：articulate_reject_count≥2 且 filler、无 commitment_deny、
     无催答应 → hold/low；why「开口拒收回流｜同场多次」；不扩词表、不改台上话术。
     """
@@ -578,6 +610,24 @@ def infer_drive(
             why="用户在回指同场刚才的话头，动力要用本场已有痕迹接，不装没发生过",
         )
 
+    # S12a) 上场未兑现承诺被催 → pursue mid（须有 prior.commitments_pending；须后于 §6；
+    # 不把 prior pending 并进 last_commitments；why 指纹标明上场承诺）
+    if cues.drive_prior_press_pending:
+        prior = getattr(context, "prior_session", None)
+        first = ""
+        if prior is not None and prior.commitments_pending:
+            first = prior.commitments_pending[0]
+        why = (
+            f"上场承诺｜用户催兑现（{first}）"
+            if first
+            else "上场承诺｜用户催兑现"
+        )
+        return DriveSignal(
+            direction="pursue",
+            salience="mid",
+            why=why,
+        )
+
     # S12) 跨场回指 → pursue mid（须有 prior_session 结构；须后于 §6；不强制开口提上场承诺）
     if cues.drive_prior_callback_pending:
         return DriveSignal(
@@ -666,6 +716,17 @@ def infer_drive(
             direction="pursue",
             salience="mid",
             why="用户在回指同场刚才的话头，动力要用本场已有痕迹接，不装没发生过",
+        )
+
+    # 5a) 上场承诺被催兜底（无 drive_prior_press_pending 时）
+    from .commit_extract import user_presses_prior_pending
+    prior = getattr(context, "prior_session", None)
+    if prior is not None and prior.commitments_pending and user_presses_prior_pending(text, prior):
+        first = prior.commitments_pending[0]
+        return DriveSignal(
+            direction="pursue",
+            salience="mid",
+            why=f"上场承诺｜用户催兑现（{first}）",
         )
 
     # 5b) 跨场回指兜底（无 drive_prior_callback_pending 时）

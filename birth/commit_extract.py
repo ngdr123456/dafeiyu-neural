@@ -78,6 +78,55 @@ _EXCLUDE_MARKS = (
 )
 
 
+def user_presses_prior_pending(user_text: str, prior) -> bool:
+    """用户话压到上场未兑现承诺（结构闸；不扩禁词堵嘴）。
+
+    命中任一即可（均要求 prior.commitments_pending 非空）：
+    1) 用户话与某条 pending 的主题 token 重叠（结构：pending 文案抠词）；
+    2) 跨场回指线索（既有 PRIOR_BACKREF_MARKS）＋既有催答应线索（user_presses_commitment）；
+    3) 跨场回指＋既有约定壳字面「答应」「说好」（已在 commit 基础设施内，非新禁词表）。
+
+    无 prior／无 pending → False；「上次」 alone 不构成 prior press。
+    """
+    if prior is None:
+        return False
+    pending = list(getattr(prior, "commitments_pending", None) or [])
+    if not pending:
+        return False
+    text = (user_text or "").strip()
+    if not text:
+        return False
+    # 1) 主题重叠
+    for p in pending:
+        toks = _pending_topic_tokens(p)
+        if toks and any(tok in text for tok in toks):
+            return True
+    # 2/3) 跨场回指 + 催答应／约定壳
+    from .session_trace import PRIOR_BACKREF_MARKS
+    if any(m in text for m in PRIOR_BACKREF_MARKS):
+        if user_presses_commitment(text):
+            return True
+        if "答应" in text or "说好" in text:
+            return True
+    return False
+
+
+def topic_from_pending_commitment(commitment: str) -> str:
+    """从 pending 短摘抠可点到的话题（去约定壳）；抠不出则空。"""
+    toks = _pending_topic_tokens(commitment)
+    if not toks:
+        return ""
+    # 去掉同场壳噪声；优先更长、更靠后的 token（中文约定句题眼多在尾）
+    noise = {"同场", "场说", "同场说"}
+    content = [t for t in toks if t not in noise] or list(toks)
+    ranked = sorted(
+        enumerate(content),
+        key=lambda iv: (len(iv[1]), iv[0]),
+        reverse=True,
+    )
+    return ranked[0][1]
+
+
 def user_presses_commitment(user_text: str) -> bool:
     """用户侧催答应／约定（轻量线索）；供仲裁写 say_intent，不是禁词。"""
     text = (user_text or "").strip()

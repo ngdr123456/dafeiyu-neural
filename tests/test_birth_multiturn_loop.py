@@ -60,6 +60,7 @@ _ENUM_LEAKS = (
     "drive_bypass",
     "drive_prior_commit_pending",
     "drive_prior_callback_pending",
+    "drive_prior_press_pending",
     "OrgConstraint",
     "ThinContext",
     "PriorSessionTrace",
@@ -100,7 +101,7 @@ FALSE_GREEN_RISKS = """
 - stance／Org 守诺主路径已改读 ThinContext.commitment_deny_pending（承诺在场＋flag → non_negotiable＋hold_same_field＋stake 字段取值）；Org grain 读结构化 stance.posture／commitments，不扫改口词表；COMMIT_DENY_MARKS 仅无 flag 时兜底（未扩）。写入侧假绿已闭合（early stance 结构前移）。arbitrate／articulate Brief 侧守诺已改读结构：StanceSignal.hold_same_field／Brief.commit_deny／Brief.hold_same_field（stake 中文常量「先守同场说过的话」仅作字段取值／无 bool 时精确相等兜底，不作唯一闸）。残余：stance／drive 无 flag 时层内词表兜底；无 hold_same_field bool 的旧 StanceSignal 仍可靠 stake==常量兜底。
 - 动力工程师旁路（BIRTH_DRIVE_BYPASS／NEUTRAL、turn(drive_bypass=True)、ThinContext.drive_bypass）强制 hold；旁路非听感验收；默认关＝现网一致。
 - CLI REPL：无参进多轮；首轮 new_session=True，/new 清场；默认 LLM，--stub 全程模板。残余：REPL 非听感验收；真 LLM 多轮波动未测；input EOF／中断仅工程师通道。
-- 跨场薄记忆（MEMORY_V1）：本地 JSON（默认 ~/.dafeiyu/birth_memory.json／BIRTH_MEMORY_PATH）；REPL 默认开、`--no-memory` 关、单轮默认关；新场读入 `ThinContext.prior_session`；`drive_prior_commit_pending`（filler soft hold，不强制开口）／`drive_prior_callback_pending`（有痕迹才 pursue）；validate 亲历并入 prior.facts；字段名进漏检。残余：跨场回指输入侧仍用固定 PRIOR_BACKREF_MARKS（上次／上一回…）作线索、放行依据是结构；未声称穷尽一切「上次」同义；容量 N／条数截断策略固定；落盘不含语气／人格；多进程共写同一 JSON 无锁；不上场承诺进同场 last_commitments（§6 不自动跨场 guard）。
+- 跨场薄记忆（MEMORY_V1）：本地 JSON（默认 ~/.dafeiyu/birth_memory.json／BIRTH_MEMORY_PATH）；REPL 默认开、`--no-memory` 关、单轮默认关；新场读入 `ThinContext.prior_session`；`drive_prior_commit_pending`（filler soft hold，不强制开口）／`drive_prior_callback_pending`（有痕迹才 pursue）／`drive_prior_press_pending`（用户压到上场 pending → pursue＋`press_commit`；文案取自 prior pending；开口覆盖 → `resolve_prior_commitment`；**不**并进 last_commitments）；validate 亲历并入 prior.facts；字段名进漏检。残余：跨场回指／prior press 输入侧仍用固定 PRIOR_BACKREF_MARKS＋既有催答应／约定壳＋pending 主题 token 重叠，未声称穷尽一切「催上场答应」换皮；主题 token 宁缺（短／噪声 pending 可能不命中）；容量 N／条数截断策略固定；落盘不含语气／人格；多进程共写同一 JSON 无锁；§6 仍不自动跨场 guard（同场改口否定逻辑不动）。
 - 对方私事闸（cannot_fake「本场没说过的对方私事」）：validate／`_accept_draft` 读 org.cannot_fake 含该项即开（stance_org 常挂）；形状 `_claims_unfounded_other_private`（你／您／对方 + 小时候／父母／住在／工作等闭集锚）；问句／模糊共情／拒装不拦；有来源＝facts_this_session ∪ prior_session.facts 子串核对（你→我归一）；短标签 `other_private_unfounded` 进漏检。残余：形状锚未声称穷尽一切换皮（「你家那边」「你上班那地方」等可能漏）；宁缺毋滥，无锚不拦；复述依赖子串重叠，换述可能误拒或漏放。
 - 开口拒收回流（REJECT_FEEDBACK_V1）：validate／`_accept_draft` 拒收写 ThinContext.`articulate_reject_count`／`last_reject_reasons`（短标签，非原文）／`articulate_reject_recovered`；空／None／抛错落入 stub 前记 `empty_backend`／`llm_error`（不拼异常全文；级联中途空输出但最终 LLM 成功不记）；**选定策略**：同场累加 count，本轮曾拒但已出话（含 stub 兜底）→ recovered=True，**不**清 count；new_session／跨场 JSON 不含拒收痕迹。Drive S14：count≥2 且 filler、无 commitment_deny、无催答应 → hold/low，why「开口拒收回流｜同场多次」；不逼台上自述「我被闸了」／「接口挂了」；§6／drive_bypass 优先不变。字段名进漏检。残余：短标签映射未声称穷尽一切 validate 文案变体／一切后端失败形态；同轮同标签去重后 count+1（要 ≥2 通常需跨轮或多样标签）；soft hold 仅 filler，不抢招呼／开话题／§6；拒收不落盘。
 """
