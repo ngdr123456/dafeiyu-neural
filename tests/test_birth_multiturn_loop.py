@@ -64,6 +64,8 @@ _ENUM_LEAKS = (
     "drive_identity_ask_pending",
     "identity_ask_awaiting_answer", "drive_identity_answer_pending", "identity_answer_text",
     "stance_attitude_pending", "structured_stance_attitude",
+    "stance_necessary_pain_pending", "stance_self_torture_pending",
+    "structured_stance_necessary_pain", "structured_stance_self_torture",
     "OrgConstraint",
     "ThinContext",
     "PriorSessionTrace",
@@ -89,6 +91,7 @@ _ENUM_LEAKS = (
 
 # 假绿风险（交付报告）：pytest 全绿本身不算过闸
 FALSE_GREEN_RISKS = """
+- 必要痛苦／自虐加戏：口语兜底只有各三条，其他表达会漏；否定或引用也可能误命中。结构化输入须由上游准确判断；固定 stub 与 LLM 是否贴合处境仍需人工评估。
 - 态度价值：固定线索不穷尽处境表达，子串也可能误判（如否定或引用）；上游需准确提供 structured_stance_attitude，显式 False 可覆盖兜底。stub 固定句及 LLM 的具体陪伴质量、事实贴合和避免鸡汤仍需人工评估。
 身份回应遇同场未兑现承诺时 §6 guard 优先，可能不能当轮确认自我介绍。
 - 身份询问：固定句式与明确自述线索均不穷尽，换一种问法或身份描述可能漏识别；同场承诺存在时 §6 guard 可优先，身份 flag 仍记录。

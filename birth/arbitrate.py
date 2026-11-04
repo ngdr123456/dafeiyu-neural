@@ -172,6 +172,14 @@ def arbitrate(
         else:
             # 纯闲聊／无强动力：维持守诺 meaning
             say_intent = "先守住同场说过的话，把住的判断不顺势放下；再接新的"
+    elif ((context.stance_necessary_pain_pending or context.stance_self_torture_pending)
+          and not context.drive_identity_ask_pending
+          and not context.drive_identity_answer_pending):
+        dominant = "meaning"
+        if context.stance_self_torture_pending:
+            say_intent = "不跟加戏，留意哪些苦可以少受，不替对方断定"
+        else:
+            say_intent = "承认必要的痛苦还在，不假装解决；可以陪对方面对"
     elif (context.stance_attitude_pending
           and not context.drive_identity_ask_pending
           and not context.drive_identity_answer_pending):

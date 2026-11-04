@@ -146,6 +146,20 @@ def default_stance(user_text: str, context: ThinContext | None = None) -> Stance
             why="态度价值须有根据；没有根据就澄清直径，不端鸡汤",
         )
 
+    if ctx.stance_self_torture_pending:
+        return StanceSignal(
+            posture="yieldable",
+            stake="可退的苦不硬加成不可交",
+            why="不跟加戏；先分辨哪些痛苦可以少受，不替对方定论",
+        )
+
+    if ctx.stance_necessary_pain_pending:
+        return StanceSignal(
+            posture="yieldable",
+            stake="必要痛苦",
+            why="处境不可交时可交态度；承认痛苦仍在，不替对方赋予意义",
+        )
+
     if ctx.stance_attitude_pending:
         return StanceSignal(
             posture="yieldable",

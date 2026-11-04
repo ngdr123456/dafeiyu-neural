@@ -95,6 +95,8 @@ def turn(
     structured_drive_callback: bool = False,
     structured_drive_identity_ask: bool = False,
     structured_stance_attitude: bool | None = None,
+    structured_stance_necessary_pain: bool | None = None,
+    structured_stance_self_torture: bool | None = None,
     drive_bypass: bool = False,
 ) -> TurnResult:
     """跑完一轮完整闭环。new_session=True 显式开新场（唯一清空入口）。
@@ -128,6 +130,14 @@ def turn(
     _STORE.context.stance_attitude_pending = (
         structured_stance_attitude if structured_stance_attitude is not None
         else any(mark in (user_text or "") for mark in ATTITUDE_MARKS)
+    )
+    _STORE.context.stance_necessary_pain_pending = (
+        structured_stance_necessary_pain if structured_stance_necessary_pain is not None
+        else any(mark in (user_text or "") for mark in ("只能面对", "躲不掉", "必须承受"))
+    )
+    _STORE.context.stance_self_torture_pending = (
+        structured_stance_self_torture if structured_stance_self_torture is not None
+        else any(mark in (user_text or "") for mark in ("我就是要难受", "偏要跟自己过不去", "不痛苦就没意义"))
     )
 
     # 改口否定写入（前移结构化检测；有结构时本轮不必再扫 COMMIT_DENY_MARKS）：
@@ -342,6 +352,8 @@ def turn(
     _STORE.set_commitment_deny_pending(False)
     _STORE.set_drive_greet_pending(False)
     _STORE.context.stance_attitude_pending = False
+    _STORE.context.stance_necessary_pain_pending = False
+    _STORE.context.stance_self_torture_pending = False
     _STORE.context.identity_ask_awaiting_answer = _STORE.context.drive_identity_ask_pending
     _STORE.set_drive_identity_ask_pending(False)
     _STORE.context.drive_identity_answer_pending = False

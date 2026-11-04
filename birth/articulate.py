@@ -246,6 +246,12 @@ def _template_utterance(brief: ThoughtBrief) -> str:
             "同场里说过的话我不当没说过。"
             "刚才那句还在，咱们先按那个接着，不跟着改口否定。"
         )
+    if (brief.context.stance_self_torture_pending and not brief.context.last_commitments
+            and brief.stance.posture == "yieldable"):
+        return "听起来你在逼自己更难受。这里面有没有哪一部分，其实可以不再加给自己？"
+    if (brief.context.stance_necessary_pain_pending and not brief.context.last_commitments
+            and brief.stance.posture == "yieldable"):
+        return "这份痛苦还在，我不能假装把它解决了。如果你愿意，我可以陪你待一会儿。"
     if (brief.context.stance_attitude_pending and not brief.context.last_commitments
             and brief.stance.posture == "yieldable"):
         return "你说的这件事已经无法改变了。我不能替你改变它，但我愿意在这里陪你待一会儿；你想说多少都可以。"
@@ -565,6 +571,8 @@ def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
         "drive_prior_press_pending", "drive_identity_ask_pending",
         "identity_ask_awaiting_answer", "drive_identity_answer_pending", "identity_answer_text",
         "stance_attitude_pending", "structured_stance_attitude",
+        "stance_necessary_pain_pending", "stance_self_torture_pending",
+        "structured_stance_necessary_pain", "structured_stance_self_torture",
         # 结构类型／上下文薄痕
         "OrgConstraint", "ThinContext", "PriorSessionTrace",
         "facts_this_session", "prior_session",
