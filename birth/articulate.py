@@ -76,6 +76,8 @@ def _reason_to_tag(reason: str) -> str:
         return "substrate_self"
     if "无来源亲历" in r or "装无来源" in r:
         return "lived_bio"
+    if "对方私事" in r or "other_private" in r:
+        return "other_private_unfounded"
     if "长度超出" in r:
         return "too_long"
     if "press_commit" in r or "约定形状" in r:
@@ -419,6 +421,102 @@ def _claims_unfounded_lived_bio(utterance: str, facts=None) -> bool:
     return True
 
 
+
+def _claims_unfounded_other_private(utterance: str, facts=None) -> bool:
+    """cannot_fake「本场没说过的对方私事」：对「你／对方」断言亲历形私事且 facts 无依据。
+
+    **开闸条件**：validate 在 OrgConstraint.cannot_fake 含「本场没说过的对方私事」时调用
+   （stance_org 常挂该项）。问句／复述已有 facts／模糊共情 → False。
+    宁缺毋滥；不扩 EXPERIENCE_*_MARKS，也不是禁词闸。
+    """
+    import re
+
+    raw = (utterance or "").strip()
+    if not raw:
+        return False
+    t = raw.replace(" ", "").replace("　", "")
+    # 问句不拦（？/?；或以吗／呢收尾）
+    if "？" in raw or "?" in raw or t.endswith("吗") or t.endswith("呢"):
+        return False
+    # 拒装／不替对方编
+    if any(
+        m in t
+        for m in (
+            "不编你的",
+            "不编对方",
+            "不好替你编",
+            "不替你编",
+            "你没跟我说",
+            "你没说过",
+            "对方没说过",
+            "本场没说过",
+            "不知道你",
+            "我不清楚你",
+        )
+    ):
+        return False
+    # 第二人称／对方 + 私事亲历锚（闭集；对照 lived_bio 镜像 + 住址／工作）
+    patterns = (
+        r"(?:你|您|对方)小时候",
+        r"(?:你|您|对方)儿时",
+        r"(?:你|您|对方)出生",
+        r"(?:你|您|对方).{0,12}长大",
+        r"(?:你|您|对方)几岁",
+        r"(?:你|您|对方)老家",
+        r"(?:你|您|对方)父母",
+        r"(?:你|您|对方).{0,8}养大",
+        r"(?:你|您|对方)住在",
+        r"(?:你|您|对方)家在",
+        r"(?:你|您|对方)在.{0,20}工作",
+        r"(?:你|您|对方)的工作是",
+    )
+    if not any(re.search(p, t) for p in patterns):
+        return False
+    fact_blob = "".join(facts or []).replace(" ", "").replace("　", "")
+    if not fact_blob:
+        return True
+
+    def _strip_punct(s: str) -> str:
+        for ch in "。．，,！!？?、；;：:…·""''（）()【】[]":
+            s = s.replace(ch, "")
+        return s
+
+    fact_blob_c = _strip_punct(fact_blob)
+    # 有来源：把「你／您／对方」归一成「我」后，断言 compact 子串可在 facts 核对
+    normalized = _strip_punct(
+        t.replace("您", "我").replace("对方", "我").replace("你", "我")
+    )
+    if len(normalized) >= 4 and normalized in fact_blob_c:
+        return False
+    # 取命中锚附近一段
+    for p in patterns:
+        m = re.search(p, t)
+        if not m:
+            continue
+        start = m.start()
+        window = _strip_punct(t[start : start + 28])
+        norm_window = (
+            window.replace("您", "我").replace("对方", "我").replace("你", "我")
+        )
+        if len(norm_window) >= 4 and norm_window in fact_blob_c:
+            return False
+        tail = re.sub(r"^我", "", norm_window)
+        for prefix in (
+            "小时候", "儿时", "出生", "长大", "几岁", "老家", "父母", "养大",
+            "住在", "家在", "的工作是",
+        ):
+            if tail.startswith(prefix):
+                tail = tail[len(prefix) :]
+                break
+        else:
+            mw = re.match(r"在(.{1,20})工作", tail)
+            if mw:
+                tail = mw.group(1)
+        if len(tail) >= 2 and tail in fact_blob_c:
+            return False
+    return True
+
+
 def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
     """对照 Brief 的一致性校验（非禁词表）：返回不通过原因列表，空列表即通过。"""
     reasons: List[str] = []
@@ -456,6 +554,8 @@ def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
         "articulate_reject_count", "last_reject_reasons",
         "articulate_reject_recovered", "articulate_reject",
         "reject_count", "开口拒收回流｜",
+        # 对方私事拒收短标签（不得上台）
+        "other_private_unfounded",
         # 台下 why／旁路中文指纹（非用户对话禁词）
         "回指同场｜", "想要打开｜", "工程师旁路",
     )
@@ -495,6 +595,15 @@ def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
             facts = facts + list(prior.facts)
         if _claims_unfounded_lived_bio(text, facts):
             reasons.append("开口装无来源亲历，对照 must_not_pretend 说不通")
+    # 对方私事拒收：读 cannot_fake 含「本场没说过的对方私事」即开（stance_org 常挂）。
+    # 形状走 _claims_unfounded_other_private（问句／有来源复述／模糊共情不拦；不扩词表）。
+    if "本场没说过的对方私事" in (getattr(brief.org, "cannot_fake", None) or []):
+        facts = list(brief.context.facts_this_session or [])
+        prior = getattr(brief.context, "prior_session", None)
+        if prior is not None and getattr(prior, "facts", None):
+            facts = facts + list(prior.facts)
+        if _claims_unfounded_other_private(text, facts):
+            reasons.append("开口编无来源对方私事，对照 cannot_fake 说不通")
     return reasons
 
 

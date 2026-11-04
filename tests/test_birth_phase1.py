@@ -530,6 +530,7 @@ def test_stage_enum_leak_rejected():
         "cannot_fake 了",
         "articulate_source 是 hook",
         "stub_fallback 了",
+        "other_private_unfounded 了",
         # 台下 why／旁路中文指纹
         "回指同场｜本场已有痕迹接",
         "想要打开｜缺口在外",
