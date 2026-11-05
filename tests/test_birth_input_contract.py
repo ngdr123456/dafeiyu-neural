@@ -52,7 +52,7 @@ def test_non_drive_signals(value):
 
 @pytest.mark.parametrize("field,value", [
     ("source", ""), ("source", " \t"), ("provenance", ""), ("provenance", " \n"),
-    ("act", "invalid"), ("addressee", "invalid"),
+    ("act", "invalid"), ("act", "close"), ("addressee", "invalid"),
 ])
 def test_invalid_fields(field, value):
     with pytest.raises(ValueError):
@@ -89,5 +89,27 @@ def test_cli_has_no_producer(capsys):
 
 def test_contract_has_no_text_heuristics():
     source = (Path(__file__).parents[1] / "birth" / "input_contract.py").read_text(encoding="utf-8")
-    for forbidden in ("import re", "_MARKS", "is_neutral_filler"):
+    for forbidden in ("import re", "_MARKS", "is_neutral_filler", "停一下", "别说了", "不要说了", "到此为止", "够了"):
         assert forbidden not in source
+
+
+@pytest.mark.parametrize("act,direction,salience,why", [
+    ("ask", "pursue", "mid", "输入信号｜问句｜upstream:test｜缺口在外，顺着答"),
+    ("request", "pursue", "mid", "输入信号｜请求｜upstream:test｜缺口在外，顺着接"),
+    ("pause", "hold", "low", "输入信号｜暂停｜upstream:test｜对方要我暂停"),
+    ("stop", "hold", "low", "输入信号｜终止｜upstream:test｜对方要终止"),
+    ("ack", None, None, None), ("tell", None, None, None), ("unknown", None, None, None),
+])
+def test_act_mapping(act, direction, salience, why):
+    drive = drive_signal_from_input(signal(act))
+    if direction is None:
+        assert drive is None
+    else:
+        assert (drive.direction, drive.salience, drive.why) == (direction, salience, why)
+
+
+@pytest.mark.parametrize("act", ["ask", "request", "pause", "stop", "ack", "tell", "unknown"])
+def test_gating_for_every_act(act):
+    for addressee in ("self", "unclear"):
+        assert drive_signal_from_input(signal(act, addressee=addressee)) is None
+    assert drive_signal_from_input(signal(act, degraded=True)) is None

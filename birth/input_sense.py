@@ -39,10 +39,15 @@ def sense_input(user_text: str, *, timeout: float | None = None) -> InputSignal 
         return degraded("no_key")
     prompt = (
         '判断下面本轮话语的言语行为和对象。只输出一个 JSON 对象：'
-        '{"act":"ask|request|ack|tell|unknown","addressee":"other|self|unclear",'
+        '{"act":"ask|request|pause|stop|ack|tell|unknown","addressee":"other|self|unclear",'
         '"confidence":"high|medium|low"}。\n'
-        'act：ask 是询问；request 是请求做事；ack 是回应或确认；tell 是陈述；unknown 是无法判断。'
-        'addressee：other 是直接对正在回应的对方说；self 是对说话者自己说；unclear 是对象不明。'
+        'act：ask 是询问；request 只用于要我去做一件具体的事，如去关窗、去查、去写；'
+        'pause 是先停一下或缓一缓，可以指停嘴，也可以指停下正在做的一件事；'
+        'stop 是明确终止、结束这场对话、不要再继续；'
+        'ack 是回应或确认，已经够了或可以收了这样的收束不算 request，归 ack 或 unknown；'
+        'tell 是陈述；unknown 是无法判断。'
+        'addressee 判断这句话在对谁说，不是内容关于谁：other 是对正在回应的对方说；'
+        'self 是对说话者自己说；unclear 是对象不明。像「我该怎么办？」是在问对方，判 other 和 ask，不是 self。'
         'confidence：high 是高置信，medium 是中置信，low 是低置信。'
         '按整句意思判断，不要猜关键词；不确定就用 unknown/unclear/low。'
         '不要解释、不要 markdown、不要多余文字。\n话语：' + user_text
@@ -81,7 +86,7 @@ def sense_input(user_text: str, *, timeout: float | None = None) -> InputSignal 
     if not isinstance(value, dict) or any(
         not isinstance(value.get(field), str) or value[field] not in allowed
         for field, allowed in (
-            ("act", ("ask", "request", "ack", "tell", "unknown")),
+            ("act", ("ask", "request", "pause", "stop", "ack", "tell", "unknown")),
             ("addressee", ("other", "self", "unclear")),
             ("confidence", ("high", "medium", "low")),
         )

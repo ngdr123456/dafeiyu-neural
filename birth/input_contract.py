@@ -10,7 +10,7 @@ from .types import DriveSignal
 
 @dataclass(frozen=True)
 class InputSignal:
-    act: Literal["ask", "request", "ack", "tell", "unknown"]
+    act: Literal["ask", "request", "pause", "stop", "ack", "tell", "unknown"]
     addressee: Literal["other", "self", "unclear"]
     source: str
     provenance: str
@@ -18,7 +18,7 @@ class InputSignal:
     reason: str = ""
 
     def __post_init__(self) -> None:
-        if self.act not in ("ask", "request", "ack", "tell", "unknown"):
+        if self.act not in ("ask", "request", "pause", "stop", "ack", "tell", "unknown"):
             raise ValueError("invalid act")
         if self.addressee not in ("other", "self", "unclear"):
             raise ValueError("invalid addressee")
@@ -40,4 +40,10 @@ def drive_signal_from_input(signal: InputSignal | None) -> DriveSignal | None:
     if signal.act == "request":
         return DriveSignal(direction="pursue", salience="mid",
                            why=f"输入信号｜请求｜{signal.source}｜缺口在外，顺着接")
+    if signal.act == "pause":
+        return DriveSignal(direction="hold", salience="low",
+                           why=f"输入信号｜暂停｜{signal.source}｜对方要我暂停")
+    if signal.act == "stop":
+        return DriveSignal(direction="hold", salience="low",
+                           why=f"输入信号｜终止｜{signal.source}｜对方要终止")
     return None

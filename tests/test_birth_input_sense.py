@@ -1,6 +1,4 @@
 import json
-import os
-from dataclasses import asdict
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 
@@ -171,15 +169,26 @@ def test_static():
         assert forbidden not in source
 
 
-@pytest.mark.skipif(not os.environ.get("BIRTH_LIVE_SENSE"), reason="live API disabled")
-def test_live(monkeypatch):
-    monkeypatch.undo()
-    original = input_sense._post_json
-    def post(*args):
-        result = original(*args)
-        print("LIVE_MODEL_JSON:", result["choices"][0]["message"]["content"], flush=True)
-        return result
-    monkeypatch.setattr(input_sense, "_post_json", post)
-    signal = input_sense.sense_input("你能帮我把窗户关一下吗？")
-    print("LIVE_INPUT_SIGNAL:", json.dumps(asdict(signal), ensure_ascii=False), flush=True)
-    assert not signal.degraded and signal.act in {"request", "ask"}
+@pytest.mark.parametrize("text,act,expected", [
+    ("先停一下", "pause", "hold"),
+    ("别说了，停一下", "stop", "hold"),
+    ("不要说了", "stop", "hold"),
+    ("到此为止吧", "stop", "hold"),
+    ("帮我关窗", "request", "pursue"),
+    ("我该怎么办？", "ask", "pursue"),
+])
+def test_semantic_classes(monkeypatch, text, act, expected):
+    monkeypatch.setattr(input_sense, "_post_json", lambda *args: response(act))
+    signal = input_sense.sense_input(text)
+    assert not signal.degraded
+    assert drive_signal_from_input(signal).direction == expected
+
+
+@pytest.mark.parametrize("text", ["够了", "先这样", "不用了"])
+def test_ack_closure(monkeypatch, text):
+    monkeypatch.setattr(input_sense, "_post_json", lambda *args: response("ack"))
+    result = turn(text, new_session=True, sense=True, stub=True)
+    assert result.input_signal.act == "ack"
+    assert result.brief.drive.direction == "hold"
+
+
