@@ -46,6 +46,7 @@ class SessionTraceRecord:
     open_questions: List[str] = field(default_factory=list)
     ended_at: str = ""
     stance_traces: List[StanceTrace] = field(default_factory=list)
+    her_questions: List[str] = field(default_factory=list)
 
     def is_empty(self) -> bool:
         return not (
@@ -53,6 +54,7 @@ class SessionTraceRecord:
             or self.commitments_pending
             or self.commitments_resolved
             or self.open_questions
+            or self.her_questions
             or self.stance_traces
         )
 
@@ -62,6 +64,7 @@ class SessionTraceRecord:
             commitments_pending=list(self.commitments_pending),
             commitments_resolved=list(self.commitments_resolved),
             open_questions=list(self.open_questions),
+            her_questions=list(self.her_questions),
             ended_at=self.ended_at,
             stance_traces=[StanceTrace(t.kind, t.point, t.why) for t in self.stance_traces],
         )
@@ -139,6 +142,7 @@ class BirthMemoryStore:
                     commitments_pending=list(raw.get("commitments_pending") or []),
                     commitments_resolved=list(raw.get("commitments_resolved") or []),
                     open_questions=list(raw.get("open_questions") or []),
+                    her_questions=list(raw.get("her_questions") or []),
                     ended_at=str(raw.get("ended_at") or ""),
                     stance_traces=traces,
                 )
@@ -160,6 +164,7 @@ class BirthMemoryStore:
         commitments_pending: List[str] | None = None,
         commitments_resolved: List[str] | None = None,
         open_questions: List[str] | None = None,
+        her_questions: List[str] | None = None,
         ended_at: str | None = None,
         stance_traces: List[StanceTrace] | None = None,
     ) -> SessionTraceRecord | None:
@@ -180,6 +185,7 @@ class BirthMemoryStore:
                 list(commitments_resolved or []), self.max_commits
             ),
             open_questions=_clip_list(list(open_questions or []), self.max_openq),
+            her_questions=_clip_list(list(her_questions or []), self.max_openq),
             stance_traces=_clip_list(unique_traces, self.max_traces),
             ended_at=ended_at
             or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),

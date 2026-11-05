@@ -38,12 +38,14 @@ class ThinContextStore:
                 commitments_pending=list(ps.commitments_pending),
                 commitments_resolved=list(ps.commitments_resolved),
                 open_questions=list(ps.open_questions),
+                her_questions=list(ps.her_questions),
                 ended_at=ps.ended_at,
                 stance_traces=[StanceTrace(t.kind, t.point, t.why) for t in ps.stance_traces],
             )
         return ThinContext(
             session_ok=ctx.session_ok,
             open_questions=list(ctx.open_questions),
+            her_questions=list(ctx.her_questions),
             last_commitments=list(ctx.last_commitments),
             facts_this_session=list(ctx.facts_this_session),
             stance_traces=[StanceTrace(t.kind, t.point, t.why) for t in ctx.stance_traces],
@@ -72,6 +74,8 @@ class ThinContextStore:
             drive_callback_pending=ctx.drive_callback_pending,
             prior_session=prior,
             drive_prior_commit_pending=ctx.drive_prior_commit_pending,
+            drive_prior_her_question_pending=ctx.drive_prior_her_question_pending,
+            drive_prior_her_question_used=ctx.drive_prior_her_question_used,
             drive_prior_callback_pending=ctx.drive_prior_callback_pending,
             drive_prior_press_pending=ctx.drive_prior_press_pending,
             drive_bypass=ctx.drive_bypass,
@@ -124,6 +128,10 @@ class ThinContextStore:
     def append_open_question(self, question: str) -> None:
         """动力层留下的悬而未决，供后续轮次捡起。"""
         self._append_unique(self._context.open_questions, question)
+
+    def append_her_question(self, q: str) -> None:
+        self._append_unique(self._context.open_questions, q)
+        self._append_unique(self._context.her_questions, q)
 
     def set_want_seen_pending(self, pending: bool) -> None:
         """Set or clear the separate cross-turn relational wait."""
@@ -226,12 +234,16 @@ class ThinContextStore:
         """
         if self._context.open_questions:
             self._context.curiosity_hang_pending = False
-            return self._context.open_questions.pop(0)
+            result = self._context.open_questions.pop(0)
+            self._context.her_questions = [q for q in self._context.her_questions if q in self._context.open_questions]
+            return result
+        self._context.her_questions = [q for q in self._context.her_questions if q in self._context.open_questions]
         return None
 
     def clear_open_questions(self) -> None:
         """放下同场所有悬问（用户换题、开了新话头时用）；好奇挂起 flag 一并清。"""
         self._context.open_questions.clear()
+        self._context.her_questions = [q for q in self._context.her_questions if q in self._context.open_questions]
         self._context.curiosity_hang_pending = False
 
     def resolve_commitment(self) -> str | None:
@@ -257,6 +269,19 @@ class ThinContextStore:
     def set_drive_prior_commit_pending(self, pending: bool) -> None:
         """pipeline：上场未兑现承诺作 drive 线索（不强制开口；§6 仍看同场）。"""
         self._context.drive_prior_commit_pending = pending
+
+    def set_drive_prior_her_question_pending(self, pending: bool) -> None:
+        self._context.drive_prior_her_question_pending = pending
+
+    def set_drive_prior_her_question_used(self) -> None:
+        self._context.drive_prior_her_question_used = True
+
+    def remove_prior_her_question(self, q: str) -> bool:
+        prior = self._context.prior_session
+        if prior is None or q not in prior.her_questions:
+            return False
+        prior.her_questions.remove(q)
+        return True
 
     def set_drive_prior_callback_pending(self, pending: bool) -> None:
         """pipeline：本轮跨场回指 pursue（须有 prior_session 结构；有同场承诺时不置）。"""
@@ -299,6 +324,7 @@ class ThinContextStore:
             commitments_pending=list(prior.commitments_pending),
             commitments_resolved=list(prior.commitments_resolved),
             open_questions=list(prior.open_questions),
+            her_questions=list(prior.her_questions),
             ended_at=prior.ended_at,
             stance_traces=[StanceTrace(t.kind, t.point, t.why) for t in prior.stance_traces],
         )
@@ -325,6 +351,7 @@ class ThinContextStore:
             "commitments_pending": list(ctx.last_commitments),
             "commitments_resolved": list(self._resolved_commitments),
             "open_questions": list(ctx.open_questions),
+            "her_questions": [q for q in ctx.her_questions if q in ctx.open_questions],
             "stance_traces": list(ctx.stance_traces),
         }
 

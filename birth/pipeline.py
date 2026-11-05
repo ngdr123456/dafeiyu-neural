@@ -246,6 +246,9 @@ def turn(
     # prior_commit 线索：有 prior_session 未兑现则整场可作线索（每轮重申，不靠回合末残留）
     _STORE.set_drive_prior_commit_pending(False)
     prior = _STORE.context.prior_session
+    _STORE.set_drive_prior_her_question_pending(False)
+    if prior is not None and prior.her_questions:
+        _STORE.set_drive_prior_her_question_pending(True)
     if prior is not None and prior.commitments_pending:
         _STORE.set_drive_prior_commit_pending(True)
     _STORE.set_drive_bypass(False)
@@ -331,6 +334,8 @@ def turn(
     org = default_org(context, drive=drive, stance=stance, user_text=user_text)
     brief = arbitrate(drive=drive, stance=stance, org=org, context=context,
                       user_text=user_text)
+    if brief.drive is not None and "上场她问出去的一句" in (brief.drive.why or ""):
+        _STORE.set_drive_prior_her_question_used()
 
     utterance = articulate(brief, stub=stub)
 
@@ -390,6 +395,11 @@ def turn(
         if utterance_covers_pending_commitment(utterance, prior_p0):
             _STORE.resolve_prior_commitment(match=prior_p0)
 
+    live_prior = _STORE.context.prior_session
+    if (live_prior is not None and live_prior.her_questions
+            and answered_open_question(user_text, live_prior.her_questions)):
+        _STORE.remove_prior_her_question(live_prior.her_questions[0])
+
     # 开口后回流薄情境：本轮用户的话头 + 台上这句都 clip 进同场事实；
     # 动力层好奇追问入库；台上薄提取承诺/悬问（宁缺毋滥）
     _STORE.append_fact(f"用户说：{_clip(user_text)}")
@@ -412,7 +422,7 @@ def turn(
           and not (context.open_questions and is_neutral_filler(user_text))):
         open_q = extract_open_question(utterance)
         if open_q:
-            _STORE.append_open_question(open_q)
+            _STORE.append_her_question(open_q)
 
     # 改口否定／非 S3 drive flags 只服务本轮 drive：回合末清，不漏到下一轮
     _STORE.set_commitment_deny_pending(False)
@@ -439,6 +449,7 @@ def turn(
     _STORE.set_drive_prior_press_pending(False)
     # drive_prior_commit_pending 下一轮开头按 prior_session 重申，此处清以免脏读
     _STORE.set_drive_prior_commit_pending(False)
+    _STORE.set_drive_prior_her_question_pending(False)
     _STORE.set_drive_bypass(False)
 
     return TurnResult(

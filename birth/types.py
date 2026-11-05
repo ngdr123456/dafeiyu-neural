@@ -73,6 +73,7 @@ class PriorSessionTrace:
     open_questions: List[str] = field(default_factory=list)
     ended_at: str = ""
     stance_traces: List[StanceTrace] = field(default_factory=list)
+    her_questions: List[str] = field(default_factory=list)
 
     def has_trace(self) -> bool:
         return bool(
@@ -80,6 +81,7 @@ class PriorSessionTrace:
             or self.commitments_pending
             or self.commitments_resolved
             or self.open_questions
+            or self.her_questions
             or self.stance_traces
         )
 
@@ -94,6 +96,7 @@ class ThinContext:
 
     session_ok: bool = True
     open_questions: List[str] = field(default_factory=list)
+    her_questions: List[str] = field(default_factory=list)
     last_commitments: List[str] = field(default_factory=list)
     facts_this_session: List[str] = field(default_factory=list)
     stance_traces: List[StanceTrace] = field(default_factory=list)
@@ -136,6 +139,8 @@ class ThinContext:
     prior_session: Optional[PriorSessionTrace] = None
     # 结构化：上场未兑现承诺作 drive 线索（不强制开口提；§6 仍只看同场 last_commitments）
     drive_prior_commit_pending: bool = False
+    drive_prior_her_question_pending: bool = False
+    drive_prior_her_question_used: bool = False
     # 结构化：本轮跨场回指 pursue（有 prior_session 结构时写入；勿主靠「上次」词表放行）
     drive_prior_callback_pending: bool = False
     # 结构化：本轮用户催兑现上场未了承诺（有 prior.commitments_pending；§6 仍只看同场）

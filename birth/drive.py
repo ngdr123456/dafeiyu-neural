@@ -119,6 +119,7 @@ class DriveCues:
     drive_callback_pending: bool = False
     # 结构化：上场未兑现承诺线索（不强制开口；§6 仍只看同场 last_commitments）
     drive_prior_commit_pending: bool = False
+    drive_prior_her_question_pending: bool = False
     # 结构化：跨场回指 pursue（须有 prior_session 结构）
     drive_prior_callback_pending: bool = False
     # 结构化：催兑现上场未了承诺 → pursue（须有 prior.commitments_pending；后于 §6）
@@ -172,6 +173,7 @@ def drive_cues_from_context(context: ThinContext) -> DriveCues:
         drive_prior_commit_pending=bool(
             getattr(context, "drive_prior_commit_pending", False)
         ),
+        drive_prior_her_question_pending=bool(getattr(context, "drive_prior_her_question_pending", False)),
         drive_prior_callback_pending=bool(
             getattr(context, "drive_prior_callback_pending", False)
         ),
@@ -670,6 +672,20 @@ def infer_drive(
             salience="mid",
             why=why,
         )
+
+    if cues.drive_prior_her_question_pending:
+        prior_q = getattr(context, "prior_session", None)
+        her_qs = list(getattr(prior_q, "her_questions", []) or []) if prior_q is not None else []
+        if her_qs:
+            backref = is_prior_session_backref(text, context)
+            used = bool(getattr(context, "drive_prior_her_question_used", False))
+            if backref or (not used and is_neutral_filler(text)):
+                q = her_qs[0]
+                return DriveSignal(
+                    direction="pursue",
+                    salience="mid",
+                    why=f"上场她问出去的一句还没被接住（{q}），这轮可以问回来",
+                )
 
     # S11) 结构化回指 → pursue mid（主路径读 flag；须后于 §6；BACKREF_MARKS 仅无结构时兜底）
     if cues.drive_callback_pending:
