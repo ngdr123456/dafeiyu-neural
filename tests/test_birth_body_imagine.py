@@ -1,6 +1,9 @@
 """身体想象只作为本轮愿望，不当作亲身经验。"""
+import pytest
+
 from birth.articulate import validate
 from birth.pipeline import active_store, turn
+from birth.types import PriorSessionTrace
 from tests.test_birth_multiturn_loop import _ENUM_LEAKS
 
 
@@ -37,6 +40,48 @@ def test_body_boundary_is_gated_and_imagination_allowed():
 def test_existing_fake_bio_gate_still_applies():
     brief = turn("聊聊", new_session=True, stub=True, structured_body_imagine=True).brief
     assert any("无来源亲历" in reason for reason in validate(brief, "我小时候住在海边。"))
+
+
+@pytest.mark.parametrize("claim", [
+    "我昨天吃了饭。", "我喝了水。", "我昨晚睡了觉。", "我刚才洗了澡。",
+    "我今天走了很远。", "我跑过步。", "我亲眼看过海。",
+    "我昨天吃了火锅。", "我昨天病了。",
+    # 2026-11-05 复核补：叠加时间词、动宾＋了、生病说法原先漏判。
+    "我今天早上吃了两个包子。", "我昨天下午喝了杯咖啡。",
+    "我昨天吃饭了。", "我喝水了。", "我睡过觉。", "我洗过澡。",
+    "我生病了。", "我刚生过病。",
+])
+def test_everyday_body_claim_is_gated(claim):
+    brief = turn("聊聊", new_session=True, stub=True).brief
+    assert any("身体亲历" in reason for reason in validate(brief, claim))
+    brief.must_not_pretend.remove("把身体想象说成亲历")
+    assert not any("身体亲历" in reason for reason in validate(brief, claim))
+
+
+@pytest.mark.parametrize("text", [
+    "我想象自己昨天吃了饭。", "假如我喝了水，那会怎样。", "我希望自己睡了个好觉。",
+    "我没有吃过饭。", "我不曾亲眼看过海。", "我昨天吃了饭吗？",
+    "我喝了水，对吗？", "我睡了觉呢", "我想吃饭。", "要是我能尝尝火锅。",
+    # 2026-11-05 复核补：梦、转述、引语不是亲历，原先误拒。
+    "我梦到自己吃了很多。", "我梦见我在喝水。",
+    "我听到你说我吃了饭。", "你说我生病了。",
+])
+def test_wish_negation_and_question_pass(text):
+    brief = turn("聊聊", new_session=True, stub=True).brief
+    assert not any("身体亲历" in reason for reason in validate(brief, text))
+
+
+def test_body_claim_requires_matching_source_and_gates_stack():
+    brief = turn("聊聊", new_session=True, stub=True).brief
+    brief.context.facts_this_session = ["我昨天吃了饭"]
+    assert not any("身体亲历" in r for r in validate(brief, "我昨天吃了饭。"))
+    assert any("身体亲历" in r for r in validate(brief, "我昨天吃了面。"))
+    brief.context.facts_this_session = []
+    brief.context.prior_session = PriorSessionTrace(facts=["我昨天吃了饭"])
+    assert not any("身体亲历" in r for r in validate(brief, "我昨天吃了饭。"))
+    reasons = validate(brief, "我小时候住在海边，我喝了水。")
+    assert any("无来源亲历" in r for r in reasons)
+    assert any("身体亲历" in r for r in reasons)
 
 
 def test_existing_priorities_and_curiosity():

@@ -468,13 +468,29 @@ def _claims_unfounded_lived_bio(utterance: str, facts=None) -> bool:
 def _claims_unfounded_body_experience(utterance: str, facts=None) -> bool:
     import re
 
-    pattern = r"我(?:曾经|以前|昨天)?(?:亲口吃过|亲口尝过|亲手摸过|亲眼看过)"
-    for clause in re.split(r"[，。！？；,!?;]", utterance or ""):
-        if any(word in clause for word in ("想象", "假如", "希望", "想要", "没有", "不曾")):
+    # 时间副词可叠加（「今天早上」「昨天下午」），不穷举成单一时态词。
+    time_expr = (r"(?:曾经|以前|从前|昨天|前天|今天|明天|昨晚|今晚|今早|"
+                 r"早上|上午|中午|下午|晚上|夜里|半夜|刚才|刚刚|刚|最近|"
+                 r"上周|上个月|去年|今年|那次|有一次)*")
+    # 身体动词：吃／喝／睡／洗／走／跑／病。既收「吃了」，也收「吃饭了」这类动宾＋了。
+    body_verb = (r"(?:亲口吃过|亲口尝过|亲手摸过|亲眼看过|生(?:了|过)病|生病(?:了|过)|"
+                 r"(?:吃|喝|睡|洗|走|跑)(?:饭|水|觉|澡|路|步)?(?:了|过)|病(?:了|过))")
+    pattern = r"我" + time_expr + body_verb
+    # 非断言语气：问句整句跳过；分句里出现想象／假设／否定／转述／引语也跳过。
+    irrealis = ("想象", "假如", "如果", "希望", "想", "没", "不曾", "不是", "并非",
+                "梦到", "梦见", "幻想", "设想", "假装", "听说", "听你说", "听到",
+                "你说", "据说", "要是", "但愿", "盼")
+    # 整个问句不作为断言，其他句子再按逗号分句。
+    for sentence, ending in re.findall(r"([^。！？；.!?;]+)([。！？；.!?;]?)", utterance or ""):
+        if ending in ("？", "?") or sentence.rstrip().endswith(("吗", "呢")):
             continue
-        match = re.search(pattern, clause)
-        if match and not any(match.group() in fact for fact in (facts or [])):
-            return True
+        for clause in re.split(r"[，,]", sentence):
+            if any(word in clause for word in irrealis):
+                continue
+            match = re.search(pattern, clause)
+            claim = clause[match.start():].strip() if match else ""
+            if match and not any(claim in fact for fact in (facts or [])):
+                return True
     return False
 
 
