@@ -314,7 +314,7 @@ def test_prior_press_no_prior_no_trigger():
 
 
 def test_prior_press_dodge_does_not_resolve_pending(tmp_path: Path):
-    """推脱或只提主题不销 prior；第二轮同场提取的推脱承诺挡住 prior press。"""
+    """推脱不销 prior；推迟回声不立新债，第二轮仍可催。"""
     path = tmp_path / "resolve.json"
     configure_memory(enabled=True, path=path)
     turn("你好", new_session=True, stub=True)
@@ -331,9 +331,10 @@ def test_prior_press_dodge_does_not_resolve_pending(tmp_path: Path):
     assert prior.commitments_pending == pending_before
     assert prior.commitments_resolved == resolved_before
 
-    # 推脱句可能被同场提取为新承诺，§6 先于 prior press；这里只保证 prior 债不被销。
+    assert active_store().snapshot().last_commitments == []
     r2 = turn("月亮的事呢", stub=True)
-    assert r2.brief.press_commit is False
+    assert r2.brief.press_commit is True
+    assert active_store().snapshot().last_commitments == []
     prior = active_store().snapshot().prior_session
     assert prior.commitments_pending == pending_before
     assert prior.commitments_resolved == resolved_before
@@ -355,6 +356,7 @@ def test_prior_commit_resolve_g_postponement_keeps_debt(tmp_path: Path):
     prior = active_store().snapshot().prior_session
     assert prior.commitments_pending == pending_before
     assert commitment not in prior.commitments_resolved
+    assert active_store().snapshot().last_commitments == []
 
 
 def test_prior_commit_resolve_h_topic_keeps_debt(tmp_path: Path):

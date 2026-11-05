@@ -627,6 +627,7 @@ def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
         "OrgConstraint", "ThinContext", "PriorSessionTrace",
         "facts_this_session", "prior_session",
         "commitments_pending", "commitments_resolved",
+        "commitment_candidates", "CommitmentCandidate", "prior_press", "same_session_press",
         "last_commitments", "open_questions",
         "birth_memory", "ended_at",
         # 来源／兜底内部标识

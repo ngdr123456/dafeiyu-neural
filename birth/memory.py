@@ -11,12 +11,12 @@ from __future__ import annotations
 
 import json
 import os
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional, TypeVar
 
-from .types import PriorSessionTrace, StanceTrace
+from .types import CommitmentCandidate, PriorSessionTrace, StanceTrace
 
 # 环境变量：覆盖默认路径
 ENV_MEMORY_PATH = "BIRTH_MEMORY_PATH"
@@ -48,6 +48,8 @@ class SessionTraceRecord:
     stance_traces: List[StanceTrace] = field(default_factory=list)
     her_questions: List[str] = field(default_factory=list)
 
+    commitment_candidates: List[CommitmentCandidate] = field(default_factory=list)
+
     def is_empty(self) -> bool:
         return not (
             self.facts
@@ -56,10 +58,12 @@ class SessionTraceRecord:
             or self.open_questions
             or self.her_questions
             or self.stance_traces
+            or self.commitment_candidates
         )
 
     def to_prior(self) -> PriorSessionTrace:
         return PriorSessionTrace(
+            commitment_candidates=[replace(c) for c in self.commitment_candidates],
             facts=list(self.facts),
             commitments_pending=list(self.commitments_pending),
             commitments_resolved=list(self.commitments_resolved),
@@ -136,8 +140,21 @@ class BirthMemoryStore:
                         why = item.get("why")
                         traces.append(StanceTrace(item["kind"], item["point"].strip(),
                                                   why.strip() if isinstance(why, str) else ""))
+            candidates = []
+            raw_candidates = raw.get("commitment_candidates")
+            if isinstance(raw_candidates, list):
+                for item in raw_candidates:
+                    if not isinstance(item, dict):
+                        continue
+                    text, target = item.get("text"), item.get("target")
+                    frame, source = item.get("frame"), item.get("source", "")
+                    if (isinstance(text, str) and text.strip() and isinstance(target, str)
+                            and target.strip() and frame in ("prior_press", "same_session_press")
+                            and isinstance(source, str)):
+                        candidates.append(CommitmentCandidate(text, target, frame, source))
             out.append(
                 SessionTraceRecord(
+                    commitment_candidates=candidates,
                     facts=list(raw.get("facts") or []),
                     commitments_pending=list(raw.get("commitments_pending") or []),
                     commitments_resolved=list(raw.get("commitments_resolved") or []),
@@ -167,6 +184,7 @@ class BirthMemoryStore:
         her_questions: List[str] | None = None,
         ended_at: str | None = None,
         stance_traces: List[StanceTrace] | None = None,
+        commitment_candidates: List[CommitmentCandidate] | None = None,
     ) -> SessionTraceRecord | None:
         """写入一场痕迹；空场跳过；超容量丢最旧。"""
         unique_traces = []
@@ -177,6 +195,7 @@ class BirthMemoryStore:
                 seen.add(key)
                 unique_traces.append(trace)
         rec = SessionTraceRecord(
+            commitment_candidates=_clip_list([replace(c) for c in (commitment_candidates or [])], self.max_commits),
             facts=_clip_list(list(facts or []), self.max_facts),
             commitments_pending=_clip_list(
                 list(commitments_pending or []), self.max_commits

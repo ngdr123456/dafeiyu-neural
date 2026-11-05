@@ -61,6 +61,14 @@ class StanceTrace:
 
 
 @dataclass
+class CommitmentCandidate:
+    text: str
+    target: str
+    frame: Literal["prior_press", "same_session_press"]
+    source: str = ""
+
+
+@dataclass
 class PriorSessionTrace:
     """上一场薄痕迹（跨场读入；非长期人格／非意识海）。
 
@@ -76,6 +84,8 @@ class PriorSessionTrace:
     stance_traces: List[StanceTrace] = field(default_factory=list)
     her_questions: List[str] = field(default_factory=list)
 
+    commitment_candidates: List[CommitmentCandidate] = field(default_factory=list)
+
     def has_trace(self) -> bool:
         return bool(
             self.facts
@@ -84,6 +94,7 @@ class PriorSessionTrace:
             or self.open_questions
             or self.her_questions
             or self.stance_traces
+            or self.commitment_candidates
         )
 
 
@@ -99,6 +110,7 @@ class ThinContext:
     open_questions: List[str] = field(default_factory=list)
     her_questions: List[str] = field(default_factory=list)
     last_commitments: List[str] = field(default_factory=list)
+    commitment_candidates: List[CommitmentCandidate] = field(default_factory=list)
     facts_this_session: List[str] = field(default_factory=list)
     stance_traces: List[StanceTrace] = field(default_factory=list)
     # 本场每个结构化点被守住的实际次数；只在本场累计，不落盘。

@@ -268,11 +268,25 @@ def utterance_is_commit_delivery(*, brief, utterance: str, commitment: str) -> b
     return True
 
 
+def pressed_frame(brief) -> tuple[str, str] | None:
+    context = brief.context
+    prior = context.prior_session
+    why = getattr(getattr(brief, "drive", None), "why", "") or ""
+    if (getattr(brief, "press_commit", False) and prior and prior.commitments_pending
+            and (getattr(context, "drive_prior_press_pending", False) or "上场承诺｜" in why)):
+        return ("prior_press", prior.commitments_pending[0])
+    if (getattr(brief, "commit_deliverable", False)
+            and getattr(brief, "commit_deliver_intent", False) and context.last_commitments):
+        return ("same_session_press", context.last_commitments[0])
+    return None
+
+
 def should_resolve_commitment(
     *,
     brief,
     utterance: str,
     pending_first: str | None,
+    commitment_candidate: bool = False,
 ) -> bool:
     """结构化才 resolve；勿「凡 pending＋主题 bigram 就清」。
 
@@ -283,6 +297,8 @@ def should_resolve_commitment(
         return False
     if bool(getattr(brief, "commit_resolve", False)) is COMMIT_RESOLVE_FLAG:
         return True
+    if commitment_candidate:
+        return False
     if getattr(brief, "commit_deliverable", False) and utterance_is_commit_delivery(
         brief=brief, utterance=utterance, commitment=pending_first
     ):

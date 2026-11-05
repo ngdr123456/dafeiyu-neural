@@ -11,7 +11,9 @@
 
 from __future__ import annotations
 
-from .types import PriorSessionTrace, StanceTrace, ThinContext
+from dataclasses import replace
+
+from .types import CommitmentCandidate, PriorSessionTrace, StanceTrace, ThinContext
 
 
 class ThinContextStore:
@@ -34,6 +36,7 @@ class ThinContextStore:
         if ctx.prior_session is not None:
             ps = ctx.prior_session
             prior = PriorSessionTrace(
+                commitment_candidates=[replace(c) for c in ps.commitment_candidates],
                 facts=list(ps.facts),
                 commitments_pending=list(ps.commitments_pending),
                 commitments_resolved=list(ps.commitments_resolved),
@@ -47,6 +50,7 @@ class ThinContextStore:
             open_questions=list(ctx.open_questions),
             her_questions=list(ctx.her_questions),
             last_commitments=list(ctx.last_commitments),
+            commitment_candidates=[replace(c) for c in ctx.commitment_candidates],
             facts_this_session=list(ctx.facts_this_session),
             stance_traces=[StanceTrace(t.kind, t.point, t.why) for t in ctx.stance_traces],
             stance_kept_counts=dict(ctx.stance_kept_counts),
@@ -124,6 +128,23 @@ class ThinContextStore:
     def append_commitment(self, commitment: str) -> None:
         """开口后承诺回流：说出去的话要守。"""
         self._append_unique(self._context.last_commitments, commitment)
+
+    def append_commitment_candidate(self, candidate: CommitmentCandidate) -> None:
+        candidates = self._context.commitment_candidates
+        if candidate not in candidates:
+            candidates.append(replace(candidate))
+            del candidates[:-20]
+
+    def commitment_candidates(self) -> list[CommitmentCandidate]:
+        return [replace(c) for c in self._context.commitment_candidates]
+
+    def _remove_candidates(self, targets: set[str]) -> None:
+        ctx = self._context
+        ctx.commitment_candidates = [c for c in ctx.commitment_candidates if c.target not in targets]
+        if ctx.prior_session:
+            ctx.prior_session.commitment_candidates = [
+                c for c in ctx.prior_session.commitment_candidates if c.target not in targets
+            ]
 
     def append_open_question(self, question: str) -> None:
         """动力层留下的悬而未决，供后续轮次捡起。"""
@@ -256,12 +277,14 @@ class ThinContextStore:
         if self._context.last_commitments:
             self._context.commitment_deny_pending = False
             done = self._context.last_commitments.pop(0)
+            self._remove_candidates({done})
             self._append_unique(self._resolved_commitments, done)
             return done
         return None
 
     def clear_commitments(self) -> None:
         """放下同场所有承诺（仅明确整场放下时用；宁缺毋滥）；改口否定 flag 一并清。"""
+        self._remove_candidates(set(self._context.last_commitments))
         self._context.last_commitments.clear()
         self._context.commitment_deny_pending = False
 
@@ -311,6 +334,7 @@ class ThinContextStore:
                     break
             if done is None:
                 return None
+        self._remove_candidates({done})
         self._append_unique(prior.commitments_resolved, done)
         return done
 
@@ -320,6 +344,7 @@ class ThinContextStore:
             self._context.prior_session = None
             return
         self._context.prior_session = PriorSessionTrace(
+            commitment_candidates=[replace(c) for c in prior.commitment_candidates],
             facts=list(prior.facts),
             commitments_pending=list(prior.commitments_pending),
             commitments_resolved=list(prior.commitments_resolved),
@@ -335,6 +360,7 @@ class ThinContextStore:
         return bool(
             ctx.facts_this_session
             or ctx.last_commitments
+            or ctx.commitment_candidates
             or self._resolved_commitments
             or ctx.open_questions
             or ctx.stance_traces
@@ -353,7 +379,13 @@ class ThinContextStore:
         for c in prior_commits + list(ctx.last_commitments):
             if c not in combined:
                 combined.append(c)
+        candidates = []
+        prior_candidates = ctx.prior_session.commitment_candidates if ctx.prior_session else []
+        for candidate in prior_candidates + ctx.commitment_candidates:
+            if candidate.target in combined and candidate not in candidates:
+                candidates.append(replace(candidate))
         return {
+            "commitment_candidates": candidates,
             "facts": list(ctx.facts_this_session),
             "commitments_pending": combined,
             "commitments_resolved": list(self._resolved_commitments),

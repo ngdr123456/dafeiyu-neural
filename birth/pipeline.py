@@ -13,6 +13,7 @@ from .arbitrate import arbitrate
 from .articulate import articulate, last_articulate_source, take_reject_feedback
 from .commit_extract import (
     extract_commitment,
+    pressed_frame,
     should_resolve_commitment,
     user_marks_commitment_done,
     should_set_commitment_deny_pending,
@@ -44,7 +45,7 @@ from .drive import (
 from .memory import active_memory, memory_enabled
 from .stance_org import (ATTITUDE_MARKS, commitment_point, conflict_point,
                          default_org, default_stance)
-from .types import ThoughtBrief
+from .types import CommitmentCandidate, ThoughtBrief
 
 _STORE: ThinContextStore = ThinContextStore()
 
@@ -378,11 +379,18 @@ def turn(
         _STORE.clear_open_questions()
 
     # 承诺兑现／放下（对齐悬问 resolve；宁缺毋滥，拿不准不清）
+    commitment = extract_commitment(utterance)
+    frame = pressed_frame(brief)
+    press_candidate = bool(commitment and frame)
+    resolved_targets = set()
     pending0 = context.last_commitments[0] if context.last_commitments else None
     if should_resolve_commitment(
-        brief=brief, utterance=utterance, pending_first=pending0
+        brief=brief, utterance=utterance, pending_first=pending0,
+        commitment_candidate=press_candidate,
     ):
-        _STORE.resolve_commitment()
+        done = _STORE.resolve_commitment()
+        if done:
+            resolved_targets.add(done)
 
     # 上场未兑现被催后，用户明确示意已兑现 → prior 侧 resolved（不并进 last_commitments）
     prior_now = context.prior_session
@@ -393,7 +401,9 @@ def turn(
     ):
         prior_p0 = prior_now.commitments_pending[0]
         if user_marks_commitment_done(user_text):
-            _STORE.resolve_prior_commitment(match=prior_p0)
+            done = _STORE.resolve_prior_commitment(match=prior_p0)
+            if done:
+                resolved_targets.add(done)
 
     if structured_openq_answered is True and not answered:
         live_prior = _STORE.context.prior_session
@@ -404,9 +414,13 @@ def turn(
     # 动力层好奇追问入库；台上薄提取承诺/悬问（宁缺毋滥）
     _STORE.append_fact(f"用户说：{_clip(user_text)}")
     _STORE.append_fact(f"台上说：{_clip(utterance)}")
-    commitment = extract_commitment(utterance)
     if commitment:
-        _STORE.append_commitment(commitment)
+        if frame is None:
+            _STORE.append_commitment(commitment)
+        elif frame[1] not in resolved_targets:
+            _STORE.append_commitment_candidate(CommitmentCandidate(
+                text=commitment, target=frame[1], frame=frame[0], source=last_articulate_source()
+            ))
     # 好奇挂起：读 Brief.openq_curiosity_hang（禁止 pipeline 再扫 CURIOSITY_MARKS）
     if getattr(brief, "openq_curiosity_hang", False):
         # 新好奇挂起替换旧悬问（可检验的「新话头」，避免只进不出堆黏）
