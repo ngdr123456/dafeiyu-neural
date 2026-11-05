@@ -1,4 +1,5 @@
 """动力层：user_text + ThinContext -> DriveSignal（DRIVE_V1）。
+S15 只接受上游传入的结构化输入信号，普通入口传 None。
 
 对齐《贪婪的多巴胺》：想要 ≠ 喜欢／满足；预期落空会改推力。
 槽位只有 direction / salience / why；禁止装饰分数当性格；不上台播报追守停。
@@ -12,6 +13,7 @@ import re
 from dataclasses import dataclass
 
 from .context import ThinContextStore  # noqa: F401  (类型提示用)
+from .input_contract import InputSignal, drive_signal_from_input
 from .session_trace import (
     is_prior_session_backref,
     is_session_backref,
@@ -503,12 +505,16 @@ def infer_drive(
     cues: DriveCues | None = None,
     *,
     drive_bypass: bool | None = None,
+    input_signal: InputSignal | None = None,
 ) -> DriveSignal:
     """DRIVE_V1 优先级：结构化阶段先行；无结构信号时才走 MARKS 兜底。
 
     工程师旁路（drive_bypass／ThinContext.drive_bypass／BIRTH_DRIVE_BYPASS｜NEUTRAL）：
     开则固定 hold/low、why「工程师旁路」，跳过全部 S*；默认关，零行为变化。
 
+    S1b 输入信号判停（INPUT_INTENT_V1）：非降级、addressee=other 的 pause／stop 先于
+    S6／S7／§6／S8–S11；无同场承诺 → hold/low，有承诺 → guard/mid（why 保留输入信号前缀）。
+    ask／request 仍留在 S15。
     S2 改口否定主路径读 ThinContext.commitment_deny_pending 结构化布尔
     （pipeline 经 store 在 turn 开头置位）；兜底范围见 S2 注释。
     S3 好奇挂起主路径读 ThinContext.curiosity_hang_pending 结构化布尔
@@ -543,6 +549,34 @@ def infer_drive(
     # S1) 新场未接上 → 不推
     if not cues.session_ok:
         return DriveSignal(direction=None, salience="low", why="新场未接上，先不推")
+
+    # S1b) 输入信号判停（INPUT_INTENT_V1）：非降级、对「我」说的暂停／终止，
+    # 先于 S6／S7／§6／S8–S11 的一切顺手追——对方明说停，就不再顺着任何本地话头走。
+    # 有同场承诺时不能把承诺当没说过：guard/mid，why 保留「输入信号｜暂停／终止｜」前缀，
+    # 供仲裁与开口认得「先停、约定还在」。ask／request 不在此列，仍留在 S15。
+    if (
+        input_signal is not None
+        and not input_signal.degraded
+        and input_signal.addressee == "other"
+        and input_signal.act in ("pause", "stop")
+    ):
+        label = "暂停" if input_signal.act == "pause" else "终止"
+        asked = "对方要我暂停" if input_signal.act == "pause" else "对方要终止"
+        if cues.commitments_present and context.last_commitments:
+            first = context.last_commitments[0]
+            return DriveSignal(
+                direction="guard",
+                salience="mid",
+                why=(
+                    f"输入信号｜{label}｜{input_signal.source}｜{asked}，"
+                    f"但同场还有没兑现的话（{first}）"
+                ),
+            )
+        return DriveSignal(
+            direction="hold",
+            salience="low",
+            why=f"输入信号｜{label}｜{input_signal.source}｜{asked}",
+        )
 
     # Identity questions do not enter the neutral-filler path. §6 still wins
     # when a same-session commitment is present.
@@ -747,6 +781,11 @@ def infer_drive(
                 salience="low",
                 why="开口拒收回流｜同场多次",
             )
+
+    # S15) 上游结构化输入信号
+    cue = drive_signal_from_input(input_signal)
+    if cue is not None:
+        return cue
 
     # 兜底：无结构信号判定时才扫输入侧 MARKS（GREETINGS/SATISFIED/CURIOSITY/DISAPPOINT/_EMPTY_STAGE）
     # 1) 招呼

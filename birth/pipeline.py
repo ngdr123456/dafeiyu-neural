@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 
 from .arbitrate import arbitrate
 from .articulate import articulate, last_articulate_source, take_reject_feedback
@@ -43,6 +44,8 @@ from .drive import (
     should_set_drive_topic_continue_pending,
 )
 from .memory import active_memory, memory_enabled
+from .input_contract import InputSignal
+from .input_sense import sense_input
 from .stance_org import (ATTITUDE_MARKS, commitment_point, conflict_point,
                          default_org, default_stance)
 from .types import CommitmentCandidate, ThoughtBrief
@@ -75,6 +78,7 @@ class TurnResult:
     utterance: str
     brief: ThoughtBrief
     articulate_source: str = "stub"  # deepseek|opencode|hook|stub|stub_fallback|reject_self_id
+    input_signal: InputSignal | None = None
 
 
 def _clip(text: str, limit: int = 40) -> str:
@@ -107,6 +111,8 @@ def turn(
     structured_stance_necessary_pain: bool | None = None,
     structured_stance_self_torture: bool | None = None,
     drive_bypass: bool = False,
+    input_signal: InputSignal | None = None,
+    sense: bool | None = None,
 ) -> TurnResult:
     """跑完一轮完整闭环。new_session=True 显式开新场（唯一清空入口）。
 
@@ -115,6 +121,7 @@ def turn(
     标记本轮开口在等对方的看法，False 禁止开口指纹兜底。
     debug 只是让工程师通道外显得更方便（CLI 用它打印 Brief）；管线行为不受影响。
     stub=True 强制模板开口；None 跟随 articulate 全局/环境（默认可走 LLM）。
+    sense=None 读取 BIRTH_INPUT_SENSE（默认关闭）；显式信号优先，绕过动力时不感知。
     structured_commit_deny: 上游结构化 deny Brief-family 标记（如 ThoughtBrief.commit_deny）；
     为 True 时优先使用结构化信号。live 本轮无 kwarg 时，写入前先跑 early stance，
     从其守诺结构（与 Brief.commit_deny 同条件）前移置 flag；COMMIT_DENY_MARKS
@@ -329,7 +336,11 @@ def turn(
         _STORE.set_drive_prior_press_pending(True)
     context = _STORE.snapshot()
 
-    drive = infer_drive(user_text, context, drive_bypass=drive_bypass or None)
+    if sense is None:
+        sense = os.environ.get("BIRTH_INPUT_SENSE", "").strip().lower() in {"1", "true", "yes", "on"}
+    if input_signal is None and sense and not drive_bypass:
+        input_signal = sense_input(user_text)
+    drive = infer_drive(user_text, context, drive_bypass=drive_bypass or None, input_signal=input_signal)
     # 旗标可能刚被 early 守诺结构置位：重算 stance，使主路径读 flag（结构路径）
     stance = default_stance(user_text, context)
     org = default_org(context, drive=drive, stance=stance, user_text=user_text)
@@ -470,4 +481,5 @@ def turn(
         utterance=utterance,
         brief=brief,
         articulate_source=last_articulate_source(),
+        input_signal=input_signal,
     )
