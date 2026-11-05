@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List, Literal, Optional
+from typing import Dict, List, Literal, Optional
 
 Direction = Optional[Literal["pursue", "guard", "hold"]]
 Salience = Literal["low", "mid", "high"]
@@ -37,6 +37,7 @@ class StanceSignal:
     # 结构化：本轮守同场承诺（stance_org 写；arbitrate／articulate／commit_extract 读；
     # 勿以用户可见 stake 中文串作唯一闸。stake 仍可写成 STAKE_HOLD_SAME_FIELD 作字段取值）
     hold_same_field: bool = False
+    reasserts_kept: bool = False
 
 
 @dataclass
@@ -51,10 +52,10 @@ class OrgConstraint:
 
 @dataclass
 class StanceTrace:
-    """一条真做过的取舍痕迹（同场可积累；随场落盘跨场读入；非人格、非价值观表）。"""
+    """一条真守住过的取舍点（结构化标识；同场／跨场只用于连续性，不是语义匹配）。"""
 
-    kind: Literal["kept", "yielded"]
-    what: str
+    kind: Literal["kept"]
+    point: str
     why: str = ""
 
 
@@ -96,6 +97,8 @@ class ThinContext:
     last_commitments: List[str] = field(default_factory=list)
     facts_this_session: List[str] = field(default_factory=list)
     stance_traces: List[StanceTrace] = field(default_factory=list)
+    # 本场每个结构化点被守住的实际次数；只在本场累计，不落盘。
+    stance_kept_counts: Dict[str, int] = field(default_factory=dict)
     drive_identity_ask_pending: bool = False
     identity_ask_awaiting_answer: bool = False
     drive_identity_answer_pending: bool = False

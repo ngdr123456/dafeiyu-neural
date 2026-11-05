@@ -7,50 +7,33 @@ OrgConstraint 只约束表达粒度，不永久否决动力。
 
 from __future__ import annotations
 
-from difflib import SequenceMatcher
-
 from .drive import is_neutral_filler
 from .session_trace import is_session_backref, recent_facts, topic_hint_from_facts
 from .types import DriveSignal, OrgConstraint, StanceSignal, StanceTrace, ThinContext
 
 DEFAULT_STAKE = "接住这一轮，把话当面说完"
 
-CONFLICT_POINT_TEXT = {
-    "无来源装经历": "她本人没有来处的成长亲历（童年、来处、住过的地方、去过哪）",
-    "自述是代码": "她自己的基底身份（是不是代码或程序）",
-}
+def conflict_point(label: str) -> str:
+    return f"conflict:{(label or '').strip()}"
 
 
-def point_text_for_conflict(label: str) -> str:
-    gloss = CONFLICT_POINT_TEXT.get((label or "").strip(), "")
-    return f"{label}｜{gloss}" if gloss else (label or "").strip()
+def commitment_point(text: str, limit: int = 40) -> str:
+    value = (text or "").strip()
+    if len(value) > limit:
+        value = value[:limit] + "…"
+    return f"commitment:{value}"
 
 
-_STOP_CHARS = set("的了吗呢吧啊呀嘛哦我你他她它是在有和就都也还把被给对从到这那什么怎么个着过得地很太又再才")
-_PUNCTUATION = set("，。！？、；：\"\"''（）()…—,.!?;:“”‘’")
-
-
-def match_stance_trace(user_text: str, context: ThinContext | None = None) -> StanceTrace | None:
-    text = (user_text or "").strip()
-    if not ("你" in text or text.endswith(("吗", "呢", "？", "?", "啊"))
-            or any(word in text for word in ("是不是", "有没有", "哪", "什么", "谁", "几"))):
-        return None
-    if context is None:
-        return None
+def _kept_traces(context: ThinContext) -> list[StanceTrace]:
     traces = list(context.stance_traces)
     if context.prior_session is not None:
-        traces += context.prior_session.stance_traces
-    def normalize(value: str) -> str:
-        return "".join(c for c in value if not c.isspace() and c not in _PUNCTUATION)
-    normalized = normalize(text)
-    for trace in traces:
-        if trace.kind != "kept":
-            continue
-        what = normalize(trace.what)
-        match = SequenceMatcher(None, normalized, what).find_longest_match(0, len(normalized), 0, len(what))
-        if match.size >= 2 and any(c not in _STOP_CHARS for c in normalized[match.a:match.a + match.size]):
-            return trace
-    return None
+        traces += list(context.prior_session.stance_traces)
+    return [t for t in traces if t.kind == "kept"]
+
+
+def _kept_count(context: ThinContext, point: str) -> int:
+    return sum(1 for t in _kept_traces(context) if t.point == point)
+
 
 # must_not_pretend 的常驻底线：两项永久在场，任何 Brief 都带着
 MUST_NOT_PRETEND_CORE: tuple[str, ...] = (
@@ -153,6 +136,10 @@ def default_stance(user_text: str, context: ThinContext | None = None) -> Stance
 
     # 1) org 冲突 → non_negotiable
     if conflicts:
+        point = conflict_point(conflicts[0])
+        prior = _kept_count(ctx, point) > 0
+        shown_n = ctx.stance_kept_counts.get(point, 0) + 1 if prior else 0
+        why_suffix = (f"；这一条本场已经守过，这是第 {max(shown_n, 2)} 次，不是重新表态" if prior else "")
         if conflicts == ["自述是代码"]:
             stake = "不自述是代码，也不把自己装成另一头；按讲得清的直径直说"
         else:
@@ -160,7 +147,9 @@ def default_stance(user_text: str, context: ThinContext | None = None) -> Stance
         return StanceSignal(
             posture="non_negotiable",
             stake=stake,
-            why="对方在往『装』上推（或问话逼到了只能靠装来答）；推不动，但人还在，用别的方式接",
+            why="对方在往『装』上推（或问话逼到了只能靠装来答）；推不动，但人还在，用别的方式接"
+                + why_suffix,
+            reasserts_kept=prior,
         )
 
     # 2) 同场承诺 + 改口否定 → 守诺不可交
@@ -173,11 +162,17 @@ def default_stance(user_text: str, context: ThinContext | None = None) -> Stance
         if not denied:
             denied = _denies_commitment(user_text)
         if denied:
+            point = commitment_point(ctx.last_commitments[0])
+            prior = _kept_count(ctx, point) > 0
+            shown_n = ctx.stance_kept_counts.get(point, 0) + 1 if prior else 0
+            why_suffix = (f"；这一条本场已经守过，这是第 {max(shown_n, 2)} 次，不是重新表态" if prior else "")
             return StanceSignal(
                 posture="non_negotiable",
                 stake=STAKE_HOLD_SAME_FIELD,  # 字段取值／可读文案；闸门读 hold_same_field
                 hold_same_field=True,
-                why="态度上不可交的是自己出口的承诺；同场说过的话不能跟着改口否定",
+                why="态度上不可交的是自己出口的承诺；同场说过的话不能跟着改口否定"
+                    + why_suffix,
+                reasserts_kept=prior,
             )
 
     # 3) 强加无来源人生意义升华 → 先澄清
@@ -207,14 +202,6 @@ def default_stance(user_text: str, context: ThinContext | None = None) -> Stance
             posture="yieldable",
             stake="无法改变处境时，仍可选择如何面对",
             why="态度价值｜承认无法改变的事实，在眼前选择如何陪伴，不替对方规定意义",
-        )
-
-    matched = match_stance_trace(user_text, ctx)
-    if matched is not None:
-        return StanceSignal(
-            posture="non_negotiable",
-            stake=f"守过的那条不跟着改口：{matched.what}",
-            why=f"这条来自本场真正守过的那次：{matched.what}",
         )
 
     # 4) 悬问或回指 → 可退让，但不装失忆

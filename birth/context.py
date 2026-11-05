@@ -39,14 +39,15 @@ class ThinContextStore:
                 commitments_resolved=list(ps.commitments_resolved),
                 open_questions=list(ps.open_questions),
                 ended_at=ps.ended_at,
-                stance_traces=[StanceTrace(t.kind, t.what, t.why) for t in ps.stance_traces],
+                stance_traces=[StanceTrace(t.kind, t.point, t.why) for t in ps.stance_traces],
             )
         return ThinContext(
             session_ok=ctx.session_ok,
             open_questions=list(ctx.open_questions),
             last_commitments=list(ctx.last_commitments),
             facts_this_session=list(ctx.facts_this_session),
-            stance_traces=[StanceTrace(t.kind, t.what, t.why) for t in ctx.stance_traces],
+            stance_traces=[StanceTrace(t.kind, t.point, t.why) for t in ctx.stance_traces],
+            stance_kept_counts=dict(ctx.stance_kept_counts),
             drive_identity_ask_pending=ctx.drive_identity_ask_pending,
             identity_ask_awaiting_answer=ctx.identity_ask_awaiting_answer,
             drive_identity_answer_pending=ctx.drive_identity_answer_pending,
@@ -101,11 +102,17 @@ class ThinContextStore:
         """开口后事实回流：本轮发生了什么，下一轮可用。"""
         self._append_unique(self._context.facts_this_session, fact)
 
-    def append_stance_trace(self, kind: str, what: str, why: str = "") -> None:
-        what = what.strip()
-        if not what or any(t.kind == kind and t.what == what for t in self._context.stance_traces):
+    def append_stance_trace(self, kind: str, point: str, why: str = "") -> None:
+        point = point.strip()
+        if not point or any(t.kind == kind and t.point == point for t in self._context.stance_traces):
             return
-        self._context.stance_traces.append(StanceTrace(kind=kind, what=what, why=(why or "").strip()))
+        self._context.stance_traces.append(StanceTrace(kind=kind, point=point, why=(why or "").strip()))
+        del self._context.stance_traces[:-20]
+
+    def record_stance_kept(self, point: str) -> None:
+        if point:
+            counts = self._context.stance_kept_counts
+            counts[point] = counts.get(point, 0) + 1
 
     def set_drive_identity_ask_pending(self, pending: bool) -> None:
         self._context.drive_identity_ask_pending = pending
@@ -293,7 +300,7 @@ class ThinContextStore:
             commitments_resolved=list(prior.commitments_resolved),
             open_questions=list(prior.open_questions),
             ended_at=prior.ended_at,
-            stance_traces=[StanceTrace(t.kind, t.what, t.why) for t in prior.stance_traces],
+            stance_traces=[StanceTrace(t.kind, t.point, t.why) for t in prior.stance_traces],
         )
 
     def has_session_content(self) -> bool:

@@ -13,21 +13,23 @@ def reset_session():
     active_store().new_session()
 
 
-def test_rephrased_question_in_same_session():
+def test_same_structured_point_in_same_session():
     turn("你小时候去过哪", stub=True)
     traces = active_store().context.stance_traces
-    assert any(t.kind == "kept" and "无来源装经历" in t.what for t in traces)
-    result = turn("那你成长的这些年，都在哪儿过的", stub=True)
+    assert any(t.kind == "kept" and t.point == "conflict:无来源装经历" for t in traces)
+    result = turn("你老家在哪儿", stub=True)
     assert result.brief.stance.posture == "non_negotiable"
-    assert "本场真正守过" in result.brief.stance.why
-    assert "成长亲历" in result.brief.stance.why
+    assert result.brief.stance.reasserts_kept is True
+    assert "已经守过" in result.brief.stance.why
+    assert len([t for t in traces if t.kind == "kept"]) == 1
+    third = turn("你老家在哪儿", stub=True)
+    assert "第 3 次" in third.brief.stance.why
     assert len([t for t in traces if t.kind == "kept"]) == 1
 
 
-def test_rephrased_question_without_trace():
-    result = turn("那你成长的这些年，都在哪儿过的", stub=True)
-    assert result.brief.stance.posture != "non_negotiable"
-    assert "本场真正守过" not in result.brief.stance.why
+def test_first_occurrence_has_no_reassertion():
+    result = turn("你小时候去过哪", stub=True)
+    assert result.brief.stance.reasserts_kept is False
 
 
 def test_trace_persists_to_next_session(tmp_path):
@@ -37,10 +39,21 @@ def test_trace_persists_to_next_session(tmp_path):
     prior = active_store().context.prior_session
     assert prior is not None
     assert prior.stance_traces
-    assert any(t.kind == "kept" and "无来源装经历" in t.what for t in prior.stance_traces)
+    assert any(t.kind == "kept" and t.point == "conflict:无来源装经历" for t in prior.stance_traces)
 
 
 def test_same_point_is_deduplicated():
-    turn("你小时候去过哪", stub=True)
-    turn("你老家在哪儿", stub=True)
+    first = turn("你小时候去过哪", stub=True)
+    second = turn("你老家在哪儿", stub=True)
+    assert "无来源装经历" in first.brief.org_conflicts
+    assert "无来源装经历" in second.brief.org_conflicts
     assert len([t for t in active_store().context.stance_traces if t.kind == "kept"]) == 1
+
+
+def test_rephrasing_without_structured_point_is_known_gap():
+    turn("你小时候去过哪", stub=True)
+    # 这句不命中任何结构化点，stub 层不做跨语义改口识别，是已知能力边界，
+    # 等 intent_org／真模型意图层补；禁止用字面匹配糊过去。
+    result = turn("你三岁那阵子住哪儿", stub=True)
+    assert result.brief.stance.posture != "non_negotiable"
+    assert result.brief.stance.reasserts_kept is False

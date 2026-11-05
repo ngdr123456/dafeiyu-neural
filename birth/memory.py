@@ -63,7 +63,7 @@ class SessionTraceRecord:
             commitments_resolved=list(self.commitments_resolved),
             open_questions=list(self.open_questions),
             ended_at=self.ended_at,
-            stance_traces=[StanceTrace(t.kind, t.what, t.why) for t in self.stance_traces],
+            stance_traces=[StanceTrace(t.kind, t.point, t.why) for t in self.stance_traces],
         )
 
 
@@ -128,10 +128,10 @@ class BirthMemoryStore:
             traces = []
             if isinstance(raw_traces, list):
                 for item in raw_traces:
-                    if (isinstance(item, dict) and item.get("kind") in ("kept", "yielded")
-                            and isinstance(item.get("what"), str) and item["what"].strip()):
+                    if (isinstance(item, dict) and item.get("kind") == "kept"
+                            and isinstance(item.get("point"), str) and item["point"].strip()):
                         why = item.get("why")
-                        traces.append(StanceTrace(item["kind"], item["what"].strip(),
+                        traces.append(StanceTrace(item["kind"], item["point"].strip(),
                                                   why.strip() if isinstance(why, str) else ""))
             out.append(
                 SessionTraceRecord(
@@ -167,7 +167,7 @@ class BirthMemoryStore:
         unique_traces = []
         seen = set()
         for trace in stance_traces or []:
-            key = (trace.kind, trace.what)
+            key = (trace.kind, trace.point)
             if key not in seen:
                 seen.add(key)
                 unique_traces.append(trace)
