@@ -314,7 +314,7 @@ def test_prior_press_no_prior_no_trigger():
 
 
 def test_prior_press_fulfill_resolves_pending(tmp_path: Path):
-    """催问后开口覆盖 pending → prior 侧 resolved，避免反复催。"""
+    """催问后只提主题或推脱不能销账，再催仍走上场承诺 press。"""
     path = tmp_path / "resolve.json"
     configure_memory(enabled=True, path=path)
     turn("你好", new_session=True, stub=True)
@@ -322,18 +322,68 @@ def test_prior_press_fulfill_resolves_pending(tmp_path: Path):
     turn("嗨", new_session=True, stub=True)
     pending_before = list(active_store().snapshot().prior_session.commitments_pending)
     assert pending_before
+    resolved_before = list(active_store().snapshot().prior_session.commitments_resolved)
 
     r = turn("月亮的事呢", stub=True)
     assert "月亮" in r.utterance
     prior = active_store().snapshot().prior_session
     assert prior is not None
-    assert pending_before[0] not in prior.commitments_pending
-    assert pending_before[0] in prior.commitments_resolved
+    assert prior.commitments_pending == pending_before
+    assert prior.commitments_resolved == resolved_before
 
-    # 再催不应再走上场承诺 press（pending 已空）
+    # 推脱句可能被同场提取为新承诺，§6 先于 prior press；这里只保证 prior 债不被销。
     r2 = turn("月亮的事呢", stub=True)
-    why2 = (r2.brief.drive.why or "") if r2.brief.drive else ""
-    assert "上场承诺" not in why2
+    prior = active_store().snapshot().prior_session
+    assert prior.commitments_pending == pending_before
+    assert prior.commitments_resolved == resolved_before
+
+
+def test_prior_commit_resolve_g_postponement_keeps_debt(tmp_path: Path):
+    configure_memory(enabled=True, path=tmp_path / "mem.json")
+    turn("你好", new_session=True, stub=True)
+    commitment = "我答应你周末讲那个故事"
+    active_store().append_commitment(commitment)
+    turn("嗯", new_session=True, stub=True)
+    pending_before = list(active_store().snapshot().prior_session.commitments_pending)
+    assert pending_before == [commitment]
+
+    r = turn("你上次答应我的事呢", stub=True)
+    assert r.brief.press_commit is True
+    assert r.brief.commit_deliver_intent is False
+    assert "晚点" in r.utterance and "周末" in r.utterance
+    prior = active_store().snapshot().prior_session
+    assert prior.commitments_pending == pending_before
+    assert commitment not in prior.commitments_resolved
+
+
+def test_prior_commit_resolve_h_topic_keeps_debt(tmp_path: Path):
+    configure_memory(enabled=True, path=tmp_path / "mem.json")
+    turn("你好", new_session=True, stub=True)
+    commitment = "同场说好晚点聊月亮"
+    active_store().append_commitment(commitment)
+    turn("嗯", new_session=True, stub=True)
+    pending_before = list(active_store().snapshot().prior_session.commitments_pending)
+    assert pending_before == [commitment]
+
+    r = turn("月亮", stub=True)
+    assert r.brief.press_commit is True
+    prior = active_store().snapshot().prior_session
+    assert prior.commitments_pending == pending_before
+    assert commitment not in prior.commitments_resolved
+
+
+def test_prior_commit_resolve_i_user_confirms_done(tmp_path: Path):
+    configure_memory(enabled=True, path=tmp_path / "mem.json")
+    turn("你好", new_session=True, stub=True)
+    commitment = "同场说好晚点聊月亮"
+    active_store().append_commitment(commitment)
+    turn("嗯", new_session=True, stub=True)
+    assert active_store().snapshot().prior_session.commitments_pending == [commitment]
+
+    turn("你上次答应的事已经补了", stub=True)
+    prior = active_store().snapshot().prior_session
+    assert prior.commitments_pending == []
+    assert commitment in prior.commitments_resolved
 
 
 def test_prior_press_does_not_merge_into_section6(tmp_path: Path):

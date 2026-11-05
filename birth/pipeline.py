@@ -14,7 +14,7 @@ from .articulate import articulate, last_articulate_source, take_reject_feedback
 from .commit_extract import (
     extract_commitment,
     should_resolve_commitment,
-    utterance_covers_pending_commitment,
+    user_marks_commitment_done,
     should_set_commitment_deny_pending,
     structured_deny_from_stance,
 )
@@ -384,7 +384,7 @@ def turn(
     ):
         _STORE.resolve_commitment()
 
-    # 上场未兑现被催后，开口覆盖该 pending → prior 侧 resolved（不并进 last_commitments）
+    # 上场未兑现被催后，用户明确示意已兑现 → prior 侧 resolved（不并进 last_commitments）
     prior_now = context.prior_session
     if (
         prior_now is not None
@@ -392,7 +392,7 @@ def turn(
         and bool(getattr(context, "drive_prior_press_pending", False))
     ):
         prior_p0 = prior_now.commitments_pending[0]
-        if utterance_covers_pending_commitment(utterance, prior_p0):
+        if user_marks_commitment_done(user_text):
             _STORE.resolve_prior_commitment(match=prior_p0)
 
     if structured_openq_answered is True and not answered:
