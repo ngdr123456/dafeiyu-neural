@@ -31,6 +31,9 @@ class InputSignal:
 def drive_signal_from_input(signal: InputSignal | None) -> DriveSignal | None:
     if signal is None or signal.degraded:
         return None
+    # 对象感：只把对我说的话当缺口。
+    if signal.addressee != "other":
+        return None
     if signal.act == "ask":
         return DriveSignal(direction="pursue", salience="mid",
                            why=f"输入信号｜问句｜{signal.source}｜缺口在外，顺着答")

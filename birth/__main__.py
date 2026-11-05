@@ -7,6 +7,7 @@
     python -m birth --stub          # REPL + 强制模板 stub
     python -m birth "你好" --stub   # 单句 stub
     python -m birth --debug         # REPL + 工程师通道（开口来源＋Brief）
+    python -m birth --no-sense      # 关闭默认开启的输入感知；--stub 自动关闭
 
 REPL 内：空行 / exit / quit / q / EOF 退出；/new 开新场（先落盘本场再清）。
 环境变量 BIRTH_MEMORY_PATH 可改持久文件路径（默认 ~/.dafeiyu/birth_memory.json）。
@@ -39,6 +40,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--debug", action="store_true", help="打印台下 Brief（工程师通道）")
     parser.add_argument("--stub", action="store_true", help="强制模板开口，不调 DeepSeek/OpenCode")
+    parser.add_argument("--no-sense", action="store_true", help="关掉输入感知（默认开；--stub 时自动关）")
     parser.add_argument("--new-session", action="store_true", help="显式开新场，清空同场积累")
     parser.add_argument(
         "--no-memory",
@@ -72,6 +74,10 @@ def _print_result(result, *, debug: bool) -> None:
         "llm": "llm",
     }
     print(f"[debug] 开口来源：{labels.get(src, src)}")
+    signal = result.input_signal
+    if signal is not None:
+        suffix = f"（降级：{signal.reason}）" if signal.degraded else ""
+        print(f"[debug] 输入信号：{signal.act}/{signal.addressee}/{signal.source}{suffix}")
     print("[debug] 台下 ThoughtBrief（工程师通道）")
     print(json.dumps(asdict(result.brief), ensure_ascii=False, indent=2))
 
@@ -108,6 +114,7 @@ def _run_repl(args: argparse.Namespace) -> int:
             new_session=new_session,
             debug=args.debug,
             stub=True if args.stub else None,
+            sense=(not args.stub and not args.no_sense),
         )
         _print_result(result, debug=args.debug)
 
@@ -134,6 +141,7 @@ def main(argv: list[str] | None = None) -> int:
         new_session=args.new_session,
         debug=args.debug,
         stub=True if args.stub else None,
+        sense=(not args.stub and not args.no_sense),
     )
     _print_result(result, debug=args.debug)
     return 0
