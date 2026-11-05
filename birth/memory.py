@@ -14,9 +14,9 @@ import os
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, TypeVar
 
-from .types import PriorSessionTrace
+from .types import PriorSessionTrace, StanceTrace
 
 # 环境变量：覆盖默认路径
 ENV_MEMORY_PATH = "BIRTH_MEMORY_PATH"
@@ -25,6 +25,7 @@ DEFAULT_MAX_SESSIONS = 5
 DEFAULT_MAX_FACTS = 40
 DEFAULT_MAX_COMMITS = 20
 DEFAULT_MAX_OPENQ = 10
+DEFAULT_MAX_TRACES = 20
 
 
 def default_memory_path() -> Path:
@@ -44,6 +45,7 @@ class SessionTraceRecord:
     commitments_resolved: List[str] = field(default_factory=list)
     open_questions: List[str] = field(default_factory=list)
     ended_at: str = ""
+    stance_traces: List[StanceTrace] = field(default_factory=list)
 
     def is_empty(self) -> bool:
         return not (
@@ -51,6 +53,7 @@ class SessionTraceRecord:
             or self.commitments_pending
             or self.commitments_resolved
             or self.open_questions
+            or self.stance_traces
         )
 
     def to_prior(self) -> PriorSessionTrace:
@@ -60,10 +63,14 @@ class SessionTraceRecord:
             commitments_resolved=list(self.commitments_resolved),
             open_questions=list(self.open_questions),
             ended_at=self.ended_at,
+            stance_traces=[StanceTrace(t.kind, t.what, t.why) for t in self.stance_traces],
         )
 
 
-def _clip_list(items: List[str], limit: int) -> List[str]:
+_T = TypeVar("_T")
+
+
+def _clip_list(items: List[_T], limit: int) -> List[_T]:
     if limit <= 0:
         return []
     if len(items) <= limit:
@@ -82,12 +89,14 @@ class BirthMemoryStore:
         max_facts: int = DEFAULT_MAX_FACTS,
         max_commits: int = DEFAULT_MAX_COMMITS,
         max_openq: int = DEFAULT_MAX_OPENQ,
+        max_traces: int = DEFAULT_MAX_TRACES,
     ) -> None:
         self.path = Path(path) if path is not None else default_memory_path()
         self.max_sessions = max(1, int(max_sessions))
         self.max_facts = max(0, int(max_facts))
         self.max_commits = max(0, int(max_commits))
         self.max_openq = max(0, int(max_openq))
+        self.max_traces = max(0, int(max_traces))
 
     def _read_raw(self) -> list[dict]:
         if not self.path.exists():
@@ -115,6 +124,15 @@ class BirthMemoryStore:
     def list_sessions(self) -> list[SessionTraceRecord]:
         out: list[SessionTraceRecord] = []
         for raw in self._read_raw():
+            raw_traces = raw.get("stance_traces")
+            traces = []
+            if isinstance(raw_traces, list):
+                for item in raw_traces:
+                    if (isinstance(item, dict) and item.get("kind") in ("kept", "yielded")
+                            and isinstance(item.get("what"), str) and item["what"].strip()):
+                        why = item.get("why")
+                        traces.append(StanceTrace(item["kind"], item["what"].strip(),
+                                                  why.strip() if isinstance(why, str) else ""))
             out.append(
                 SessionTraceRecord(
                     facts=list(raw.get("facts") or []),
@@ -122,6 +140,7 @@ class BirthMemoryStore:
                     commitments_resolved=list(raw.get("commitments_resolved") or []),
                     open_questions=list(raw.get("open_questions") or []),
                     ended_at=str(raw.get("ended_at") or ""),
+                    stance_traces=traces,
                 )
             )
         return out
@@ -142,8 +161,16 @@ class BirthMemoryStore:
         commitments_resolved: List[str] | None = None,
         open_questions: List[str] | None = None,
         ended_at: str | None = None,
+        stance_traces: List[StanceTrace] | None = None,
     ) -> SessionTraceRecord | None:
         """写入一场痕迹；空场跳过；超容量丢最旧。"""
+        unique_traces = []
+        seen = set()
+        for trace in stance_traces or []:
+            key = (trace.kind, trace.what)
+            if key not in seen:
+                seen.add(key)
+                unique_traces.append(trace)
         rec = SessionTraceRecord(
             facts=_clip_list(list(facts or []), self.max_facts),
             commitments_pending=_clip_list(
@@ -153,6 +180,7 @@ class BirthMemoryStore:
                 list(commitments_resolved or []), self.max_commits
             ),
             open_questions=_clip_list(list(open_questions or []), self.max_openq),
+            stance_traces=_clip_list(unique_traces, self.max_traces),
             ended_at=ended_at
             or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         )

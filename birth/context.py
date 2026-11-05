@@ -11,7 +11,7 @@
 
 from __future__ import annotations
 
-from .types import PriorSessionTrace, ThinContext
+from .types import PriorSessionTrace, StanceTrace, ThinContext
 
 
 class ThinContextStore:
@@ -39,12 +39,14 @@ class ThinContextStore:
                 commitments_resolved=list(ps.commitments_resolved),
                 open_questions=list(ps.open_questions),
                 ended_at=ps.ended_at,
+                stance_traces=[StanceTrace(t.kind, t.what, t.why) for t in ps.stance_traces],
             )
         return ThinContext(
             session_ok=ctx.session_ok,
             open_questions=list(ctx.open_questions),
             last_commitments=list(ctx.last_commitments),
             facts_this_session=list(ctx.facts_this_session),
+            stance_traces=[StanceTrace(t.kind, t.what, t.why) for t in ctx.stance_traces],
             drive_identity_ask_pending=ctx.drive_identity_ask_pending,
             identity_ask_awaiting_answer=ctx.identity_ask_awaiting_answer,
             drive_identity_answer_pending=ctx.drive_identity_answer_pending,
@@ -98,6 +100,12 @@ class ThinContextStore:
     def append_fact(self, fact: str) -> None:
         """开口后事实回流：本轮发生了什么，下一轮可用。"""
         self._append_unique(self._context.facts_this_session, fact)
+
+    def append_stance_trace(self, kind: str, what: str, why: str = "") -> None:
+        what = what.strip()
+        if not what or any(t.kind == kind and t.what == what for t in self._context.stance_traces):
+            return
+        self._context.stance_traces.append(StanceTrace(kind=kind, what=what, why=(why or "").strip()))
 
     def set_drive_identity_ask_pending(self, pending: bool) -> None:
         self._context.drive_identity_ask_pending = pending
@@ -285,6 +293,7 @@ class ThinContextStore:
             commitments_resolved=list(prior.commitments_resolved),
             open_questions=list(prior.open_questions),
             ended_at=prior.ended_at,
+            stance_traces=[StanceTrace(t.kind, t.what, t.why) for t in prior.stance_traces],
         )
 
     def has_session_content(self) -> bool:
@@ -295,6 +304,7 @@ class ThinContextStore:
             or ctx.last_commitments
             or self._resolved_commitments
             or ctx.open_questions
+            or ctx.stance_traces
         )
 
     def export_session_trace(self) -> dict:
@@ -308,6 +318,7 @@ class ThinContextStore:
             "commitments_pending": list(ctx.last_commitments),
             "commitments_resolved": list(self._resolved_commitments),
             "open_questions": list(ctx.open_questions),
+            "stance_traces": list(ctx.stance_traces),
         }
 
 

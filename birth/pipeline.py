@@ -42,7 +42,8 @@ from .drive import (
     should_set_drive_topic_continue_pending,
 )
 from .memory import active_memory, memory_enabled
-from .stance_org import ATTITUDE_MARKS, default_org, default_stance
+from .stance_org import (ATTITUDE_MARKS, DEFAULT_STAKE, default_org, default_stance,
+                         match_stance_trace, point_text_for_conflict)
 from .types import ThoughtBrief
 
 _STORE: ThinContextStore = ThinContextStore()
@@ -332,6 +333,24 @@ def turn(
                       user_text=user_text)
 
     utterance = articulate(brief, stub=stub)
+
+    stance_now = brief.stance
+    if stance_now.posture == "non_negotiable":
+        kept_what = ""
+        if brief.org_conflicts:
+            kept_what = point_text_for_conflict(brief.org_conflicts[0])
+        elif brief.hold_same_field and context.last_commitments:
+            kept_what = context.last_commitments[0]
+        else:
+            matched = match_stance_trace(user_text, context)
+            if matched is not None:
+                kept_what = matched.what
+        if kept_what:
+            _STORE.append_stance_trace("kept", kept_what, stance_now.why)
+    elif stance_now.posture == "yieldable":
+        stake_now = (stance_now.stake or "").strip()
+        if stake_now and stake_now != DEFAULT_STAKE:
+            _STORE.append_stance_trace("yielded", stake_now, stance_now.why)
 
     # Only a concrete opening asking for the other's side creates a wait.
     opening_hang = structured_want_seen_hang

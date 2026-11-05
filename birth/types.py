@@ -50,6 +50,15 @@ class OrgConstraint:
 
 
 @dataclass
+class StanceTrace:
+    """一条真做过的取舍痕迹（同场可积累；随场落盘跨场读入；非人格、非价值观表）。"""
+
+    kind: Literal["kept", "yielded"]
+    what: str
+    why: str = ""
+
+
+@dataclass
 class PriorSessionTrace:
     """上一场薄痕迹（跨场读入；非长期人格／非意识海）。
 
@@ -62,6 +71,7 @@ class PriorSessionTrace:
     commitments_resolved: List[str] = field(default_factory=list)
     open_questions: List[str] = field(default_factory=list)
     ended_at: str = ""
+    stance_traces: List[StanceTrace] = field(default_factory=list)
 
     def has_trace(self) -> bool:
         return bool(
@@ -69,6 +79,7 @@ class PriorSessionTrace:
             or self.commitments_pending
             or self.commitments_resolved
             or self.open_questions
+            or self.stance_traces
         )
 
 
@@ -84,6 +95,7 @@ class ThinContext:
     open_questions: List[str] = field(default_factory=list)
     last_commitments: List[str] = field(default_factory=list)
     facts_this_session: List[str] = field(default_factory=list)
+    stance_traces: List[StanceTrace] = field(default_factory=list)
     drive_identity_ask_pending: bool = False
     identity_ask_awaiting_answer: bool = False
     drive_identity_answer_pending: bool = False
