@@ -37,6 +37,10 @@ from .types import (
 
 def _drive_say_intent(drive: DriveSignal) -> str:
     why = drive.why or ""
+    if why.startswith("输入信号｜问句｜"):
+        return "对方在问我，先正面接住这个问题；能答就答，答不上来就说清"
+    if why.startswith("输入信号｜请求｜"):
+        return "对方在请我做事，先接住这件事；能做就说怎么做，不能就直说"
     if "身体想象｜" in why:
         return "承认想象中想要感受的愿望，不把想象说成亲历"
     if "想被看见｜" in why:

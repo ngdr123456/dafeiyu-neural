@@ -42,6 +42,7 @@ from .drive import (
     should_set_drive_topic_continue_pending,
 )
 from .memory import active_memory, memory_enabled
+from .input_contract import InputSignal
 from .stance_org import (ATTITUDE_MARKS, commitment_point, conflict_point,
                          default_org, default_stance)
 from .types import ThoughtBrief
@@ -74,6 +75,7 @@ class TurnResult:
     utterance: str
     brief: ThoughtBrief
     articulate_source: str = "stub"  # deepseek|opencode|hook|stub|stub_fallback|reject_self_id
+    input_signal: InputSignal | None = None
 
 
 def _clip(text: str, limit: int = 40) -> str:
@@ -106,6 +108,7 @@ def turn(
     structured_stance_necessary_pain: bool | None = None,
     structured_stance_self_torture: bool | None = None,
     drive_bypass: bool = False,
+    input_signal: InputSignal | None = None,
 ) -> TurnResult:
     """跑完一轮完整闭环。new_session=True 显式开新场（唯一清空入口）。
 
@@ -328,7 +331,7 @@ def turn(
         _STORE.set_drive_prior_press_pending(True)
     context = _STORE.snapshot()
 
-    drive = infer_drive(user_text, context, drive_bypass=drive_bypass or None)
+    drive = infer_drive(user_text, context, drive_bypass=drive_bypass or None, input_signal=input_signal)
     # 旗标可能刚被 early 守诺结构置位：重算 stance，使主路径读 flag（结构路径）
     stance = default_stance(user_text, context)
     org = default_org(context, drive=drive, stance=stance, user_text=user_text)
@@ -456,4 +459,5 @@ def turn(
         utterance=utterance,
         brief=brief,
         articulate_source=last_articulate_source(),
+        input_signal=input_signal,
     )

@@ -1,4 +1,5 @@
 """动力层：user_text + ThinContext -> DriveSignal（DRIVE_V1）。
+S15 只接受上游传入的结构化输入信号，普通入口传 None。
 
 对齐《贪婪的多巴胺》：想要 ≠ 喜欢／满足；预期落空会改推力。
 槽位只有 direction / salience / why；禁止装饰分数当性格；不上台播报追守停。
@@ -12,6 +13,7 @@ import re
 from dataclasses import dataclass
 
 from .context import ThinContextStore  # noqa: F401  (类型提示用)
+from .input_contract import InputSignal, drive_signal_from_input
 from .session_trace import (
     is_prior_session_backref,
     is_session_backref,
@@ -503,6 +505,7 @@ def infer_drive(
     cues: DriveCues | None = None,
     *,
     drive_bypass: bool | None = None,
+    input_signal: InputSignal | None = None,
 ) -> DriveSignal:
     """DRIVE_V1 优先级：结构化阶段先行；无结构信号时才走 MARKS 兜底。
 
@@ -747,6 +750,11 @@ def infer_drive(
                 salience="low",
                 why="开口拒收回流｜同场多次",
             )
+
+    # S15) 上游结构化输入信号
+    cue = drive_signal_from_input(input_signal)
+    if cue is not None:
+        return cue
 
     # 兜底：无结构信号判定时才扫输入侧 MARKS（GREETINGS/SATISFIED/CURIOSITY/DISAPPOINT/_EMPTY_STAGE）
     # 1) 招呼
