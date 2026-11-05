@@ -35,8 +35,24 @@ from .types import (
 )
 
 
+def _input_stop_label(drive: DriveSignal | None) -> str | None:
+    """读 drive.why 结构前缀，回到「暂停／终止」；不是扫用户原句。"""
+    why = (drive.why if drive is not None else "") or ""
+    if why.startswith("输入信号｜暂停｜"):
+        return "暂停"
+    if why.startswith("输入信号｜终止｜"):
+        return "终止"
+    return None
+
+
 def _drive_say_intent(drive: DriveSignal) -> str:
     why = drive.why or ""
+    # INPUT_INTENT_V1：判停之后台上先应一声就停住——问候、邀请继续、问「要我做什么」
+    # 都会把「停」重新说回「接着聊」。
+    if why.startswith("输入信号｜暂停｜"):
+        return "对方在叫停：先应一声就暂停，不问候、不邀请继续、不问要我做什么、不开新话头"
+    if why.startswith("输入信号｜终止｜"):
+        return "对方在收束这场：先应一声就停在点子上，不问候、不邀请继续、不问要我做什么、不开新话头"
     if why.startswith("输入信号｜问句｜"):
         return "对方在问我，先正面接住这个问题；能答就答，答不上来就说清"
     if why.startswith("输入信号｜请求｜"):
@@ -166,8 +182,14 @@ def arbitrate(
         if toks and any(tok in (user_text or "") for tok in toks):
             commit_deliver_intent = True  # 用户点到主题＝可检验接着交付，非纯守诺
         why = drive.why or ""
+        # 输入信号判停 + 同场承诺：先说停，再说约定还在；不能让通用守诺模板盖掉这一句停。
+        if _input_stop_label(drive) is not None:
+            commit_hold_with_drive = True
+            say_intent = (
+                f"{_drive_say_intent(drive)}；同场约定还在，说清它没消失"
+            )
         # 收束 hold／好奇 pursue：动力人话进 say_intent，薄守诺并存（勿只吐守诺模板）
-        if drive.direction == "hold" and (
+        elif drive.direction == "hold" and (
             "喜欢/满足" in why or "不必再追" in why
         ):
             commit_hold_with_drive = True

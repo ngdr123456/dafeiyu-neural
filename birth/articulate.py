@@ -160,8 +160,29 @@ _ORG_FALLBACK = (
 _DEFAULT_FALLBACK = "这句我接。你想先从哪说起，我就从哪接。"
 
 
+def _input_stop_kind(drive) -> str | None:
+    """读 drive.why 的结构前缀判断本轮是不是被叫停；不扫用户原句。"""
+    why = (getattr(drive, "why", "") if drive is not None else "") or ""
+    if why.startswith("输入信号｜暂停｜"):
+        return "pause"
+    if why.startswith("输入信号｜终止｜"):
+        return "stop"
+    return None
+
+
+def _input_stop_utterance(kind: str, has_commitment: bool) -> str:
+    if kind == "pause":
+        if has_commitment:
+            return "行，先停一下，我不往下说了。同场里说好的那句还在，我不当它没了。"
+        return "行，先停一下，我不往下说了。"
+    if has_commitment:
+        return "好，就到这儿，我不往下说了。同场里说好的那句还在，我不当它没了。"
+    return "好，就到这儿，我不往下说了。"
+
+
 def _template_utterance(brief: ThoughtBrief) -> str:
     """stub 开口：主路径读 Brief 结构化标记／posture——
+    0) drive.why 带「输入信号｜暂停／终止｜」→ 判停模板（有承诺时先说停再说约定）；
     1) dominant=org → _ORG_TEMPLATES／fallback；
     2) press_commit → 催答应约定句；
     3) commit_hold_with_drive → 读 drive.direction／drive.why 选收束／好奇；
@@ -174,6 +195,14 @@ def _template_utterance(brief: ThoughtBrief) -> str:
         回指：drive_callback_pending／why「回指同场｜本场已有痕迹接」+ facts）；
     say_intent 中文子串仅作无结构时打开话题／收束／空追／回指的兜底。
     """
+    # 0) 输入信号判停（INPUT_INTENT_V1）：对方明说要暂停／终止，台上先应一声就停住。
+    #    判停压过话题／好奇／回指／招呼等一切上下文分支；有同场约定时先说停、再说约定还在。
+    #    只读 drive.why 结构前缀，不扫用户原句。
+    stop_kind = _input_stop_kind(brief.drive)
+    if stop_kind is not None:
+        has_commitment = "同场还有没兑现的话" in (brief.drive.why or "")
+        return _input_stop_utterance(stop_kind, has_commitment)
+
     if (getattr(brief.context, "drive_identity_answer_pending", False)
             and brief.drive and brief.drive.direction == "pursue"):
         return f"收到，你说『{brief.context.identity_answer_text}』。"

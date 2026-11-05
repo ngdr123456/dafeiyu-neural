@@ -66,17 +66,104 @@ def test_frozen_and_none():
     assert drive_signal_from_input(None) is None
 
 
-def test_commitment_precedes_input():
+def test_ask_input_still_after_commitment():
+    """ask 仍留在 S15（本刀只把 pause／stop 前移），同场承诺的 guard 先命中。
+    对应新次序：pause／stop 在 S1b 前置，ask／request 不受此限。"""
     store = active_store()
     store.new_session()
     store.append_commitment("同场里说好这轮先补月亮的事")
     result = turn("你还记得吗？", stub=True, input_signal=signal())
     assert result.brief.drive.direction == "guard"
+    assert not result.brief.drive.why.startswith("输入信号｜")
 
 
-def test_curiosity_precedes_input():
+def test_ask_input_still_after_curiosity():
+    """ask 仍留在 S15：好奇 pursue/high 先命中。pause／stop 才在 S1b 前置。"""
     result = turn("为什么星星会发光？", new_session=True, stub=True, input_signal=signal())
     assert (result.brief.drive.direction, result.brief.drive.salience) == ("pursue", "high")
+    assert not result.brief.drive.why.startswith("输入信号｜")
+
+
+# INPUT_INTENT_V1：判停之后台上该怎么停。stub 话术按结构映射固定，不用词表扫描。
+STOP_TEMPLATES = {
+    ("pause", False): "行，先停一下，我不往下说了。",
+    ("pause", True): "行，先停一下，我不往下说了。同场里说好的那句还在，我不当它没了。",
+    ("stop", False): "好，就到这儿，我不往下说了。",
+    ("stop", True): "好，就到这儿，我不往下说了。同场里说好的那句还在，我不当它没了。",
+}
+
+
+@pytest.mark.parametrize("text,act", [
+    ("先停一下", "pause"),
+    ("别说了，停一下", "stop"),
+    ("不要说了", "stop"),
+    ("到此为止吧", "stop"),
+])
+def test_pause_stop_gates_before_local_cues(text, act):
+    result = turn(text, new_session=True, stub=True, input_signal=signal(act))
+    label = "暂停" if act == "pause" else "终止"
+    assert (result.brief.drive.direction, result.brief.drive.salience) == ("hold", "low")
+    assert result.brief.drive.why.startswith(f"输入信号｜{label}｜upstream:test｜")
+    prefix = "对方在叫停：" if act == "pause" else "对方在收束这场："
+    assert result.brief.say_intent.startswith(prefix)
+    assert result.utterance == STOP_TEMPLATES[(act, False)]
+
+
+def test_pause_stop_beats_curiosity_high():
+    """用户明说停时，本地「为什么」的好奇 pursue/high 不许把话头重新挑起来。"""
+    result = turn(
+        "不要说了，我不想听为什么",
+        new_session=True,
+        stub=True,
+        structured_drive_curiosity=True,
+        input_signal=signal("stop"),
+    )
+    assert (result.brief.drive.direction, result.brief.drive.salience) == ("hold", "low")
+    assert result.brief.drive.why.startswith("输入信号｜终止｜")
+    assert result.utterance == STOP_TEMPLATES[("stop", False)]
+
+
+def test_pause_stop_beats_callback_mid():
+    """用户明说停时，同场回指 pursue/mid 不许把话头接回去。"""
+    result = turn(
+        "停一下，刚才说到哪了",
+        new_session=True,
+        stub=True,
+        structured_drive_callback=True,
+        input_signal=signal("pause"),
+    )
+    assert (result.brief.drive.direction, result.brief.drive.salience) == ("hold", "low")
+    assert result.brief.drive.why.startswith("输入信号｜暂停｜")
+    assert result.utterance == STOP_TEMPLATES[("pause", False)]
+
+
+def test_pause_with_commitment_stops_first_then_keeps_promise():
+    """§6：同场承诺在场时先停，但约定还在——guard/mid，先说停再说约定。"""
+    store = active_store()
+    store.new_session()
+    store.append_commitment("同场里说好这轮先补月亮的事")
+    result = turn("先停一下", stub=True, input_signal=signal("pause"))
+    assert (result.brief.drive.direction, result.brief.drive.salience) == ("guard", "mid")
+    assert result.brief.drive.why.startswith("输入信号｜暂停｜")
+    assert "同场里说好这轮先补月亮的事" in result.brief.drive.why
+    assert result.brief.commit_hold_with_drive is True
+    assert result.utterance == STOP_TEMPLATES[("pause", True)]
+    assert result.utterance.index("先停一下") < result.utterance.index("同场里说好的那句还在")
+
+
+def test_request_still_pursues_after_stop_gate():
+    """request 不前置，仍留在 S15：pursue/mid。"""
+    result = turn("帮我关窗", new_session=True, stub=True, input_signal=signal("request"))
+    assert (result.brief.drive.direction, result.brief.drive.salience) == ("pursue", "mid")
+    assert result.brief.drive.why.startswith("输入信号｜请求｜upstream:test｜")
+
+
+@pytest.mark.parametrize("text", ["够了，先这样", "算了，不用了"])
+def test_closing_phrases_unchanged(text):
+    """既有收束路径不归本刀管，话术必须逐字不变。"""
+    result = turn(text, new_session=True, stub=True)
+    assert (result.brief.drive.direction, result.brief.drive.salience) == ("hold", "low")
+    assert result.utterance == "好，那就先这样。你回头想接着再叫我就行。"
 
 
 def test_cli_has_no_producer(capsys):
