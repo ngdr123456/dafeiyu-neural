@@ -1,7 +1,10 @@
 """Engineer-side shape and consistency checks for real turn briefs."""
 
+import pytest
+
 from birth.articulate import clear_llm_hook, set_stub_mode
 from birth.pipeline import active_store, turn
+from birth.types import ThoughtBrief
 
 
 def _brief_shape_message(brief, label):
@@ -19,8 +22,9 @@ def _brief_shape_message(brief, label):
 def _assert_brief_shape(brief, label):
     message = _brief_shape_message(brief, label)
     assert brief.dominant in {"drive", "meaning", "org"}, message
-    if brief.dominant == "org":
+    if brief.dominant in {"drive", "org"}:
         assert brief.drive is not None, message
+    if brief.dominant == "org":
         assert isinstance(brief.drive.why, str) and brief.drive.why.strip(), message
     if brief.drive is not None:
         assert brief.drive.direction in {"pursue", "guard", "hold", None}, message
@@ -37,6 +41,16 @@ def _new_session():
     set_stub_mode(True)
     clear_llm_hook()
     active_store().new_session()
+
+
+def test_drive_dominant_requires_drive_signal():
+    brief = ThoughtBrief(
+        dominant="drive",
+        drive=None,
+        must_not_pretend=["无来源装经历", "自述是代码", "把身体想象说成亲历"],
+    )
+    with pytest.raises(AssertionError, match="drive is None=True"):
+        _assert_brief_shape(brief, "动力缺失")
 
 
 def test_daily_statement():
