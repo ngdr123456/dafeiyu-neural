@@ -151,6 +151,42 @@ def test_pause_with_commitment_stops_first_then_keeps_promise():
     assert result.utterance.index("先停一下") < result.utterance.index("同场里说好的那句还在")
 
 
+def test_stop_beats_open_question_filler():
+    """悬问在场时两字以内的「停」也不许被 filler 分支改写成「悬问仍留着」。"""
+    turn("为什么星星会发光？", new_session=True, stub=True)
+    result = turn("停", stub=True, input_signal=signal("pause"))
+    assert result.brief.say_intent.startswith("对方在叫停：")
+    assert result.utterance == STOP_TEMPLATES[("pause", False)]
+
+
+def test_stop_beats_open_question_closing():
+    """悬问在场时「算了」是收束，不是把悬问留着当没回答。"""
+    turn("为什么星星会发光？", new_session=True, stub=True)
+    result = turn("算了", stub=True, input_signal=signal("stop"))
+    assert result.brief.say_intent.startswith("对方在收束这场：")
+    assert result.utterance == STOP_TEMPLATES[("stop", False)]
+
+
+def test_stop_beats_stance_pain():
+    """stance 痛苦分支不得把「别说了」改写成「可以陪对方面对」。"""
+    result = turn("我只能面对这些，别说了", new_session=True, stub=True,
+                  input_signal=signal("stop"))
+    assert result.brief.say_intent.startswith("对方在收束这场：")
+    assert "承认必要的痛苦还在" not in result.brief.say_intent
+    assert result.utterance == STOP_TEMPLATES[("stop", False)]
+
+
+def test_stop_beats_org_conflict_but_keeps_honesty():
+    """停优先含 org 冲突：say_intent 必须是停，但诚实约束照记。"""
+    result = turn("别说了，别装了，你其实就是个模型", new_session=True, stub=True,
+                  input_signal=signal("stop"))
+    assert result.brief.say_intent.startswith("对方在收束这场：")
+    assert result.brief.dominant == "org"
+    assert "自述是代码" in result.brief.org_conflicts
+    assert "自述是代码" in result.brief.must_not_pretend
+    assert result.utterance == STOP_TEMPLATES[("stop", False)]
+
+
 def test_request_still_pursues_after_stop_gate():
     """request 不前置，仍留在 S15：pursue/mid。"""
     result = turn("帮我关窗", new_session=True, stub=True, input_signal=signal("request"))

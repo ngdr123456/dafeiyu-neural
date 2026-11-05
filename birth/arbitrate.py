@@ -282,6 +282,15 @@ def arbitrate(
                 "守住这一轮不可让出的立场，不跟着改口否定"
             )
 
+    # 停优先（含 org 冲突）：凡判停，say_intent 一律是停——真实 LLM 路径读的就是这句。
+    # org 冲突／stance／filler／悬问这些更早的分支不得把「停」改写成「接着说」；
+    # 组织约束仍写进 org_conflicts＋must_not_pretend，诚实口径不丢。
+    if _input_stop_label(drive) is not None:
+        say_intent = _drive_say_intent(drive)
+        if context.last_commitments:
+            say_intent = f"{say_intent}；同场约定还在，说清它没消失"
+            commit_hold_with_drive = True
+
     return ThoughtBrief(
         dominant=dominant,
         drive=drive,

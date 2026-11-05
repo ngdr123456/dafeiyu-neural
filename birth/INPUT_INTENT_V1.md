@@ -43,6 +43,9 @@
 
 - `pause`、`stop` 各有一条 distinct `say_intent`，前缀分别是「对方在叫停：」「对方在收束这场：」，内容写死：先应一声就停住，不问候、不邀请继续、不问「要我做什么」、不开新话头。
 - 同场承诺在场且本轮判停时：`commit_hold_with_drive = True`，`say_intent` = 停语义 + 「同场约定还在，说清它没消失」。通用守诺模板不得盖掉这一句停。
+- **全局守卫（所有分支之后）**：凡 `drive.why` 以「输入信号｜暂停｜」「输入信号｜终止｜」开头，`say_intent` 一律取停文案，压过 org 冲突、stance 痛苦、filler＋悬问等更早命中的分支。真实 LLM 路径读的就是 `say_intent`，不能只靠 stub 模板停。
+- **停优先含 org 冲突**：`dominant` 可为 org，`org_conflicts`／`must_not_pretend` 照记（诚实约束不丢），但 `say_intent` 必须是停，不得被改写成回答「是不是代码」。
+- stub 模板与真实路 `say_intent` 同口径：同一结构前缀，两条路径都停；结构断言同时校验 `say_intent` 前缀与 stub 话术，不是只断言 stub。
 
 ## 开口：三条模板（articulate.py）
 
@@ -62,6 +65,7 @@ stub 开口只按 `drive.why` 的结构前缀与 `say_intent` 的完整口径映
 - 结构断言：`drive.direction` / `salience`、`drive.why` 前缀、`say_intent` 前缀、`Brief.commit_hold_with_drive`、stub `utterance` 是否等于上表模板。
 - 不用「聊／继续／随便」这类字面禁词表去扫台上话；模板相等本身就是结构映射的证明。
 - 覆盖：四句 pause／stop（「先停一下」「别说了，停一下」「不要说了」「到此为止吧」）；「不要说了，我不想听为什么」压过好奇 high；「停一下，刚才说到哪了」压过回指 mid；§6 承诺 + 停；「帮我关窗」仍 pursue/mid；「够了，先这样」「算了，不用了」收束话逐字不变。
+- 全局守卫覆盖：悬问后「停」（pause）→「对方在叫停：」；悬问后「算了」（stop）→「对方在收束这场：」；「我只能面对这些，别说了」（stop）→ 停，不落「承认必要的痛苦还在」；org 冲突＋停 → 停，且 `org_conflicts`／`must_not_pretend` 仍含「自述是代码」。每条同时断言 stub `utterance` 等于停模板。
 
 本文件取代 `birth/INPUT_SENSE_V1.md` 中 act 枚举与提示词判据部分；`INPUT_SENSE_V1.md` 其余内容不变，本次不改该文件。
 
