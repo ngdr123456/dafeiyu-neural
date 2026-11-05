@@ -334,7 +334,7 @@ def turn(
     org = default_org(context, drive=drive, stance=stance, user_text=user_text)
     brief = arbitrate(drive=drive, stance=stance, org=org, context=context,
                       user_text=user_text)
-    if brief.drive is not None and "上场她问出去的一句" in (brief.drive.why or ""):
+    if brief.drive is not None and bool(getattr(brief.drive, "prior_her_question", False)):
         _STORE.set_drive_prior_her_question_used()
 
     utterance = articulate(brief, stub=stub)

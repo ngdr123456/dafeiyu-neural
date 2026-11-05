@@ -25,6 +25,7 @@ class DriveSignal:
     direction: Direction = None
     salience: Salience = "low"
     why: str = ""
+    prior_her_question: bool = False
 
 
 @dataclass

@@ -27,6 +27,10 @@ def brief_to_prompt(brief: ThoughtBrief) -> str:
     else:
         fact_block = "- （本场尚无记下的痕迹）"
     extras: list[str] = []
+    if brief.drive is not None and bool(getattr(brief.drive, "prior_her_question", False)):
+        prior = ctx.prior_session
+        if prior is not None and prior.her_questions:
+            extras.append(f"上场你问出去、还没被接住的一句：{prior.her_questions[0]}")
     if ctx.open_questions:
         extras.append(f"同场悬着：{ctx.open_questions[0]}")
     if ctx.last_commitments:

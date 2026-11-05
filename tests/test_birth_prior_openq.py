@@ -64,3 +64,36 @@ def test_t5_user_question_source():
     context = active_store().snapshot()
     assert "为什么天是蓝的" in context.open_questions
     assert "为什么天是蓝的" not in context.her_questions
+
+
+def test_t6_prior_question_in_prompt(tmp_path):
+    from birth.llm_opencode import brief_to_prompt
+
+    configure_memory(enabled=True, path=tmp_path / "mem.json")
+    turn("你记得我是谁吗", new_session=True, stub=True)
+    question = active_store().snapshot().her_questions[0]
+    result = turn("嗯", new_session=True, stub=True)
+    assert result.brief.drive.prior_her_question is True
+    prompt = brief_to_prompt(result.brief)
+    assert question in prompt
+    assert "prior_her_question" not in prompt
+    assert "her_questions" not in prompt
+
+    result = turn("今天天气不错", stub=True)
+    assert result.brief.drive.prior_her_question is False
+    prompt = brief_to_prompt(result.brief)
+    assert question not in prompt
+    assert "上场你问出去、还没被接住的一句" not in prompt
+
+
+def test_t7_used_suppresses_filler_but_not_backref(tmp_path):
+    configure_memory(enabled=True, path=tmp_path / "mem.json")
+    turn("你记得我是谁吗", new_session=True, stub=True)
+    assert active_store().snapshot().her_questions
+
+    result = turn("嗯", new_session=True, stub=True)
+    assert result.brief.drive.prior_her_question is True
+    result = turn("嗯", stub=True)
+    assert result.brief.drive.prior_her_question is False
+    result = turn("上次我说过的那个呢", stub=True)
+    assert result.brief.drive.prior_her_question is True

@@ -685,6 +685,7 @@ def infer_drive(
                     direction="pursue",
                     salience="mid",
                     why=f"上场她问出去的一句还没被接住（{q}），这轮可以问回来",
+                    prior_her_question=True,
                 )
 
     # S11) 结构化回指 → pursue mid（主路径读 flag；须后于 §6；BACKREF_MARKS 仅无结构时兜底）

@@ -68,7 +68,7 @@ def _drive_say_intent(drive: DriveSignal) -> str:
         return "稳住让步，跟着对方的节奏把话说完"
     if drive.direction == "pursue" and drive.salience == "high":
         return "顺着用户好奇的那一点回应，可以反问一句把话说开"
-    if "上场她问出去的一句" in why:
+    if bool(getattr(drive, "prior_her_question", False)):
         return "上场你问出去的那句还没被接住，可以顺口问回来，别当成对方已经答过"
     if drive.direction == "pursue":
         return "适时捡起同场悬着的那一点，别晾着"
@@ -234,7 +234,7 @@ def arbitrate(
         if (is_session_backref(user_text, context) and not context.drive_openq_satisfied_pending
                 and "想被看见｜" not in (drive.why or "")
                 and "被看见了｜" not in (drive.why or "")
-                and "上场她问出去的一句" not in (drive.why or "")):
+                and not bool(getattr(drive, "prior_her_question", False))):
             digest = "；".join(recent_facts(context, 3))
             say_intent = (
                 "接住对方对同场刚才话题的回指，用本场已有痕迹接话，"

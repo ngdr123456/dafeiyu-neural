@@ -8,6 +8,8 @@
 
 ## 规则
 
+- 上场问题必须**原样进提示**（`brief_to_prompt` 用 `prior_her_question` 结构化字段判断），否则模型会自己编一个问题；这是本刀有效性的前提，不只是工程细节。
+
 - 台上问出去的问题记入 `her_questions`，同时沿用 `open_questions`；用户抛来的待接话头只进后者。始终维持本场 `her_questions ⊆ open_questions`，导出时也过滤。
 - 上场问题留在 `prior_session.her_questions`，不并进本场 `open_questions`；旧记忆缺字段视为空，落盘使用悬问容量。
 - 每轮依照上场问题重申 pending，回合末清除；used 在本场首次主动提及后保留，开新场重置。用户跨场回指不受 used 限制，filler 仅在尚未使用时可触发。
