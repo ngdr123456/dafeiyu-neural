@@ -395,7 +395,7 @@ def turn(
         if utterance_covers_pending_commitment(utterance, prior_p0):
             _STORE.resolve_prior_commitment(match=prior_p0)
 
-    if structured_openq_answered is True:
+    if structured_openq_answered is True and not answered:
         live_prior = _STORE.context.prior_session
         if live_prior is not None and live_prior.her_questions:
             _STORE.remove_prior_her_question(live_prior.her_questions[0])

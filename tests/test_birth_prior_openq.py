@@ -73,6 +73,9 @@ def test_b_unstructured_name_keeps_prior(tmp_path):
 
 def test_c_structured_answer_clears_prior(tmp_path):
     q1 = establish_prior(tmp_path).her_questions[0]
+    # flag 先归本场；本场没有悬问时才落到 prior，所以先清本场悬问。
+    active_store().clear_open_questions()
+    assert active_store().snapshot().open_questions == []
     turn("我告诉你一件事", stub=True, structured_openq_answered=True)
     assert q1 not in active_store().context.prior_session.her_questions
 
@@ -96,6 +99,16 @@ def test_e_new_question_survives_to_next_session(tmp_path):
     assert q2 != q1
     turn("嗯", new_session=True, stub=True)
     assert q2 in active_store().context.prior_session.her_questions
+
+
+def test_f_structured_answer_only_clears_current_question(tmp_path):
+    q1 = establish_prior(tmp_path).her_questions[0]
+    turn("我想聊聊星空", stub=True)
+    q2 = active_store().snapshot().open_questions[0]
+    assert q2 != q1
+    turn("月亮是卫星", stub=True, structured_openq_answered=True)
+    assert q2 not in active_store().snapshot().open_questions
+    assert q1 in active_store().context.prior_session.her_questions
 
 
 def test_t5_user_question_source():
