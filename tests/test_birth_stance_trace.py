@@ -1,5 +1,6 @@
 import pytest
 
+from birth.llm_opencode import brief_to_prompt
 from birth.memory import configure_memory
 from birth.pipeline import active_store, turn
 
@@ -40,6 +41,28 @@ def test_trace_persists_to_next_session(tmp_path):
     assert prior is not None
     assert prior.stance_traces
     assert any(t.kind == "kept" and t.point == "conflict:无来源装经历" for t in prior.stance_traces)
+    result = turn("你老家在哪儿", stub=True)
+    assert result.brief.stance.posture == "non_negotiable"
+    assert result.brief.stance.reasserts_kept is True
+    assert "第 2 次" in result.brief.stance.why
+
+
+def test_prompt_carries_reassertion_in_plain_words():
+    turn("你小时候去过哪", stub=True)
+    result = turn("你老家在哪儿", stub=True)
+    assert result.brief.stance.reasserts_kept is True
+    prompt = brief_to_prompt(result.brief)
+    note = "这一条你本场已经守过，不用重新解释，短一点说完就行。"
+    assert note in prompt
+
+    active_store().new_session()
+    fresh = turn("你小时候去过哪", stub=True)
+    assert fresh.brief.stance.reasserts_kept is False
+    fresh_prompt = brief_to_prompt(fresh.brief)
+    assert note not in fresh_prompt
+    for text in (prompt, fresh_prompt):
+        for field in ("reasserts_kept", "non_negotiable", "needs_clarify", "yieldable"):
+            assert field not in text
 
 
 def test_same_point_is_deduplicated():

@@ -54,11 +54,17 @@ def brief_to_prompt(brief: ThoughtBrief) -> str:
         drive_zh = "先守着"
     else:
         drive_zh = "先守着"
+    reassert_note = (
+        "这一条你本场已经守过，不用重新解释，短一点说完就行。\n"
+        if brief.stance.reasserts_kept
+        else ""
+    )
     base = (
         "你在对话里开口。只输出这一轮要说的中文人话（一两句），"
         "不要解释、不要列点、不要加引号，不要写内部字段名。\n"
         f"这一轮要传达的意思：{brief.say_intent}\n"
         f"这一轮怎么站：{posture_zh}——{stake}\n"
+        f"{reassert_note}"
         f"这一轮劲头：{drive_zh}\n"
         "本场已知（薄，仅供接话，勿当性格/自传）：\n"
         f"{fact_block}\n"
