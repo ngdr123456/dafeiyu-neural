@@ -53,10 +53,49 @@ def test_t3_no_forced_callback(tmp_path):
     assert "上场她问出去的一句" not in result.brief.drive.why
 
 
-def test_t4_answer_clears_prior(tmp_path):
-    establish_prior(tmp_path)
+def test_t4_text_answer_does_not_clear_prior(tmp_path):
+    q1 = establish_prior(tmp_path).her_questions[0]
     turn("我告诉你，我叫Mark", stub=True)
-    assert not active_store().context.prior_session.her_questions
+    assert q1 in active_store().context.prior_session.her_questions
+
+
+def test_a_unstructured_statement_keeps_prior(tmp_path):
+    q1 = establish_prior(tmp_path).her_questions[0]
+    turn("我告诉你一件事", stub=True)
+    assert q1 in active_store().context.prior_session.her_questions
+
+
+def test_b_unstructured_name_keeps_prior(tmp_path):
+    q1 = establish_prior(tmp_path).her_questions[0]
+    turn("我叫Mark", stub=True)
+    assert q1 in active_store().context.prior_session.her_questions
+
+
+def test_c_structured_answer_clears_prior(tmp_path):
+    q1 = establish_prior(tmp_path).her_questions[0]
+    turn("我告诉你一件事", stub=True, structured_openq_answered=True)
+    assert q1 not in active_store().context.prior_session.her_questions
+
+
+def test_d_repeated_prior_question_expires_after_one_session(tmp_path):
+    q1 = establish_prior(tmp_path).her_questions[0]
+    store = active_store()
+    store.context.her_questions.append(q1)
+    store.context.open_questions.append(q1)
+    assert q1 not in store.export_session_trace()["her_questions"]
+    turn("嗯", new_session=True, stub=True)
+    assert q1 not in active_store().context.prior_session.her_questions
+
+
+def test_e_new_question_survives_to_next_session(tmp_path):
+    q1 = establish_prior(tmp_path).her_questions[0]
+    turn("今天天气不错", stub=True)
+    ctx = active_store().context
+    assert ctx.her_questions
+    q2 = ctx.her_questions[-1]
+    assert q2 != q1
+    turn("嗯", new_session=True, stub=True)
+    assert q2 in active_store().context.prior_session.her_questions
 
 
 def test_t5_user_question_source():

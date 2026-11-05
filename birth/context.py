@@ -346,12 +346,17 @@ class ThinContextStore:
         不含 articulate_reject_*／last_reject_reasons（拒收不跨场持久化）。
         """
         ctx = self._context
+        # 继承来的悬问只续一场，用过没用过都放掉；本场新问句不在 prior_live 里，照常导出。
+        prior_live = set(ctx.prior_session.her_questions) if ctx.prior_session else set()
         return {
             "facts": list(ctx.facts_this_session),
             "commitments_pending": list(ctx.last_commitments),
             "commitments_resolved": list(self._resolved_commitments),
             "open_questions": list(ctx.open_questions),
-            "her_questions": [q for q in ctx.her_questions if q in ctx.open_questions],
+            "her_questions": [
+                q for q in ctx.her_questions
+                if q in ctx.open_questions and q not in prior_live
+            ],
             "stance_traces": list(ctx.stance_traces),
         }
 

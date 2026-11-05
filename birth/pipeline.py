@@ -395,10 +395,10 @@ def turn(
         if utterance_covers_pending_commitment(utterance, prior_p0):
             _STORE.resolve_prior_commitment(match=prior_p0)
 
-    live_prior = _STORE.context.prior_session
-    if (live_prior is not None and live_prior.her_questions
-            and answered_open_question(user_text, live_prior.her_questions)):
-        _STORE.remove_prior_her_question(live_prior.her_questions[0])
+    if structured_openq_answered is True:
+        live_prior = _STORE.context.prior_session
+        if live_prior is not None and live_prior.her_questions:
+            _STORE.remove_prior_her_question(live_prior.her_questions[0])
 
     # 开口后回流薄情境：本轮用户的话头 + 台上这句都 clip 进同场事实；
     # 动力层好奇追问入库；台上薄提取承诺/悬问（宁缺毋滥）
