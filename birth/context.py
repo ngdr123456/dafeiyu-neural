@@ -348,9 +348,14 @@ class ThinContextStore:
         ctx = self._context
         # 继承来的悬问只续一场，用过没用过都放掉；本场新问句不在 prior_live 里，照常导出。
         prior_live = set(ctx.prior_session.her_questions) if ctx.prior_session else set()
+        prior_commits = list(ctx.prior_session.commitments_pending) if ctx.prior_session else []
+        combined = []
+        for c in prior_commits + list(ctx.last_commitments):
+            if c not in combined:
+                combined.append(c)
         return {
             "facts": list(ctx.facts_this_session),
-            "commitments_pending": list(ctx.last_commitments),
+            "commitments_pending": combined,
             "commitments_resolved": list(self._resolved_commitments),
             "open_questions": list(ctx.open_questions),
             "her_questions": [

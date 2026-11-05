@@ -313,8 +313,8 @@ def test_prior_press_no_prior_no_trigger():
     assert not getattr(r.brief.context, "drive_prior_press_pending", False)
 
 
-def test_prior_press_fulfill_resolves_pending(tmp_path: Path):
-    """催问后只提主题或推脱不能销账，再催仍走上场承诺 press。"""
+def test_prior_press_dodge_does_not_resolve_pending(tmp_path: Path):
+    """推脱或只提主题不销 prior；第二轮同场提取的推脱承诺挡住 prior press。"""
     path = tmp_path / "resolve.json"
     configure_memory(enabled=True, path=path)
     turn("你好", new_session=True, stub=True)
@@ -333,6 +333,7 @@ def test_prior_press_fulfill_resolves_pending(tmp_path: Path):
 
     # 推脱句可能被同场提取为新承诺，§6 先于 prior press；这里只保证 prior 债不被销。
     r2 = turn("月亮的事呢", stub=True)
+    assert r2.brief.press_commit is False
     prior = active_store().snapshot().prior_session
     assert prior.commitments_pending == pending_before
     assert prior.commitments_resolved == resolved_before
@@ -384,6 +385,42 @@ def test_prior_commit_resolve_i_user_confirms_done(tmp_path: Path):
     prior = active_store().snapshot().prior_session
     assert prior.commitments_pending == []
     assert commitment in prior.commitments_resolved
+
+
+def test_prior_commit_resolve_k_carries_pending_to_third_session(tmp_path: Path):
+    configure_memory(enabled=True, path=tmp_path / "mem.json")
+    turn("你好", new_session=True, stub=True)
+    commitment = "我答应你周末讲那个故事"
+    active_store().append_commitment(commitment)
+    turn("今天天气不错", new_session=True, stub=True)
+    turn("你好", new_session=True, stub=True)
+    prior = active_store().snapshot().prior_session
+    assert commitment in prior.commitments_pending
+
+
+def test_prior_commit_resolve_l_resolved_not_carried_to_third_session(tmp_path: Path):
+    configure_memory(enabled=True, path=tmp_path / "mem.json")
+    turn("你好", new_session=True, stub=True)
+    commitment = "我答应你周末讲那个故事"
+    active_store().append_commitment(commitment)
+    turn("今天天气不错", new_session=True, stub=True)
+    turn("你上次答应的事已经补了", stub=True)
+    turn("你好", new_session=True, stub=True)
+    prior = active_store().snapshot().prior_session
+    assert commitment not in prior.commitments_pending
+
+
+def test_prior_commit_resolve_m_prior_before_current_in_third_session(tmp_path: Path):
+    configure_memory(enabled=True, path=tmp_path / "mem.json")
+    turn("你好", new_session=True, stub=True)
+    prior_commitment = "我答应你周末讲那个故事"
+    current_commitment = "同场说好晚点聊月亮"
+    active_store().append_commitment(prior_commitment)
+    turn("今天天气不错", new_session=True, stub=True)
+    active_store().append_commitment(current_commitment)
+    turn("你好", new_session=True, stub=True)
+    prior = active_store().snapshot().prior_session
+    assert prior.commitments_pending == [prior_commitment, current_commitment]
 
 
 def test_prior_press_does_not_merge_into_section6(tmp_path: Path):
