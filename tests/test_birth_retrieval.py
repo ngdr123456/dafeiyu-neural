@@ -77,7 +77,7 @@ def test_unavailable_leaves_ledger_and_index_untouched(tmp_path, monkeypatch):
     assert not retrieval.default_index_path(ledger).exists()
 
 
-@pytest.mark.parametrize("contents", [None, "", '{"sessions": []}'])
+@pytest.mark.parametrize("contents", [None, '{"sessions": []}', '[]'])
 def test_empty_or_missing_ledger(tmp_path, monkeypatch, contents):
     ledger = tmp_path / "ledger.json"
     if contents is not None:
@@ -87,6 +87,90 @@ def test_empty_or_missing_ledger(tmp_path, monkeypatch, contents):
     monkeypatch.setattr(retrieval, "_load_embedder", unavailable)
     assert retrieval.build_index(ledger).rows == 0
     assert retrieval.search("什么", ledger) == []
+
+
+def test_corrupt_ledger_preserves_existing_index(tmp_path, fake_model):
+    ledger = tmp_path / "ledger.json"
+    write_ledger(ledger, [{"facts": ["周末"]}])
+    retrieval.build_index(ledger)
+    index = retrieval.default_index_path(ledger)
+    original_index = index.read_bytes()
+    ledger.write_bytes(b'{"sessions": [')
+    broken = ledger.read_bytes()
+    for operation in (lambda: retrieval.build_index(ledger),
+                      lambda: retrieval.search("周末", ledger),
+                      lambda: retrieval.index_status(ledger)):
+        with pytest.raises(retrieval.LedgerInvalid) as exc:
+            operation()
+        assert str(ledger) in str(exc.value)
+    assert index.read_bytes() == original_index
+    assert ledger.read_bytes() == broken
+
+
+def test_unreadable_ledger_preserves_existing_index(tmp_path, fake_model, monkeypatch):
+    ledger = tmp_path / "ledger.json"
+    write_ledger(ledger, [{"facts": ["周末"]}])
+    retrieval.build_index(ledger)
+    index = retrieval.default_index_path(ledger)
+    original_index = index.read_bytes()
+    original_ledger = ledger.read_bytes()
+    def unreadable(path):
+        raise PermissionError("access denied")
+    monkeypatch.setattr(retrieval, "_read_ledger_bytes", unreadable)
+    for operation in (lambda: retrieval.build_index(ledger),
+                      lambda: retrieval.search("周末", ledger),
+                      lambda: retrieval.index_status(ledger)):
+        with pytest.raises(retrieval.LedgerUnreadable) as exc:
+            operation()
+        assert str(ledger) in str(exc.value)
+        assert "access denied" in str(exc.value)
+    assert index.read_bytes() == original_index
+    assert ledger.read_bytes() == original_ledger
+
+
+def test_empty_index_does_not_hide_corruption(tmp_path):
+    ledger = tmp_path / "ledger.json"
+    write_ledger(ledger, [])
+    retrieval.build_index(ledger)
+    index = retrieval.default_index_path(ledger)
+    original_index = index.read_bytes()
+    ledger.write_bytes(b"broken")
+    for operation in (lambda: retrieval.search("周末", ledger),
+                      lambda: retrieval.index_status(ledger)):
+        with pytest.raises(retrieval.LedgerInvalid):
+            operation()
+    assert index.read_bytes() == original_index
+    assert ledger.read_bytes() == b"broken"
+
+
+def test_recovered_ledger_can_be_searched(tmp_path, fake_model):
+    ledger = tmp_path / "ledger.json"
+    write_ledger(ledger, [{"facts": ["周末讲故事"]}])
+    original = ledger.read_bytes()
+    retrieval.build_index(ledger)
+    assert retrieval.search("周末", ledger)[0].text == "周末讲故事"
+    ledger.write_bytes(b"broken")
+    with pytest.raises(retrieval.LedgerInvalid):
+        retrieval.search("周末", ledger)
+    ledger.write_bytes(original)
+    assert retrieval.search("周末", ledger)[0].text == "周末讲故事"
+    assert ledger.read_bytes() == original
+
+
+@pytest.mark.parametrize("contents", [
+    b'', b'\xff', b'{"sessions": [1]}', b'{"sessions": "x"}',
+    b'{"sessions": [{"facts": "x"}]}', b'{"sessions": [{"facts": [1]}]}',
+    b'{"sessions": [{"stance_traces": "x"}]}', b'{}', b'null',
+    b'{"sessions": [{"stance_traces": [1]}]}',
+    b'{"sessions": [{"stance_traces": [{"why": 1}]}]}',
+])
+def test_invalid_ledger_structure(tmp_path, contents):
+    ledger = tmp_path / "ledger.json"
+    ledger.write_bytes(contents)
+    with pytest.raises(retrieval.LedgerInvalid):
+        retrieval.build_index(ledger)
+    assert ledger.read_bytes() == contents
+    assert not retrieval.default_index_path(ledger).exists()
 
 
 def test_failed_rebuild_preserves_previous_index(tmp_path, fake_model, monkeypatch):

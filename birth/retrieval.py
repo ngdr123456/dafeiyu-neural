@@ -25,6 +25,18 @@ class IndexStale(RuntimeError):
     """The index is absent, incompatible, or does not match the ledger."""
 
 
+class LedgerError(RuntimeError):
+    """The ledger cannot be safely read for retrieval."""
+
+
+class LedgerUnreadable(LedgerError):
+    """The ledger cannot be read."""
+
+
+class LedgerInvalid(LedgerError):
+    """The ledger is not a valid supported JSON structure."""
+
+
 @dataclass(frozen=True)
 class RetrievalHit:
     text: str
@@ -63,11 +75,64 @@ def _paths(ledger_path, index_path):
     return ledger, index
 
 
+def _read_ledger_bytes(path):
+    try:
+        return path.read_bytes()
+    except FileNotFoundError:
+        return b""
+    except OSError as exc:
+        raise LedgerUnreadable(f"Cannot read ledger {path}: {exc}") from exc
+
+
+def _preflight_ledger(path):
+    try:
+        path.stat()
+    except FileNotFoundError:
+        return
+    except OSError as exc:
+        raise LedgerUnreadable(f"Cannot read ledger {path}: {exc}") from exc
+    try:
+        data = _read_ledger_bytes(path)
+    except OSError as exc:
+        raise LedgerUnreadable(f"Cannot read ledger {path}: {exc}") from exc
+    if not data:
+        raise LedgerInvalid(f"Invalid ledger {path}: empty file")
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise LedgerInvalid(f"Invalid ledger {path}: not UTF-8") from exc
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise LedgerInvalid(f"Invalid ledger {path}: invalid JSON at line {exc.lineno}, column {exc.colno}") from exc
+    if isinstance(payload, dict):
+        sessions = payload.get("sessions")
+    else:
+        sessions = payload
+    if not isinstance(sessions, list):
+        raise LedgerInvalid(f"Invalid ledger {path}: sessions must be a list")
+    for number, session in enumerate(sessions):
+        if not isinstance(session, dict):
+            raise LedgerInvalid(f"Invalid ledger {path}: session {number} must be an object")
+        for field in _FIELDS:
+            if field in session and (not isinstance(session[field], list)
+                                     or any(not isinstance(value, str) for value in session[field])):
+                raise LedgerInvalid(f"Invalid ledger {path}: session {number} {field} must be a list of strings")
+        if "stance_traces" in session:
+            traces = session["stance_traces"]
+            if not isinstance(traces, list) or any(not isinstance(trace, dict) for trace in traces):
+                raise LedgerInvalid(f"Invalid ledger {path}: session {number} stance_traces must be a list of objects")
+            for trace in traces:
+                for field in ("kind", "point", "why"):
+                    if field in trace and not isinstance(trace[field], str):
+                        raise LedgerInvalid(f"Invalid ledger {path}: session {number} stance_traces.{field} must be a string")
+
+
 def _fingerprint(path):
     try:
-        data = path.read_bytes()
-    except FileNotFoundError:
-        data = b""
+        data = _read_ledger_bytes(path)
+    except OSError as exc:
+        raise LedgerUnreadable(f"Cannot read ledger {path}: {exc}") from exc
     return hashlib.sha256(data).hexdigest(), len(data)
 
 
@@ -124,6 +189,7 @@ def _items(ledger):
 
 
 def index_status(ledger_path, index_path=None, *, model=DEFAULT_MODEL, dim=None):
+    _preflight_ledger(Path(ledger_path).expanduser())
     ledger, index = _paths(ledger_path, index_path)
     digest, size = _fingerprint(ledger)
     if not index.is_file():
@@ -149,6 +215,7 @@ def index_status(ledger_path, index_path=None, *, model=DEFAULT_MODEL, dim=None)
 
 
 def build_index(ledger_path, index_path=None, *, model=DEFAULT_MODEL, model_dir=None, cache_dir=None, force=False):
+    _preflight_ledger(Path(ledger_path).expanduser())
     ledger, index = _paths(ledger_path, index_path)
     digest, size = _fingerprint(ledger)
     items = list(_items(ledger))
@@ -204,8 +271,8 @@ def build_index(ledger_path, index_path=None, *, model=DEFAULT_MODEL, model_dir=
 def search(query, ledger_path, index_path=None, *, k=5, model=DEFAULT_MODEL, model_dir=None, cache_dir=None, rebuild_if_stale=True):
     if not isinstance(k, int) or isinstance(k, bool) or not 1 <= k <= 50:
         raise ValueError("k must be an integer between 1 and 50")
+    status = index_status(ledger_path, index_path, model=model)
     ledger, index = _paths(ledger_path, index_path)
-    status = index_status(ledger, index, model=model)
     if status.stale:
         if not rebuild_if_stale:
             raise IndexStale("retrieval index is missing or stale")
