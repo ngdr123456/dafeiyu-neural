@@ -389,7 +389,8 @@ def turn(
             kept_point = conflict_point(brief.org_conflicts[0])
         elif brief.hold_same_field and context.last_commitments:
             target = getattr(brief.stance, "held_commitment", "") or ""
-            if not target and len(context.last_commitments) == 1:
+            if (not target and len(context.last_commitments) == 1
+                    and not (input_signal and input_signal.quoted_or_negated)):
                 target = context.last_commitments[0]  # 唯一一笔，兼容旧构造
             if target and target in context.last_commitments:
                 kept_point = commitment_point(target)

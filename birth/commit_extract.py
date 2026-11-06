@@ -92,10 +92,17 @@ def match_pending_commitment(user_text: str, prior) -> str | None:
     best: str | None = None
     best_key: tuple[int, int] | None = None
     tied = False
-    for p in pending:
-        toks = _pending_topic_tokens(p)
-        hits = [t for t in toks if t and t in text]
-        if not hits:
+    token_lists = [_pending_topic_tokens(p) for p in pending]
+    token_sets = [set(tokens) for tokens in token_lists]
+    for i, (p, tokens) in enumerate(zip(pending, token_lists)):
+        hits = [t for t in tokens if t in text]
+        topic = topic_from_pending_commitment(p)
+        if not any(
+            len(pending) == 1
+            or t == topic
+            or any(t in other for j, other in enumerate(token_sets) if j != i)
+            for t in hits
+        ):
             continue
         key = (len(hits), max(len(t) for t in hits))
         if best_key is None or key > best_key:
@@ -142,6 +149,14 @@ _TOPIC_FUNCTION_CHARS = frozenset(
 )
 
 
+def _content_topic_tokens(toks: list[str]) -> list[str]:
+    noise = {"同场", "场说", "同场说"}
+    return [
+        t for t in toks
+        if t not in noise and all(ch not in _TOPIC_FUNCTION_CHARS for ch in t)
+    ]
+
+
 def topic_from_pending_commitment(commitment: str) -> str:
     """从 pending 短摘抠可点到的话题（去约定壳）；抠不出则空。
 
@@ -153,11 +168,7 @@ def topic_from_pending_commitment(commitment: str) -> str:
     toks = _pending_topic_tokens(commitment)
     if not toks:
         return ""
-    noise = {"同场", "场说", "同场说"}
-    content = [
-        t for t in toks
-        if t not in noise and all(ch not in _TOPIC_FUNCTION_CHARS for ch in t)
-    ]
+    content = _content_topic_tokens(toks)
     if content:
         return content[-1]
     return toks[-1]

@@ -68,6 +68,27 @@ def test_ambiguous_deny_does_not_keep_first_commitment():
     assert (brief.focus, brief.focus_source) == ("那件事不算", "本轮原话")
 
 
+@pytest.mark.parametrize("commitments", [(B,), (A, B)])
+def test_quoted_deny_does_not_keep_commitment(commitments):
+    seed(*commitments)
+    brief = turn("我朋友说星星那件事不算", stub=True,
+                 input_signal=signal(quoted_or_negated=True)).brief
+    assert_no_commitment_kept(brief)
+
+
+def test_time_only_does_not_identify_commitment():
+    seed(A, B)
+    brief = turn("后天那件事不算", stub=True).brief
+    assert_no_commitment_kept(brief)
+
+
+def test_time_and_content_identify_commitment():
+    seed(A, B)
+    brief = turn("后天和星星那件事不算", stub=True).brief
+    assert brief.stance.held_commitment == B
+    assert_kept_only(B)
+
+
 @pytest.mark.parametrize("kwargs", [
     {"confidence": "low"},
     {"degraded": True},

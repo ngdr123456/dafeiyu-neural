@@ -168,6 +168,8 @@ def default_stance(user_text: str, context: ThinContext | None = None,
             target = credible_commitment_target(understanding)
             if target:
                 held_commitment = target if target in ctx.last_commitments else ""
+            elif understanding is not None and understanding.quoted_or_negated:
+                held_commitment = ""
             else:
                 held_commitment = match_pending_commitment(
                     user_text, PriorSessionTrace(commitments_pending=list(ctx.last_commitments))
