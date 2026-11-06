@@ -42,6 +42,9 @@ class StanceSignal:
     # 勿以用户可见 stake 中文串作唯一闸。stake 仍可写成 STAKE_HOLD_SAME_FIELD 作字段取值）
     hold_same_field: bool = False
     reasserts_kept: bool = False
+    # 本轮实际守住的那一笔同场承诺原文；空表示没有可信且唯一的同场目标，
+    # 消费侧不得猜成其他笔。
+    held_commitment: str = ""
 
 
 @dataclass

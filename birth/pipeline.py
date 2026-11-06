@@ -359,7 +359,11 @@ def turn(
         if brief.org_conflicts:
             kept_point = conflict_point(brief.org_conflicts[0])
         elif brief.hold_same_field and context.last_commitments:
-            kept_point = commitment_point(context.last_commitments[0])
+            target = getattr(brief.stance, "held_commitment", "") or ""
+            if not target and len(context.last_commitments) == 1:
+                target = context.last_commitments[0]  # 唯一一笔，兼容旧构造
+            if target and target in context.last_commitments:
+                kept_point = commitment_point(target)
         if kept_point:
             _STORE.append_stance_trace("kept", kept_point, stance_now.why)
             _STORE.record_stance_kept(kept_point)

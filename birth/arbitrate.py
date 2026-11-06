@@ -234,9 +234,12 @@ def arbitrate(
         say_intent = "先守住同场自己说过的话，不跟着改口否定；再接眼前这句"
         commit_deny = True
         hold_same_field = True
-        pending = recognized_same or context.last_commitments[0]
-        focus = _clip_bounded(topic_from_pending_commitment(pending) or pending, 60)
-        focus_source = "同场承诺"
+        target = getattr(stance, "held_commitment", "") or ""
+        if not target and len(context.last_commitments) == 1:
+            target = context.last_commitments[0]  # 唯一一笔，不是猜
+        if target:
+            focus = _clip_bounded(topic_from_pending_commitment(target) or target, 60)
+            focus_source = "同场承诺"
         dominant_why = "意义主导｜同场出口的承诺不可跟着改口否定，压过本轮动力；动力仍在 Brief（来源：外补·同场承诺一致性）"
     elif stance.posture == "needs_clarify":
         dominant = "meaning"

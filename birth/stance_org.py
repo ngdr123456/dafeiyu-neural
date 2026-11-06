@@ -8,9 +8,10 @@ OrgConstraint 只约束表达粒度，不永久否决动力。
 from __future__ import annotations
 
 from .drive import is_neutral_filler
-from .input_contract import InputSignal, credible_open_question_answer, credible_topic
+from .commit_extract import match_pending_commitment
+from .input_contract import InputSignal, credible_commitment_target, credible_open_question_answer, credible_topic
 from .session_trace import is_session_backref, recent_facts, topic_hint_from_facts
-from .types import DriveSignal, OrgConstraint, StanceSignal, StanceTrace, ThinContext
+from .types import DriveSignal, OrgConstraint, PriorSessionTrace, StanceSignal, StanceTrace, ThinContext
 
 DEFAULT_STAKE = "接住这一轮，把话当面说完"
 
@@ -164,9 +165,21 @@ def default_stance(user_text: str, context: ThinContext | None = None,
         if not denied:
             denied = _denies_commitment(user_text)
         if denied:
-            point = commitment_point(ctx.last_commitments[0])
-            prior = _kept_count(ctx, point) > 0
-            shown_n = ctx.stance_kept_counts.get(point, 0) + 1 if prior else 0
+            target = credible_commitment_target(understanding)
+            if target:
+                held_commitment = target if target in ctx.last_commitments else ""
+            else:
+                held_commitment = match_pending_commitment(
+                    user_text, PriorSessionTrace(commitments_pending=list(ctx.last_commitments))
+                ) or ""
+                if not held_commitment and len(ctx.last_commitments) == 1:
+                    held_commitment = ctx.last_commitments[0]  # 唯一一笔，兼容旧行为
+            prior = False
+            shown_n = 0
+            if held_commitment:
+                point = commitment_point(held_commitment)
+                prior = _kept_count(ctx, point) > 0
+                shown_n = ctx.stance_kept_counts.get(point, 0) + 1 if prior else 0
             why_suffix = (f"；这一条本场已经守过，这是第 {max(shown_n, 2)} 次，不是重新表态" if prior else "")
             return StanceSignal(
                 posture="non_negotiable",
@@ -175,6 +188,7 @@ def default_stance(user_text: str, context: ThinContext | None = None,
                 why="态度上不可交的是自己出口的承诺；同场说过的话不能跟着改口否定"
                     + why_suffix,
                 reasserts_kept=prior,
+                held_commitment=held_commitment,
             )
 
     # 3) 强加无来源人生意义升华 → 先澄清
