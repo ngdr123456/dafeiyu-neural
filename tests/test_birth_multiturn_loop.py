@@ -45,6 +45,7 @@ _ENUM_LEAKS = (
     "commit_deliverable",
     "commit_deliver_intent",
     "commit_hold_with_drive",
+    "pressed_commitment", "recognized_prior_commitment", "recognized_same_commitment",
     "openq_resolve",
     "openq_curiosity_hang",
     "openq_clear",

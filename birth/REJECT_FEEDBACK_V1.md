@@ -19,6 +19,12 @@
 2. generate 空／None／抛错且最终落入 stub 前：若尚无 validate 拒收标签，记 `empty_backend`／`llm_error`（不拼异常全文；级联中途空输出但最终 LLM 成功则不记）
 3. `pipeline.turn` 在 `articulate` 返回后 `take_reject_feedback()` → `store.record_articulate_rejects` → `mark_articulate_uttered`
 
+## 2026-11-06 实际消费者与边界
+
+出处：总规格「开口只 articulation」及底层结构核对中的催诺形状误拒。`_accept_draft` 仍先走 validate；催债草稿可被既有 extract_commitment 提取则保持兼容，否则必须有明确 pressed_commitment、用账上主题词可核对地触及目标、排除既有守诺口径与约定/推迟形状（复用 _GUARD_COMMIT_UTTER、_COMMIT_SHAPES，不新增词表）才可接受。接受草稿不是兑现证据：prior 只认用户明示已兑现，同场仍有既有交付/候选闸，推迟承诺形状继续进候选不立新债。
+
+validate 实际覆盖空稿、长度、内部标识泄露与若干无来源断言形状；请求与对话停模板用定向测试核对不误拒。本次不扩禁词/正则，不改变一般语义保证边界；can_name 仅为提示约束。主题覆盖与有限守诺形状不等于语义理解，未见过的推脱、反话与引用仍可能通过接受闸；这不会授权销 prior 债。真实模型行为未运行不能声称验收通过，stub/hook 绿灯只证明确定性链路。
+
 ## Drive 可选读（S14）
 同场 `articulate_reject_count ≥ 2` 且 filler、无 `commitment_deny_pending`、无催答应（`user_presses_commitment`）→ `hold`／`low`，why 指纹 `开口拒收回流｜同场多次`。
 

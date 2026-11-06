@@ -199,7 +199,8 @@ def test_candidate_store_capacity_and_same_session_cleanup():
 def test_memory_candidate_capacity_and_candidate_only_trace(tmp_path):
     store = BirthMemoryStore(tmp_path / "capacity.json", max_commits=1)
     candidates = [CommitmentCandidate(str(i), A, "prior_press") for i in range(2)]
-    record = store.append_session(commitment_candidates=candidates)
+    record = store.append_session(commitments_pending=[A], commitment_candidates=candidates)
     assert [c.text for c in record.commitment_candidates] == ["1"]
-    assert record.commitments_pending == []
+    assert record.commitments_pending == [A]
     assert store.latest().commitment_candidates == record.commitment_candidates
+    assert store.append_session(commitment_candidates=candidates) is None

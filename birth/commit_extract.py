@@ -82,24 +82,28 @@ def match_pending_commitment(user_text: str, prior) -> str | None:
     """认出本轮用户话点到账上哪一笔未兑现（债有身份，不是只认第一条）。
 
     只做账内身份识别：拿每笔债的主题词与用户话比对，不扫用户句式、不扩禁词。
-    命中多笔时取命中词数多者；同数取更长词；再同取更早入账（稳定）。
-    一笔都没命中 → None（调用方回落最老一笔，不猜）。
+    命中多笔时取命中词数多者；同数取更长词；最高分并列则无法唯一识别。
+    无命中或最高分并列 → None；催债可回落最老，销账只允许单笔回落。
     """
     pending = list(getattr(prior, "commitments_pending", None) or [])
     text = (user_text or "").strip()
     if not pending or not text:
         return None
     best: str | None = None
-    best_key: tuple[int, int, int] | None = None
-    for idx, p in enumerate(pending):
+    best_key: tuple[int, int] | None = None
+    tied = False
+    for p in pending:
         toks = _pending_topic_tokens(p)
         hits = [t for t in toks if t and t in text]
         if not hits:
             continue
-        key = (len(hits), max(len(t) for t in hits), -idx)
+        key = (len(hits), max(len(t) for t in hits))
         if best_key is None or key > best_key:
             best, best_key = p, key
-    return best
+            tied = False
+        elif key == best_key and p != best:
+            tied = True
+    return None if tied else best
 
 
 def user_presses_prior_pending(user_text: str, prior) -> bool:
@@ -310,7 +314,8 @@ def pressed_frame(brief) -> tuple[str, str] | None:
         return ("prior_press", target)
     if (getattr(brief, "commit_deliverable", False)
             and getattr(brief, "commit_deliver_intent", False) and context.last_commitments):
-        return ("same_session_press", context.last_commitments[0])
+        target = getattr(brief, "recognized_same_commitment", "") or context.last_commitments[0]
+        return ("same_session_press", target)
     return None
 
 

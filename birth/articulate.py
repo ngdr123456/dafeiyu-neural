@@ -218,6 +218,8 @@ def _template_utterance(brief: ThoughtBrief) -> str:
         if len(hits) == 1:
             return _ORG_TEMPLATES[hits[0]]
         return _ORG_FALLBACK
+    if brief.drive and (brief.drive.why or "").startswith("输入信号｜请求｜"):
+        return "收到，你要我做的这件事我接住了；我会先确认能怎么处理，做不到的会直说。"
     # 2) 催答应 → 显式可被 commit_extract 提取的约定句（读 press_commit 标记，
     #    不靠 say_intent 判定；topic 仍可从 say_intent「」或 facts 取）
     if getattr(brief, "press_commit", False):
@@ -636,6 +638,7 @@ def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
         # 承诺／守诺内部标记
         "hold_same_field", "press_commit", "commit_deny", "commit_resolve",
         "commit_deliverable", "commit_deliver_intent", "commit_hold_with_drive",
+        "pressed_commitment", "recognized_prior_commitment", "recognized_same_commitment",
         # 悬问内部标记
         "openq_resolve", "openq_curiosity_hang", "openq_clear",
         "curiosity_hang_pending", "commitment_deny_pending",
@@ -747,11 +750,16 @@ def _accept_draft(brief: ThoughtBrief, draft: Optional[str]) -> Optional[str]:
         return None
     # 闭合约束：仅当 Brief.press_commit（与 PRESS_COMMIT_FLAG 同义）才用 extract 拒收；
     # 禁止只靠 say_intent 中文子串；禁止扩词表、禁止当通用堵嘴；不扩 commit_extract 词表。
-    from .commit_extract import PRESS_COMMIT_FLAG, extract_commitment
+    from .commit_extract import (PRESS_COMMIT_FLAG, extract_commitment,
+                                 utterance_covers_pending_commitment, _GUARD_COMMIT_UTTER,
+                                 _COMMIT_SHAPES)
     if bool(getattr(brief, "press_commit", False)) is PRESS_COMMIT_FLAG:
         if not extract_commitment(draft):
-            _note_reject("press_commit_shape")
-            return None
+            target = brief.pressed_commitment
+            if not (target and utterance_covers_pending_commitment(draft, target)
+                    and not any(m in draft for m in _GUARD_COMMIT_UTTER + _COMMIT_SHAPES)):
+                _note_reject("press_commit_shape")
+                return None
     return draft
 
 

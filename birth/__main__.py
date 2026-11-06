@@ -20,7 +20,7 @@ import json
 from dataclasses import asdict
 
 from .articulate import set_stub_mode
-from .memory import configure_memory
+from .memory import PendingCommitmentCapacityError, configure_memory
 from .pipeline import turn
 
 
@@ -109,13 +109,17 @@ def _run_repl(args: argparse.Namespace) -> int:
         first = False
         force_new = False
 
-        result = turn(
-            text,
-            new_session=new_session,
-            debug=args.debug,
-            stub=True if args.stub else None,
-            sense=(not args.stub and not args.no_sense),
-        )
+        try:
+            result = turn(
+                text,
+                new_session=new_session,
+                debug=args.debug,
+                stub=True if args.stub else None,
+                sense=(not args.stub and not args.no_sense),
+            )
+        except PendingCommitmentCapacityError:
+            print("[记忆容量不足] 未结承诺超限，未写盘、未清场；仍在原场，可核对销账后再 /new。")
+            continue
         _print_result(result, debug=args.debug)
 
     return 0  # pragma: no cover

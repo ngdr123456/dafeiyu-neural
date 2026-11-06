@@ -24,6 +24,7 @@ ENV_MEMORY_PATH = "BIRTH_MEMORY_PATH"
 DEFAULT_MAX_SESSIONS = 5
 DEFAULT_MAX_FACTS = 40
 DEFAULT_MAX_COMMITS = 20
+DEFAULT_MAX_PENDING_COMMITS = 1000
 DEFAULT_MAX_OPENQ = 10
 DEFAULT_MAX_TRACES = 20
 
@@ -77,6 +78,10 @@ class SessionTraceRecord:
 _T = TypeVar("_T")
 
 
+class PendingCommitmentCapacityError(OverflowError):
+    """未结债容量不足；不得写盘或清场，调用方可保留当前场后重试。"""
+
+
 def _clip_list(items: List[_T], limit: int) -> List[_T]:
     if limit <= 0:
         return []
@@ -97,11 +102,13 @@ class BirthMemoryStore:
         max_commits: int = DEFAULT_MAX_COMMITS,
         max_openq: int = DEFAULT_MAX_OPENQ,
         max_traces: int = DEFAULT_MAX_TRACES,
+        max_pending_commits: int = DEFAULT_MAX_PENDING_COMMITS,
     ) -> None:
         self.path = Path(path) if path is not None else default_memory_path()
         self.max_sessions = max(1, int(max_sessions))
         self.max_facts = max(0, int(max_facts))
         self.max_commits = max(0, int(max_commits))
+        self.max_pending_commits = max(1, int(max_pending_commits))
         self.max_openq = max(0, int(max_openq))
         self.max_traces = max(0, int(max_traces))
 
@@ -154,7 +161,7 @@ class BirthMemoryStore:
                         candidates.append(CommitmentCandidate(text, target, frame, source))
             out.append(
                 SessionTraceRecord(
-                    commitment_candidates=candidates,
+                    commitment_candidates=[c for c in candidates if c.target in (raw.get("commitments_pending") or [])],
                     facts=list(raw.get("facts") or []),
                     commitments_pending=list(raw.get("commitments_pending") or []),
                     commitments_resolved=list(raw.get("commitments_resolved") or []),
@@ -186,8 +193,18 @@ class BirthMemoryStore:
         stance_traces: List[StanceTrace] | None = None,
         commitment_candidates: List[CommitmentCandidate] | None = None,
     ) -> SessionTraceRecord | None:
-        """写入一场痕迹；空场跳过；超容量丢最旧。"""
+        """写入一场痕迹；历史有界，未结债超限拒绝写入并保留现场。"""
         unique_traces = []
+        pending = list(dict.fromkeys(commitments_pending or []))
+        if len(pending) > self.max_pending_commits:
+            # 先拒绝、再写盘；pipeline 尚未清场，调用者可提高容量后重试。
+            raise PendingCommitmentCapacityError(
+                f"pending commitments exceed capacity {self.max_pending_commits}; session retained"
+            )
+        candidates = []
+        for c in commitment_candidates or []:
+            if c.target in pending and c not in candidates:
+                candidates.append(replace(c))
         seen = set()
         for trace in stance_traces or []:
             key = (trace.kind, trace.point)
@@ -195,11 +212,9 @@ class BirthMemoryStore:
                 seen.add(key)
                 unique_traces.append(trace)
         rec = SessionTraceRecord(
-            commitment_candidates=_clip_list([replace(c) for c in (commitment_candidates or [])], self.max_commits),
+            commitment_candidates=_clip_list(candidates, self.max_commits),
             facts=_clip_list(list(facts or []), self.max_facts),
-            commitments_pending=_clip_list(
-                list(commitments_pending or []), self.max_commits
-            ),
+            commitments_pending=pending,
             commitments_resolved=_clip_list(
                 list(commitments_resolved or []), self.max_commits
             ),
@@ -240,6 +255,7 @@ def configure_memory(
     max_facts: int = DEFAULT_MAX_FACTS,
     max_commits: int = DEFAULT_MAX_COMMITS,
     max_openq: int = DEFAULT_MAX_OPENQ,
+    max_pending_commits: int = DEFAULT_MAX_PENDING_COMMITS,
 ) -> BirthMemoryStore | None:
     """开／关跨场薄记忆。enabled=False 时不碰磁盘。"""
     global _ENABLED, _STORE
@@ -253,5 +269,6 @@ def configure_memory(
         max_facts=max_facts,
         max_commits=max_commits,
         max_openq=max_openq,
+        max_pending_commits=max_pending_commits,
     )
     return _STORE

@@ -54,6 +54,8 @@ def test_named_debt_drives_why_and_utterance():
     assert r.brief.pressed_commitment == B
     assert B in (r.brief.drive.why or "")
     assert A not in (r.brief.drive.why or "")
+    assert "月亮" in r.brief.say_intent
+    assert "故事" not in r.brief.say_intent
     assert "月亮" in r.utterance
     assert "故事" not in r.utterance
     # 只认账，不销账：两笔都还在

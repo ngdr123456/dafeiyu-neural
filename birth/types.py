@@ -192,7 +192,7 @@ class ThoughtBrief:
     openq_clear: bool = False
     # 结构化：本轮用户催可核对约定（articulate 拒空壳／stub 模板读此标记）
     press_commit: bool = False
-    # 结构化：本轮被催的是上场账上哪一笔原文（债有身份；空＝认不出，回落最老一笔）
+    # 催债动作的目标（可回落最老）；销账只读下方独立的认账身份。
     pressed_commitment: str = ""
     # 结构化：用户示意约定已兑现 → 开口后 resolve
     commit_resolve: bool = False
@@ -206,3 +206,6 @@ class ThoughtBrief:
     commit_deliver_intent: bool = False
     # 承诺与动力并存时双写（含 differentiated）；勿靠中文子串门控。
     commit_hold_with_drive: bool = False
+    # 认账身份独立于主导分支与催债动作；空＝未唯一识别（单笔可回落）。
+    recognized_prior_commitment: str = ""
+    recognized_same_commitment: str = ""

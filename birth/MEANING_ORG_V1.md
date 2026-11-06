@@ -41,6 +41,7 @@
 - **禁止** Org 永久否决 drive；drive 信号仍进 Brief
 
 ## 开口
+- 2026-11-06（出处：总规格第 3 层的可知直径、底层结构核对）：`llm_opencode.brief_to_prompt` 将 `org.can_name` 作为「这一轮能说清的边界」送入真实提示；DeepSeek `_brief_prompt` 共用同一路径。明确这是表达边界，不是能力或亲历证明；不泄露 can_name 字段名、不增加组织能力。此项是提示约束，validate 无一般语义理解能力，不能宣称模型已遵守。
 - `brief_to_prompt` 已带本场事实；本刀若 say_intent/stance 变厚，prompt 可多一行立场人话：把 posture 译成「可退／不可交／需澄清」再拼 stake；**禁止** `non_negotiable` 等枚举字面与字段名进 prompt（规格官硬钉）
 - 枚举漏检含 **utterance**：`validate` 拦台上出现的 pursue／guard／hold（独立英文词）与 non_negotiable／ThoughtBrief 等；不只查 prompt
 - stub：needs_clarify / commitment 守诺 各补一条模板，勿掉成「嗯听着」

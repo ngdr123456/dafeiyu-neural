@@ -559,6 +559,7 @@ def infer_drive(
         and not input_signal.degraded
         and input_signal.addressee == "other"
         and input_signal.act in ("pause", "stop")
+        and input_signal.scope == "conversation"
     ):
         label = "暂停" if input_signal.act == "pause" else "终止"
         asked = "对方要我暂停" if input_signal.act == "pause" else "对方要终止"

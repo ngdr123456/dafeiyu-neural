@@ -19,6 +19,8 @@
 ## 收放（resolve／clear）
 与承诺 resolve 对称：**宁缺毋滥**，拿不准不清。勿禁词堵嘴。
 
+2026-11-06 生产消费者核对（全仓非测试 Python 调用搜索及普通 CLI）：`structured_openq_answered` 仅是可接收参数，仓内没有生产调用方传入。跨场不能据原句猜删，只能等显式结构信号或按既有一场寿命过期；同场主题重叠兼容判断保留。残余：可信答复信号的生产入口缺失，需外部模型/上游结构或重大架构补充，当前未实现语义答复分类器；参数存在不算完成（FALSE_GREEN）。
+
 - **回答 resolve**：`turn(..., structured_openq_answered=True/False)` 优先；仅 None 时，薄检查同场有挂起且用户话与首条悬问有主题 token 重叠。命中调用现有 `resolve_open_question`，并清好奇挂起；仅 flag 而无条目时清 flag。False 明确否决兜底。filler 只短暂接话，不再自动 resolve 或追加同一轮问句。旧 `Brief.openq_resolve` 路径仍供结构化仲裁使用。
 - 兜底排除 filler、改口否定、开题／放下及问句；中文相邻双字或英文整词重叠并非语义理解，可能误判复述，也会漏掉代词、同义改写、短答和非首条悬问。上游应优先提供结构化判断。
 - 回答命中置本轮 `drive_openq_satisfied_pending`，无同场承诺时 hold/low，回复稳住、不追问原悬问；有 `last_commitments` 时只消解悬问并保持 §6 guard，不产生满足 hold。回合末清本轮 flag；org、身份与意义路径仍按原优先级处理。

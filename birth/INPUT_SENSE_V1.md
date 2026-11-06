@@ -2,7 +2,7 @@
 
 出处：规格页「出生必备·感知与对象感」和「第一期」第 2 条。
 
-本刀只用项目已有 DeepSeek 薄客户端的配置与密钥读取，模型只产出 act、addressee、confidence；确定性映射仍在 input_contract，S15 位置不变。self/unclear 不产 pursue。结果不写记忆，只在 TurnResult.input_signal 返回。普通入口默认开启；--stub 或 --no-sense 关闭；turn 直调默认关闭，可用 BIRTH_INPUT_SENSE 开启。
+本刀只用项目已有 DeepSeek 薄客户端的配置与密钥读取，模型产出 act、addressee、confidence、scope；确定性映射仍在 input_contract。仅 scope=conversation 的 pause/stop 前移 S1b；task 作用域映射 S15 请求，unclear 不猜停。缺 scope 的旧模型输出按 unclear 兼容读取，非法 scope 显式 degraded。self/unclear 对象不产 pursue。结果不写记忆，只在 TurnResult.input_signal 返回。普通入口默认开启；--stub 或 --no-sense 关闭；turn 直调默认关闭，可用 BIRTH_INPUT_SENSE 开启。
 
 降级时保留非空 source 和 provenance，不提供动力线索：
 

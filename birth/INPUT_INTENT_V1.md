@@ -6,8 +6,8 @@
 
 - `ask`：询问（语义不变）。
 - `request`：任务请求，要我具体去做一件事，如去关窗、去查、去写。
-- `pause`：要我暂停或缓一缓，可以是停嘴，也可以是停下手上的事。
-- `stop`：明确终止，结束这场对话，不要再继续。
+- `pause`：要我暂停或缓一缓；与 scope 一起解释。
+- `stop`：明确终止；与 scope 一起解释。
 - `ack`：回应或确认，包括「已经够了／可以收了」这类收束。
 - `tell`：陈述（语义不变）。
 - `unknown`：无法判断（语义不变）。
@@ -20,8 +20,10 @@
 | `addressee != "other"` | `None` | — |
 | `ask` | `pursue/mid` | `输入信号｜问句｜{source}｜缺口在外，顺着答` |
 | `request` | `pursue/mid` | `输入信号｜请求｜{source}｜缺口在外，顺着接` |
-| `pause` | `hold/low` | `输入信号｜暂停｜{source}｜对方要我暂停` |
-| `stop` | `hold/low` | `输入信号｜终止｜{source}｜对方要终止` |
+| `pause` + conversation | `hold/low` | `输入信号｜暂停｜{source}｜对方要我暂停` |
+| `stop` + conversation | `hold/low` | `输入信号｜终止｜{source}｜对方要终止` |
+| `pause/stop` + task | `pursue/mid` | `输入信号｜请求｜{source}｜接住具体任务` |
+| `pause/stop` + unclear | `None` | — |
 | `ack` / `tell` / `unknown` | `None` | — |
 
 这一层不做文本判定、不加分数；`input_contract.py` 内不得出现中文停／别说类词表常量、`import re` 或子串匹配。语义判断只在 `input_sense.py` 的模型提示词里进行。
@@ -30,12 +32,15 @@
 
 ## 判停的优先级（drive.py）
 
-**暂停／终止不是又一条「顺着接」的线索，而是叫停本身。** 因此非降级、`addressee == "other"` 的 `pause` / `stop` 在 `infer_drive` 里前置为 **S1b**：
+`InputSignal.scope` 放在 dataclass 末尾、默认 unclear，旧位置构造与 act 值兼容，但旧信号未声明作用域时不猜停。模型从整句判断 conversation（停嘴／结束这场）、task（停音乐／动作／具体任务）、unclear（不确定）。ask/request 原语义不变。
+
+非降级、`addressee == "other"` 且 **scope=conversation** 的 `pause` / `stop` 在 `infer_drive` 里前置为 **S1b**：
 
 - 位置：S1（新场未接上）之后，S6／S7／§6／S8–S11 之前——本地「打开话题」「好奇」「回指」这些词形线索一律让位。
 - 无同场承诺：`hold/low`，why = `输入信号｜暂停｜{source}｜对方要我暂停`（终止同理）。
 - 有同场 `last_commitments`：`guard/mid`，why 仍以 `输入信号｜暂停｜`／`输入信号｜终止｜` 开头，并带那条未兑现的话。语义是「先停，但约不当没说过」，不是把承诺丢掉。
 - `ask` / `request` **不前移**，仍留在 S15（S14 之后、MARKS 兜底之前）。原先「请求一律 pursue」的映射不变。
+- task 的 pause/stop 在 S15 映射请求，why 不带暂停／终止前缀；同现有请求一样不会越过既有更早信号与 §6。不改 S1–S14 编号或相对顺序。
 
 判停只读 `InputSignal` 的结构字段，不读用户原句；`drive.py` 不新增任何停／别说类词表。
 
@@ -48,6 +53,8 @@
 - stub 模板与真实路 `say_intent` 同口径：同一结构前缀，两条路径都停；结构断言同时校验 `say_intent` 前缀与 stub 话术，不是只断言 stub。
 
 ## 开口：三条模板（articulate.py）
+
+任务请求在真实 say_intent 中只接住这件事，能做说明办法、不能直说；stub 在 org 诚实分支之后、开新话题分支之前读取「输入信号｜请求｜」结构前缀，输出「收到，你要我做的这件事我接住了；我会先确认能怎么处理，做不到的会直说。」不声称已控制音乐，不邀请另开话题。不扫用户原句。对话停的全局优先不变。
 
 stub 开口只按 `drive.why` 的结构前缀与 `say_intent` 的完整口径映射，**不扫用户原句**。判停命中时最先返回，压过话题／好奇／回指／招呼等一切上下文分支：
 

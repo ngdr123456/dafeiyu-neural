@@ -16,8 +16,11 @@ class InputSignal:
     provenance: str
     degraded: bool = False
     reason: str = ""
+    scope: Literal["conversation", "task", "unclear"] = "unclear"
 
     def __post_init__(self) -> None:
+        if self.scope not in ("conversation", "task", "unclear"):
+            raise ValueError("invalid scope")
         if self.act not in ("ask", "request", "pause", "stop", "ack", "tell", "unknown"):
             raise ValueError("invalid act")
         if self.addressee not in ("other", "self", "unclear"):
@@ -40,10 +43,13 @@ def drive_signal_from_input(signal: InputSignal | None) -> DriveSignal | None:
     if signal.act == "request":
         return DriveSignal(direction="pursue", salience="mid",
                            why=f"输入信号｜请求｜{signal.source}｜缺口在外，顺着接")
-    if signal.act == "pause":
+    if signal.act in ("pause", "stop") and signal.scope == "task":
+        return DriveSignal(direction="pursue", salience="mid",
+                           why=f"输入信号｜请求｜{signal.source}｜接住具体任务")
+    if signal.act == "pause" and signal.scope == "conversation":
         return DriveSignal(direction="hold", salience="low",
                            why=f"输入信号｜暂停｜{signal.source}｜对方要我暂停")
-    if signal.act == "stop":
+    if signal.act == "stop" and signal.scope == "conversation":
         return DriveSignal(direction="hold", salience="low",
                            why=f"输入信号｜终止｜{signal.source}｜对方要终止")
     return None

@@ -33,6 +33,7 @@ from .types import (
     StanceSignal,
     ThoughtBrief,
     ThinContext,
+    PriorSessionTrace,
 )
 
 
@@ -154,6 +155,20 @@ def arbitrate(
     commit_hold_with_drive = False
     commit_deny = False
     hold_same_field = False
+    # 先认账，再选主导；意义／组织分支不能抹掉用户点名的债。
+    prior = context.prior_session
+    pending_all = list(dict.fromkeys(
+        (prior.commitments_pending if prior else []) + context.last_commitments
+    ))
+    recognized = match_pending_commitment(
+        user_text, PriorSessionTrace(commitments_pending=pending_all)
+    ) or ""
+    recognized_prior = recognized if prior and recognized in prior.commitments_pending else ""
+    recognized_same = recognized if recognized in context.last_commitments else ""
+    done_same = recognized_same or (
+        context.last_commitments[0] if len(pending_all) == 1 and context.last_commitments else ""
+    )
+    commit_resolve = bool(done_same and user_marks_commitment_done(user_text))
     if conflicts:
         dominant = "org"
         say_intent = _org_say_intent(conflicts)
@@ -171,7 +186,7 @@ def arbitrate(
     elif stance.posture == "needs_clarify":
         dominant = "meaning"
         say_intent = "不空壳升华：先澄清这一轮能讲清的直径，没有根据就不装人生答案"
-    elif context.last_commitments and user_marks_commitment_done(user_text):
+    elif commit_resolve:
         # 用户示意已兑现：结构化 commit_resolve（宁缺既有线索，勿扩词表）
         dominant = "meaning"
         commit_resolve = True
@@ -179,7 +194,7 @@ def arbitrate(
     elif context.last_commitments:
         dominant = "meaning"
         commit_deliverable = True
-        pending0 = context.last_commitments[0]
+        pending0 = recognized_same or context.last_commitments[0]
         toks = _pending_topic_tokens(pending0)
         if toks and any(tok in (user_text or "") for tok in toks):
             commit_deliver_intent = True  # 用户点到主题＝可检验接着交付，非纯守诺
@@ -311,6 +326,8 @@ def arbitrate(
         openq_clear=openq_clear,
         press_commit=press_commit,
         pressed_commitment=pressed_commitment,
+        recognized_prior_commitment=recognized_prior,
+        recognized_same_commitment=recognized_same,
         commit_resolve=commit_resolve,
         commit_deliverable=commit_deliverable,
         commit_deliver_intent=commit_deliver_intent,

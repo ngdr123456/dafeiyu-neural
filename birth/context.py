@@ -267,16 +267,19 @@ class ThinContextStore:
         self._context.her_questions = [q for q in self._context.her_questions if q in self._context.open_questions]
         self._context.curiosity_hang_pending = False
 
-    def resolve_commitment(self) -> str | None:
-        """兑现／接完第一条承诺：弹出并返回它；没有则 None。
+    def resolve_commitment(self, match: str | None = None) -> str | None:
+        """兑现／接完指定承诺：精确匹配；旧调用不传 match 时仍取第一条。
 
         对齐 resolve_open_question；态度上可守的对象，接完可放下。
         改口否定 flag 一并清 False（承诺已了，改口线索无对象）。
         弹出的条目记入本场已兑现列表，供跨场落盘。
         """
         if self._context.last_commitments:
+            if match is not None and match not in self._context.last_commitments:
+                return None
             self._context.commitment_deny_pending = False
-            done = self._context.last_commitments.pop(0)
+            index = self._context.last_commitments.index(match) if match is not None else 0
+            done = self._context.last_commitments.pop(index)
             self._remove_candidates({done})
             self._append_unique(self._resolved_commitments, done)
             return done
@@ -390,6 +393,10 @@ class ThinContextStore:
             if c not in combined:
                 combined.append(c)
         candidates = []
+        resolved = list(dict.fromkeys(
+            (ctx.prior_session.commitments_resolved if ctx.prior_session else [])
+            + self._resolved_commitments
+        ))
         prior_candidates = ctx.prior_session.commitment_candidates if ctx.prior_session else []
         for candidate in prior_candidates + ctx.commitment_candidates:
             if candidate.target in combined and candidate not in candidates:
@@ -398,7 +405,7 @@ class ThinContextStore:
             "commitment_candidates": candidates,
             "facts": list(ctx.facts_this_session),
             "commitments_pending": combined,
-            "commitments_resolved": list(self._resolved_commitments),
+            "commitments_resolved": resolved,
             "open_questions": list(ctx.open_questions),
             "her_questions": [
                 q for q in ctx.her_questions

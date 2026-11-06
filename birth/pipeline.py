@@ -394,25 +394,31 @@ def turn(
     frame = pressed_frame(brief)
     press_candidate = bool(commitment and frame)
     resolved_targets = set()
-    pending0 = context.last_commitments[0] if context.last_commitments else None
+    pending_all = set(context.last_commitments)
+    if context.prior_session:
+        pending_all.update(context.prior_session.commitments_pending)
+    pending0 = brief.recognized_same_commitment or (
+        context.last_commitments[0] if len(pending_all) == 1 and context.last_commitments else None
+    )
     if should_resolve_commitment(
         brief=brief, utterance=utterance, pending_first=pending0,
         commitment_candidate=press_candidate,
     ):
-        done = _STORE.resolve_commitment()
+        done = _STORE.resolve_commitment(match=pending0)
         if done:
             resolved_targets.add(done)
 
-    # 上场未兑现被催后，用户明确示意已兑现 → prior 侧 resolved（不并进 last_commitments）
+    # 用户明确示意已兑现，按独立认账身份销 prior；无需催债分支胜出。
     prior_now = context.prior_session
     if (
         prior_now is not None
         and prior_now.commitments_pending
-        and bool(getattr(context, "drive_prior_press_pending", False))
     ):
-        # 债有身份：只销本轮认出的那一笔；认不出才销最老一笔（同改前）。
-        prior_p0 = getattr(brief, "pressed_commitment", "") or prior_now.commitments_pending[0]
-        if user_marks_commitment_done(user_text):
+        # 无唯一身份时只允许单笔回落，多笔不猜。
+        prior_p0 = brief.recognized_prior_commitment or (
+            prior_now.commitments_pending[0] if len(pending_all) == 1 else None
+        )
+        if prior_p0 and user_marks_commitment_done(user_text):
             done = _STORE.resolve_prior_commitment(match=prior_p0)
             if done:
                 resolved_targets.add(done)

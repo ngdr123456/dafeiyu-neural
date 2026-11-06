@@ -10,7 +10,7 @@ from birth.pipeline import active_store, turn
 
 def signal(act="ask", **kwargs):
     values = dict(act=act, addressee="other", source="upstream:test",
-                  provenance="turn:1/segment:0")
+                  provenance="turn:1/segment:0", scope="conversation")
     values.update(kwargs)
     return InputSignal(**values)
 

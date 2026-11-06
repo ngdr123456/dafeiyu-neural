@@ -19,7 +19,7 @@ CASES = [
 
 
 def response(act):
-    content = json.dumps({"act": act, "addressee": "other", "confidence": "high"})
+    content = json.dumps({"act": act, "addressee": "other", "confidence": "high", "scope": "conversation"})
     return {"choices": [{"message": {"content": content}}]}
 
 

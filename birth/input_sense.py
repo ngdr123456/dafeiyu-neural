@@ -40,10 +40,12 @@ def sense_input(user_text: str, *, timeout: float | None = None) -> InputSignal 
     prompt = (
         '判断下面本轮话语的言语行为和对象。只输出一个 JSON 对象：'
         '{"act":"ask|request|pause|stop|ack|tell|unknown","addressee":"other|self|unclear",'
-        '"confidence":"high|medium|low"}。\n'
+        '"confidence":"high|medium|low","scope":"conversation|task|unclear"}。\n'
         'act：ask 是询问；request 只用于要我去做一件具体的事，如去关窗、去查、去写；'
-        'pause 是先停一下或缓一缓，可以指停嘴，也可以指停下正在做的一件事；'
-        'stop 是明确终止、结束这场对话、不要再继续；'
+        'pause 是暂停或缓一缓；stop 是明确终止；两者必须同时判断作用域。'
+        'scope：停嘴、暂停或结束这场对话是 conversation；'
+        '停下具体音乐、动作或任务是 task（操作请求），不确定是 unclear。'
+        '其他 act 不受 scope 改写；'
         'ack 是回应或确认，已经够了或可以收了这样的收束不算 request，归 ack 或 unknown；'
         'tell 是陈述；unknown 是无法判断。'
         'addressee 判断这句话在对谁说，不是内容关于谁：other 是对正在回应的对方说；'
@@ -93,5 +95,8 @@ def sense_input(user_text: str, *, timeout: float | None = None) -> InputSignal 
     ):
         return degraded("invalid_output")
     low = value["confidence"] == "low"
+    scope = value.get("scope", "unclear")
+    if scope not in ("conversation", "task", "unclear"):
+        return degraded("invalid_output")
     return InputSignal(value["act"], value["addressee"], source, provenance,
-                       low, "low_confidence" if low else "")
+                       low, "low_confidence" if low else "", scope)

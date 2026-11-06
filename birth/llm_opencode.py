@@ -70,6 +70,7 @@ def brief_to_prompt(brief: ThoughtBrief) -> str:
         f"这一轮怎么站：{posture_zh}——{stake}\n"
         f"{reassert_note}"
         f"这一轮劲头：{drive_zh}\n"
+        f"这一轮能说清的边界：{'；'.join(brief.org.can_name) or '只说有根据、能讲清的部分'}。这些是表达边界，不是已具备能力或亲历的证明。\n"
         "本场已知（薄，仅供接话，勿当性格/自传）：\n"
         f"{fact_block}\n"
         f"{extra_block}"

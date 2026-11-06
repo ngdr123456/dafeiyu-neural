@@ -12,9 +12,9 @@ from birth.input_contract import InputSignal, drive_signal_from_input
 from birth.pipeline import active_store, turn
 
 
-def response(act="ask", addressee="other", confidence="high"):
+def response(act="ask", addressee="other", confidence="high", scope="conversation"):
     return {"choices": [{"message": {"content": json.dumps(dict(
-        act=act, addressee=addressee, confidence=confidence))}}]}
+        act=act, addressee=addressee, confidence=confidence, scope=scope))}}]}
 
 
 @pytest.fixture(autouse=True)

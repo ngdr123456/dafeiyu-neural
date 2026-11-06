@@ -10,7 +10,7 @@
 
 债和悬问不同，悬问可以放过，债不能自己没。认不出她是否真交付，就只认用户明说「已经了了」；宁可债多留，不许凭空销。
 
-跨场销账保留两个前置：`prior.commitments_pending` 非空且 `drive_prior_press_pending` 为真；证据只用 `user_marks_commitment_done(user_text)`，不再用 `utterance_covers_pending_commitment`，不加词表或相似度。
+跨场销账前置是 `prior.commitments_pending` 非空；证据只用 `user_marks_commitment_done(user_text)`，不要求催债动作或对应 dominant 胜出。身份由仲裁分支之前的账内主题匹配提供：唯一识别销该笔，未识别仅单笔可回落，多笔不销。不以接受草稿或主题覆盖销 prior 债，不加词表或相似度。
 
 原 `test_prior_press_fulfill_resolves_pending` 改名为 `test_prior_press_dodge_does_not_resolve_pending`：旧断言把推脱当交付，是误销行为，不是退让。
 
@@ -26,4 +26,4 @@
 
 ## 边界
 
-仍认不出她是否真交付；`_FULFILL_USER_MARKS` 只是既有小线索，不是语义判断。不给 prior 加 `commit_deliver_intent` 生产逻辑，那是另一刀；同场路径不动；债不会因为一次推脱被销账；跨场携带由导出的 pending 列表保证。推脱句可能被同场 `extract_commitment` 记成新承诺，下一轮 §6 guard 会先于 prior press；本刀只保证 prior 债不被销，不改同场路径。
+仍认不出她是否真交付；`_FULFILL_USER_MARKS` 只是既有小线索，不是语义判断。不给 prior 加 `commit_deliver_intent` 生产逻辑；跨场携带由导出的 pending 列表保证。催债草稿只记候选、不立新债，详见 COMMIT_IDENTITY_V1；同场销账身份修复见 COMMIT_DEBT_IDENTITY_V1，§6 口径不变。
