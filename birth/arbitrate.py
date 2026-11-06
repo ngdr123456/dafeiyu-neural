@@ -17,7 +17,7 @@
 from __future__ import annotations
 
 from .drive import _extract_open_topic, is_neutral_filler
-from .input_contract import InputSignal, credible_commitment_target, credible_open_question_answer
+from .input_contract import InputSignal, credible_commitment_target, credible_open_question_answer, credible_topic
 from .commit_extract import (
     _pending_topic_tokens,
     match_pending_commitment,
@@ -124,6 +124,30 @@ def _clip_bounded(text: str, limit: int) -> str:
     return (text or "").strip()[:limit]
 
 
+def _response_focus(
+    user_text: str, context: ThinContext, understanding: InputSignal | None,
+) -> tuple[str, str]:
+    """只取内容短摘及其来源，不用焦点文案控制主导或销账。"""
+    topic = credible_topic(understanding)
+    if topic:
+        return topic, "本轮理解"
+    text = (user_text or "").strip()
+    if text and not is_neutral_filler(text):
+        return _clip_bounded(text, 60), "本轮原话"
+    if context.open_questions:
+        return _clip_bounded(context.open_questions[0], 60), "同场悬问"
+    if context.last_commitments:
+        pending = context.last_commitments[0]
+        return _clip_bounded(topic_from_pending_commitment(pending) or pending, 60), "同场承诺"
+    prior = context.prior_session
+    if prior and prior.commitments_pending:
+        pending = prior.commitments_pending[0]
+        return _clip_bounded(topic_from_pending_commitment(pending) or pending, 60), "上场承诺"
+    if text:
+        return _clip_bounded(text, 60), "本轮原话"
+    return "", "无实质内容"
+
+
 def arbitrate(
     drive: DriveSignal,
     stance: StanceSignal,
@@ -134,7 +158,14 @@ def arbitrate(
     understanding: InputSignal | None = None,
 ) -> ThoughtBrief:
     """四路输入 → 一条 Brief。主导字段把冲突写明白，不藏在语气里。"""
-    conflicts = detect_org_conflict(user_text)
+    drive = drive if drive is not None else DriveSignal(why="动力层未给出信号")
+    stance = stance if stance is not None else StanceSignal()
+    org = org if org is not None else OrgConstraint()
+    conflicts = list(getattr(org, "conflicts", None) or [])
+    if not conflicts:
+        conflicts = detect_org_conflict(user_text)
+    focus, focus_source = _response_focus(user_text, context, understanding)
+    dominant_why = ""
 
     must_not_pretend = list(MUST_NOT_PRETEND_CORE)
     for item in conflicts:
@@ -185,6 +216,13 @@ def arbitrate(
     if conflicts:
         dominant = "org"
         say_intent = _org_say_intent(conflicts)
+        if focus:
+            say_intent += f"；这一轮要接的原话是「{focus}」，回答要落在这句上"
+        dominant_why = (
+            f"组织主导｜诚实硬闸优先：本轮命中「{'、'.join(conflicts)}」，"
+            "宁可收窄能说清的直径也不编造；动力仍在 Brief，不被否决"
+            "（来源：可施工规格 第5层／硬闸3；外补：不可编造来处）"
+        )
     elif (
         stance.posture == "non_negotiable"
         and context.last_commitments
@@ -196,18 +234,29 @@ def arbitrate(
         say_intent = "先守住同场自己说过的话，不跟着改口否定；再接眼前这句"
         commit_deny = True
         hold_same_field = True
+        pending = recognized_same or context.last_commitments[0]
+        focus = _clip_bounded(topic_from_pending_commitment(pending) or pending, 60)
+        focus_source = "同场承诺"
+        dominant_why = "意义主导｜同场出口的承诺不可跟着改口否定，压过本轮动力；动力仍在 Brief（来源：外补·同场承诺一致性）"
     elif stance.posture == "needs_clarify":
         dominant = "meaning"
         say_intent = "不空壳升华：先澄清这一轮能讲清的直径，没有根据就不装人生答案"
+        dominant_why = "意义主导｜没有根据的意义态度先澄清，不端空壳升华；动力仍在 Brief（来源：《活出生命的意义》态度价值须有根据）"
     elif commit_resolve:
         # 用户示意已兑现：结构化 commit_resolve（宁缺既有线索，勿扩词表）
         dominant = "meaning"
         commit_resolve = True
         say_intent = "对方示意同场那件约定已接上，可以放下再接眼前这句"
+        focus = _clip_bounded(topic_from_pending_commitment(done_same) or done_same, 60)
+        focus_source = "同场承诺"
+        dominant_why = "意义主导｜对方示意同场约定已兑现，先销账再接眼前（来源：外补·同场承诺一致性）"
     elif context.last_commitments:
         dominant = "meaning"
         commit_deliverable = True
         pending0 = recognized_same or context.last_commitments[0]
+        focus = _clip_bounded(topic_from_pending_commitment(pending0) or pending0, 60)
+        focus_source = "同场承诺"
+        dominant_why = "意义主导｜同场还有未兑现的承诺，先守自己的话再接新的；动力仍在 Brief（来源：外补·同场承诺一致性）"
         toks = _pending_topic_tokens(pending0)
         if toks and any(tok in (user_text or "") for tok in toks):
             commit_deliver_intent = True  # 用户点到主题＝可检验接着交付，非纯守诺
@@ -242,6 +291,7 @@ def arbitrate(
           and not context.drive_identity_ask_pending
           and not context.drive_identity_answer_pending):
         dominant = "meaning"
+        dominant_why = "意义主导｜必要痛苦/自虐加戏在场，先分辨哪些苦可以少受，不替对方定论（来源：《活出生命的意义》必要痛苦 vs 自虐加戏）"
         if context.stance_self_torture_pending:
             say_intent = "不跟加戏，留意哪些苦可以少受，不替对方断定"
         else:
@@ -251,14 +301,17 @@ def arbitrate(
           and not context.drive_identity_answer_pending):
         dominant = "meaning"
         say_intent = "承认对方说的处境无法改变；不许诺改变它，选择在此陪对方一起面对，不替对方赋予意义"
+        dominant_why = "意义主导｜处境不可改变时先承认事实，再选择怎么面对（来源：《活出生命的意义》态度价值）"
     elif (context.open_questions and is_neutral_filler(user_text)
           and "想被看见｜" not in (drive.why or "")):
         # filler + 确有悬问：短暂接话，但不当作用户已经回答。
         dominant = "meaning"
         say_intent = "先接住这声回应，悬问仍留着，不把它当作已经回答"
+        dominant_why = "意义主导｜轻接话时短暂捡一次同场悬问，接完即收，不让悬问长期占领主导（来源：外补·悬问不过夜）"
     elif context.drive_openq_satisfied_pending and drive.direction == "hold":
         dominant = "drive"
         say_intent = _drive_say_intent(drive)
+        dominant_why = "动力主导｜悬问被接住，喜欢/满足侧到了，不必再追（来源：《贪婪的多巴胺》想要 vs 喜欢）"
     elif bool(getattr(context, "drive_prior_press_pending", False)) or (
         "上场承诺｜" in ((drive.why or "") if drive else "")
     ):
@@ -276,6 +329,9 @@ def arbitrate(
             )
             pending0 = pressed_commitment
         topic = topic_from_pending_commitment(pending0) or "这事"
+        focus = _clip_bounded(topic_from_pending_commitment(pressed_commitment) or pressed_commitment or "这事", 60)
+        focus_source = "上场承诺"
+        dominant_why = "动力主导｜上场未兑现被催，追着兑现；承诺照结构化身份销（来源：外补·承诺一致性；《贪婪的多巴胺》缺口在外）"
         # 截短话题，避免整句承诺塞进「」
         if len(topic) > 12:
             topic = topic[:12]
@@ -287,6 +343,8 @@ def arbitrate(
         dominant = "drive"
         press_commit = True
         topic = topic_hint_from_facts(list(context.facts_this_session or [])) or "这事"
+        focus, focus_source = _clip_bounded(topic, 60), "同场事实"
+        dominant_why = "动力主导｜同场催一个可核对的约定，追着兑现；承诺照结构化身份销（来源：外补·同场承诺一致性；《贪婪的多巴胺》缺口在外）"
         say_intent = (
             f"对方催一个可核对的约定，就着本场话头「{topic}」应一句可兑现的，不空口"
         )
@@ -297,6 +355,7 @@ def arbitrate(
                 and "被看见了｜" not in (drive.why or "")
                 and not bool(getattr(drive, "prior_her_question", False))):
             digest = "；".join(recent_facts(context, 3))
+            dominant_why = "动力主导｜按本场已有痕迹接回指，不编场外经历（来源：《贪婪的多巴胺》缺口在外；外补·薄情境）"
             say_intent = (
                 "接住对方对同场刚才话题的回指，用本场已有痕迹接话，"
                 "不装没发生过、也不编场外经历。"
@@ -305,8 +364,12 @@ def arbitrate(
         else:
             say_intent = _drive_say_intent(drive)
 
+    if dominant == "drive" and not dominant_why:
+        dominant_why = "动力主导｜无诚实冲突、无未兑现承诺，按本轮推力方向接（来源：《贪婪的多巴胺》想要/喜欢）"
+
     # 粒度只读结构字段；保留先前分支的主导和具体约束，不靠人话子串判定。
     if org.grain == "differentiated" and not conflicts:
+        dominant_why += "；组织层只收粒度、不否决动力（来源：《自我的发展》组织复杂度匹配）"
         if context.last_commitments:
             if not commit_hold_with_drive:
                 say_intent = f"{_drive_say_intent(drive)}；{say_intent}"
@@ -321,6 +384,7 @@ def arbitrate(
     # org 冲突／stance／filler／悬问这些更早的分支不得把「停」改写成「接着说」；
     # 组织约束仍写进 org_conflicts＋must_not_pretend，诚实口径不丢。
     if _input_stop_label(drive) is not None:
+        dominant_why = "判停优先｜对方明说暂停/终止，本轮心思先应一声停住；组织冲突仍照记，主导字段保留诚实冲突层（来源：INPUT_INTENT_V1；规格硬闸3）"
         say_intent = _drive_say_intent(drive)
         if context.last_commitments:
             say_intent = f"{say_intent}；同场约定还在，说清它没消失"
@@ -353,4 +417,7 @@ def arbitrate(
         commit_deny=commit_deny,
         hold_same_field=hold_same_field,
         org_conflicts=list(conflicts),
+        dominant_why=dominant_why or "仲裁未写明取舍（工程师需修复）",
+        focus=focus,
+        focus_source=focus_source if focus else "无实质内容",
     )

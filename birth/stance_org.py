@@ -297,6 +297,7 @@ def default_org(
         can_name=can_name,
         cannot_fake=cannot_fake,
         why=why,
+        conflicts=list(conflicts),
     )
 
 

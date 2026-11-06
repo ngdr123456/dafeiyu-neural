@@ -78,6 +78,8 @@ def _print_result(result, *, debug: bool) -> None:
     if signal is not None:
         suffix = f"（降级：{signal.reason}）" if signal.degraded else ""
         print(f"[debug] 输入信号：{signal.act}/{signal.addressee}/{signal.source}{suffix}")
+    if result.brief.dominant_why:
+        print(f"[debug] 仲裁取舍：{result.brief.dominant_why}")
     print("[debug] 台下 ThoughtBrief（工程师通道）")
     print(json.dumps(asdict(result.brief), ensure_ascii=False, indent=2))
 

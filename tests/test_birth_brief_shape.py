@@ -28,6 +28,11 @@ def _assert_brief_shape(brief, label):
         assert isinstance(brief.drive.why, str) and brief.drive.why.strip(), message
     if brief.drive is not None:
         assert brief.drive.direction in {"pursue", "guard", "hold", None}, message
+    assert brief.dominant_why.strip(), message
+    if brief.focus:
+        assert brief.focus_source and brief.focus_source != "无实质内容", message
+    else:
+        assert brief.focus_source == "无实质内容", message
     assert brief.stance.posture in {"yieldable", "non_negotiable", "needs_clarify"}, message
     assert brief.org.grain in {"simple", "rule", "differentiated"}, message
     assert isinstance(brief.must_not_pretend, list) and brief.must_not_pretend, message

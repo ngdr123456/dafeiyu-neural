@@ -52,6 +52,8 @@ class OrgConstraint:
     can_name: List[str] = field(default_factory=list)
     cannot_fake: List[str] = field(default_factory=list)
     why: str = ""
+    # 组织层识别的不能假装命中项；旧构造为空时仲裁才兼容兜底。
+    conflicts: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -224,3 +226,9 @@ class ThoughtBrief:
     user_input: Optional[SourcedInput] = None
     openq_resolve_target: str = ""
     prior_openq_resolve_target: str = ""
+    # 仲裁取舍与来源，只供工程师通道。
+    dominant_why: str = ""
+    # 本轮要回应的实际内容短摘；空表示无实质内容。
+    focus: str = ""
+    # 本轮理解／本轮原话／同场悬问／同场承诺／上场承诺／同场事实／无实质内容。
+    focus_source: str = ""

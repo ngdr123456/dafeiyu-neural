@@ -63,6 +63,10 @@ def brief_to_prompt(brief: ThoughtBrief) -> str:
         if brief.stance.reasserts_kept
         else ""
     )
+    focus_block = (
+        f"这一轮要回应的具体内容：{brief.focus}（来源：{brief.focus_source}）\n"
+        if brief.focus else ""
+    )
     input_block = ""
     if brief.user_input is not None and brief.user_input.text:
         input_block = (
@@ -82,6 +86,7 @@ def brief_to_prompt(brief: ThoughtBrief) -> str:
         "本场已知（薄，仅供接话，勿当性格/自传）：\n"
         f"{fact_block}\n"
         f"{extra_block}"
+        f"{focus_block}"
         f"{input_block}"
         f"绝不能装作：{must_not}\n"
         "硬禁止：不要说自己是模型/代码/程序/语言模型；"
