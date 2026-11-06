@@ -167,8 +167,8 @@ def test_task_stop_and_conversation_stop_are_distinct(act):
     assert drive_signal_from_input(task).why.startswith("输入信号｜请求｜")
     r = turn("把音乐停了", stub=True, input_signal=task)
     assert r.brief.drive.direction == "pursue"
-    assert r.brief.say_intent.startswith("对方在请我做事")
-    assert r.utterance == "收到，你要我做的这件事我接住了；我会先确认能怎么处理，做不到的会直说。"
+    assert r.brief.say_intent.startswith("对方请求做的事是本轮重点")
+    assert r.utterance == "收到，你要我做的事我知道了；我会先确认能怎么处理，做不到的会直说。"
     assert validate(r.brief, r.utterance) == []
     r = turn("先停一下", stub=True, input_signal=conv)
     assert r.brief.drive.direction == "hold"

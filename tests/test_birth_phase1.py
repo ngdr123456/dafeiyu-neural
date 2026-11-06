@@ -48,7 +48,7 @@ def test_append_commitment_drives_meaning_domination():
     store.append_commitment("同场里说好这轮先补月亮的事")
     result = turn("今天怎么样")
     assert result.brief.dominant == "meaning"
-    assert "先" in result.brief.say_intent
+    assert "同场说过的话仍然有效" in result.brief.say_intent
 
 
 def test_store_clears_only_via_new_session():
@@ -698,7 +698,7 @@ def test_commitment_deny_stance_non_negotiable_meaning():
     store.append_commitment("同场里说好这轮先补月亮的事")
     r = turn("那刚才说的不算", stub=True)
     assert r.brief.stance.posture == "non_negotiable"
-    assert "先守同场说过的话" in r.brief.stance.stake
+    assert "同场说过的话仍然有效" in r.brief.stance.stake
     assert r.brief.dominant == "meaning"
     assert "改口" in r.brief.say_intent or "说过的话" in r.brief.say_intent
     assert "嗯，听着" not in r.utterance
@@ -775,7 +775,7 @@ def test_satisfied_hold_not_pursue():
     r = turn("够了，先这样", new_session=True, stub=True)
     assert r.brief.drive.direction in {"hold", None}
     assert r.brief.drive.direction != "pursue"
-    assert "加码追" in r.brief.say_intent or r.brief.drive.direction is None
+    assert "不再加码" in r.brief.say_intent or r.brief.drive.direction is None
     assert "你想从哪头" not in r.utterance
 
 
@@ -923,7 +923,7 @@ def test_tampered_say_intent_non_negotiable_commitments_still_keep_word():
 
     brief = _tampered_brief(
         dominant="meaning",
-        stance=StanceSignal(posture="non_negotiable", stake="先守同场说过的话"),
+        stance=StanceSignal(posture="non_negotiable", stake="同场说过的话仍然有效"),
         context=ThinContext(last_commitments=["同场里说好这轮先补月亮的事"]),
     )
     assert "守住" not in brief.say_intent
@@ -933,7 +933,7 @@ def test_tampered_say_intent_non_negotiable_commitments_still_keep_word():
     # stake 带守诺口径、commitments 空的备路（旧字段取值兜底）
     brief2 = _tampered_brief(
         dominant="meaning",
-        stance=StanceSignal(posture="non_negotiable", stake="先守同场说过的话"),
+        stance=StanceSignal(posture="non_negotiable", stake="同场说过的话仍然有效"),
     )
     out2 = _template_utterance(brief2)
     assert "不当没说过" in out2 or "不跟着改口" in out2, out2
@@ -947,7 +947,7 @@ def test_tampered_say_intent_non_negotiable_commitments_still_keep_word():
         commit_deny=True,
         hold_same_field=True,
     )
-    assert "先守同场说过的话" not in (brief3.stance.stake or "")
+    assert "同场说过的话仍然有效" not in (brief3.stance.stake or "")
     out3 = _template_utterance(brief3)
     assert "不当没说过" in out3 or "不跟着改口" in out3, out3
 
@@ -1088,7 +1088,7 @@ def test_tampered_say_intent_empty_chase_via_flag():
     )
     assert "先停硬追" not in brief.say_intent
     out = _template_utterance(brief)
-    assert "不硬往下追" in out, out
+    assert "不硬往下推" in out, out
 
     brief2 = _tampered_brief(
         drive=DriveSignal(direction="guard", salience="mid", why="x"),
@@ -1096,7 +1096,7 @@ def test_tampered_say_intent_empty_chase_via_flag():
     )
     assert "先停硬追" not in brief2.say_intent
     out2 = _template_utterance(brief2)
-    assert "不硬往下追" in out2, out2
+    assert "不硬往下推" in out2, out2
 
 
 def test_tampered_say_intent_empty_chase_via_drive_why():
@@ -1115,7 +1115,7 @@ def test_tampered_say_intent_empty_chase_via_drive_why():
     assert not brief.context.drive_disappoint_pending
     assert "先停硬追" not in brief.say_intent
     out = _template_utterance(brief)
-    assert "不硬往下追" in out, out
+    assert "不硬往下推" in out, out
 
 
 def test_empty_chase_say_intent_fallback_without_marker():
@@ -1131,7 +1131,7 @@ def test_empty_chase_say_intent_fallback_without_marker():
         say_intent="这一轮先停硬追，老实接住对方的不满或缺口，不装已经答完",
     )
     out = _template_utterance(brief)
-    assert "不硬往下追" in out, out
+    assert "不硬往下推" in out, out
 
 
 def test_tampered_say_intent_backref_via_drive_why():

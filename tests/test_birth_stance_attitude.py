@@ -45,7 +45,7 @@ def test_same_session_commitment_wins():
     assert result.brief.context.stance_attitude_pending
     assert result.brief.drive.direction == "guard"
     assert result.brief.commit_deliverable
-    assert "守住" in result.brief.say_intent
+    assert "仍然有效" in result.brief.say_intent
     assert "陪你待" not in result.utterance
 
 

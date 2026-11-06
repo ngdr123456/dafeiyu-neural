@@ -70,7 +70,7 @@ def test_org_preserves_actual_content_and_drive():
     b = arbitrate(d, s, o, ThinContext(), user_text="我想聊星空")
     assert b.drive is d and b.drive.why
     assert b.say_intent.startswith(_org_say_intent(o.conflicts))
-    assert "这一轮要接的原话是「我想聊星空」" in b.say_intent
+    assert "这一轮回应的原话是「我想聊星空」" in b.say_intent
     assert _drive_say_intent(d) not in b.say_intent
     assert "动力仍在 Brief" in b.dominant_why
     assert b.org_conflicts == ["自述是代码"]

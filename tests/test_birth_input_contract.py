@@ -32,8 +32,8 @@ def test_existing_drive(text, salience):
 
 
 @pytest.mark.parametrize("act,label,intent", [
-    ("ask", "问句", "对方在问我"),
-    ("request", "请求", "对方在请我做事"),
+    ("ask", "问句", "对方的问题是本轮重点"),
+    ("request", "请求", "对方请求做的事是本轮重点"),
 ])
 def test_signal_reaches_drive_and_result(act, label, intent):
     value = signal(act)
@@ -199,7 +199,7 @@ def test_closing_phrases_unchanged(text):
     """既有收束路径不归本刀管，话术必须逐字不变。"""
     result = turn(text, new_session=True, stub=True)
     assert (result.brief.drive.direction, result.brief.drive.salience) == ("hold", "low")
-    assert result.utterance == "好，那就先这样。你回头想接着再叫我就行。"
+    assert result.utterance == "好，那就先这样。你回头想继续再叫我就行。"
 
 
 def test_cli_has_no_producer(capsys):

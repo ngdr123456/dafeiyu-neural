@@ -13,7 +13,7 @@ from .input_contract import InputSignal, credible_commitment_target, credible_op
 from .session_trace import is_session_backref, recent_facts, topic_hint_from_facts
 from .types import DriveSignal, OrgConstraint, PriorSessionTrace, StanceSignal, StanceTrace, ThinContext
 
-DEFAULT_STAKE = "接住这一轮，把话当面说完"
+DEFAULT_STAKE = "这一轮的对话在场，话有当面说完的空间"
 
 def conflict_point(label: str) -> str:
     return f"conflict:{(label or '').strip()}"
@@ -65,7 +65,7 @@ COMMIT_DENY_MARKS = (
 )
 
 # 守诺 stake 字段取值（作文案／旧路径兜底精确相等用）；消费侧主路径读 hold_same_field／Brief 标记
-STAKE_HOLD_SAME_FIELD = "先守同场说过的话"
+STAKE_HOLD_SAME_FIELD = "同场说过的话仍然有效"
 
 
 def stance_holds_same_field(stance) -> bool:
@@ -225,7 +225,7 @@ def default_stance(user_text: str, context: ThinContext | None = None,
     if credible_open_question_answer(understanding):
         return StanceSignal(
             posture="yieldable",
-            stake="接住对方给出的回答，把这一轮收好",
+            stake="对方的回答已在场，这一轮安稳收束",
             why="本轮理解｜对方直接回答了薄痕中的悬问，先接住回答",
         )
 
@@ -233,7 +233,7 @@ def default_stance(user_text: str, context: ThinContext | None = None,
     if ctx.open_questions or is_session_backref(user_text, ctx):
         return StanceSignal(
             posture="yieldable",
-            stake="顺着本场未决或痕迹把话接完",
+            stake="本场未决之事或已有痕迹仍是话题，直到说完",
             why="可退让节奏，但不装失忆；把同场还悬着的或刚指到的接完",
         )
 

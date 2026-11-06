@@ -1,44 +1,67 @@
-"""Prompt wording checks without calling a model."""
+"""Prompt wording checks against unmodified Briefs built by the pipeline."""
 
 import pytest
 
 from birth.llm_deepseek import _brief_prompt
 from birth.llm_opencode import brief_to_prompt
+from birth.input_contract import InputSignal
 from birth.memory import configure_memory
 from birth.pipeline import active_store, turn
-from birth.types import DriveSignal, PriorSessionTrace, ThoughtBrief
+from birth.stance_org import STAKE_HOLD_SAME_FIELD
+from birth.types import DriveSignal, ThoughtBrief
+
+
+def assert_gate(brief):
+    prompt = brief_to_prompt(brief)
+    assert _brief_prompt(brief) == prompt
+    text = brief.user_input.text if brief.user_input else ""
+    if text:
+        assert f"「{text}」" in prompt
+        prompt = prompt.replace(f"「{text}」", "「」")
+    for fact in brief.context.facts_this_session or []:
+        prompt = prompt.replace(f"- {fact}\n", "- [事实]\n")
+    for verb in ("追", "守", "接住", "接话", "接上", "接完", "接眼前", "继续接", "直接接", "追问"):
+        assert verb not in prompt, (verb, prompt)
 
 
 @pytest.mark.parametrize("text", [
     "你好，我今天有点累", "你是谁", "刚才说到哪里了", "我想聊星空", "先停一下",
 ])
-def test_template_wording_for_built_briefs(text):
+def test_real_brief_gate(text):
     configure_memory(enabled=False)
-    active_store().new_session()
-    brief = turn(text, stub=True, sense=False).brief
-    # The template interpolates upstream content verbatim; isolate its wording
-    # without filtering or changing that content in the application.
-    brief.say_intent = "意思"
-    brief.stance.stake = "立场"
-    brief.org.can_name = ["边界"]
-    brief.must_not_pretend = ["无根据的经历"]
-    brief.focus = "内容"
-    brief.focus_source = "来源"
-    brief.context.facts_this_session = ["事实里可以追问"]
-    brief.context.open_questions = ["悬问"]
-    brief.stance.held_commitment = "约定"
-    brief.context.prior_session = PriorSessionTrace(her_questions=["上场的问题"])
-    if brief.drive is None:
-        brief.drive = DriveSignal()
-    brief.drive.prior_her_question = True
-    brief.stance.reasserts_kept = True
-    prompt = brief_to_prompt(brief)
-    assert _brief_prompt(brief) == prompt
-    assert f"「{text}」" in prompt
-    assert "事实里可以追问" in prompt
-    assert all(value in prompt for value in ("悬问", "约定", "上场的问题"))
-    template = prompt.replace(f"「{text}」", "").replace("事实里可以追问", "")
-    assert not any(word in template for word in ("追", "守", "接住", "接话", "追问"))
+    brief = turn(text, new_session=True, stub=True, sense=False).brief
+    assert_gate(brief)
+
+
+def test_recognized_stop_remains_clear():
+    configure_memory(enabled=False)
+    signal = InputSignal(act="pause", addressee="other", scope="conversation",
+                         source="test", provenance="test")
+    brief = turn("先停一下", new_session=True, stub=True, sense=False, input_signal=signal).brief
+    assert "停" in brief.say_intent
+    assert "不再继续" in brief_to_prompt(brief)
+    assert_gate(brief)
+
+
+def test_commitment_deny_gate():
+    configure_memory(enabled=False)
+    store = active_store()
+    store.new_session()
+    store.append_commitment("同场里说好这轮先补月亮的事")
+    brief = turn("那刚才说的不算", stub=True, sense=False).brief
+    assert brief.stance.posture == "non_negotiable"
+    assert brief.stance.stake == STAKE_HOLD_SAME_FIELD
+    assert brief.commit_deny and brief.hold_same_field
+    assert_gate(brief)
+
+
+def test_answered_open_question_gate():
+    configure_memory(enabled=False)
+    turn("为什么月亮老跟着人走？", new_session=True, stub=True, sense=False)
+    assert active_store().pending_questions()
+    brief = turn("因为距离很远", stub=True, sense=False, structured_openq_answered=True).brief
+    assert brief.context.drive_openq_satisfied_pending
+    assert_gate(brief)
 
 
 @pytest.mark.parametrize("direction,why,expected", [

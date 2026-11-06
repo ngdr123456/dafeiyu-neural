@@ -58,7 +58,7 @@ def test_curiosity_hang_survives_filler_until_structured_answer():
     assert not answer.brief.context.open_questions
     assert answer.brief.drive.direction == "hold"
     assert "满足" in answer.brief.drive.why
-    assert "回答" in answer.brief.say_intent and "不再追问" in answer.brief.say_intent
+    assert "回答" in answer.brief.say_intent and "不再发问" in answer.brief.say_intent
     assert not active_store().snapshot().curiosity_hang_pending
     assert not active_store().snapshot().open_questions
 
@@ -78,7 +78,7 @@ def test_commitment_deny_and_normal_followup_keep_priority():
     assert all(item in followup.brief.context.last_commitments for item in commitments)
     assert not followup.brief.context.commitment_deny_pending
     assert followup.brief.dominant == "meaning" and followup.brief.drive.direction == "guard"
-    assert "守住同场说过的话" in followup.brief.say_intent
+    assert "同场说过的话仍然有效" in followup.brief.say_intent
     assert all(item in active_store().snapshot().last_commitments for item in commitments)
 
 
@@ -125,7 +125,7 @@ def test_differentiated_dual_write_then_answer_preserves_commitment():
     assert answered.brief.context.drive_openq_satisfied_pending
     assert not answered.brief.context.open_questions
     assert answered.brief.drive.direction == "guard" and answered.brief.dominant == "meaning"
-    assert "守住同场说过的话" in answered.brief.say_intent
+    assert "同场说过的话仍然有效" in answered.brief.say_intent
     assert all(item in answered.brief.context.last_commitments for item in commitments)
     assert all(item in active_store().snapshot().last_commitments for item in commitments)
     assert not active_store().snapshot().curiosity_hang_pending

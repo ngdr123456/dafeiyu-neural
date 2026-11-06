@@ -176,7 +176,7 @@ def test_turn_same_target(monkeypatch, target, confidence, quoted):
     assert active_store().pending_questions() == ([Q1] if valid else [Q1, Q2])
     assert active_store().snapshot().her_questions == ([Q1] if valid else [Q1, Q2])
     if valid:
-        assert result.utterance == "好，这条我接住了，先不追着问。"
+        assert result.utterance == "好，你的回答我知道了，先不再问。"
         assert not result.brief.context.drive_openq_satisfied_pending
 
 
@@ -236,7 +236,7 @@ def test_drive_answer(commitments, direction):
     assert drive.direction == direction and drive.why.startswith("输入理解｜答复悬问｜")
     if commitments:
         assert C1 in drive.why
-    assert _drive_say_intent(drive) == "接住对方给出的回答，这轮不再追问同一个悬问"
+    assert _drive_say_intent(drive) == "对方的回答已在场，同一个悬问本轮不再发问"
 
 
 @pytest.mark.parametrize("act", ["pause", "stop"])
@@ -267,7 +267,7 @@ def test_stance_org(changes, credible):
     value = replace(signal(target_open_question=Q2, topic="出行去处"), **changes)
     stance = default_stance("那一项选蓝色", ctx, understanding=value)
     org = default_org(ctx, understanding=value)
-    assert ("接住对方给出的回答" in stance.stake) == credible
+    assert ("对方的回答已在场" in stance.stake) == credible
     assert any("本轮话题：出行去处（来自本轮理解）" == name for name in org.can_name) == credible
     assert org.grain == default_org(ctx).grain
     if credible:

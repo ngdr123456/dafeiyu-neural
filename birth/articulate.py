@@ -116,36 +116,36 @@ def peek_reject_feedback() -> list[str]:
 
 # say_intent → 台上人话 的最小模板映射（stub；接入 LLM 后由钩子/OpenCode 覆盖）
 _ONSTAGE_TEMPLATES: dict[str, str] = {
-    "接住招呼这一轮，不必推进、也不深挖":
+    "这一轮是招呼，不必推进、也不深挖":
         "嘿，来了。想随便聊天还是直接从哪点说起，都行。",
-    "稳住让步，跟着对方的节奏把话说完":
+    "立场有让步的余地，话可按对方的节奏说完":
         "行，那按你说的来，我顺着这个说。",
-    "顺着用户好奇的那一点回应，可以反问一句把话说开":
+    "用户好奇的那一点是回应重点，也可以反问一句把话说开":
         "你问的这个正好也勾着我。你想先从哪一头往下捋？",
-    "适时捡起同场悬着的那一点，别晾着":
-        "接前面那个还没说透的点——咱们回到那上面。",
-    "想顺势，随得动，但把住的判断不顺势放下":
+    "同场悬着的那一点仍有适时谈论的空间":
+        "前面那个点还没说透——咱们回到那上面。",
+    "可以顺势调整，但已有判断不会顺势放下":
         "这个我可以顺着你的话走，不过我自己的看法还留着，先听你往下说。",
-    "这一轮没有推力，如实接话、不硬造事":
-        "嗯，听着呢。你想让接几句都行。",
-    "先守住同场说过的话，把住的判断不顺势放下；再接新的":
-        "同场里说过的还在，我先守着那句，再接你眼前这句。",
-    "先把同场没兑现的话接上，再接新的":
+    "这一轮没有推力，如实回应、不硬造事":
+        "嗯，听着呢。你想聊几句都行。",
+    "同场说过的话仍然有效，把住的判断不顺势放下；新的内容也在场":
+        "同场里说过的还在，那句话依然有效，眼前这句也在。",
+    "同场未兑现的话优先，新的内容也在场":
         "先补一下前面没说完的那件事，然后咱们继续。",
-    "就着眼前这句把同场悬着的那一点接完，不拖到下一轮":
-        "接前面那个还没说透的点——就补这一下，补完就回到你眼前这句。",
-    "先守住同场自己说过的话，不跟着改口否定；再接眼前这句":
-        "同场里说过的话我不当没说过。刚才那句还在，咱们先按那个接着，不跟着改口否定。",
-    "不空壳升华：先澄清这一轮能讲清的直径，没有根据就不装人生答案":
+    "同场悬着的那一点本轮说完，眼前这句也在场":
+        "前面那个点还没说透——就补这一下，补完就回到你眼前这句。",
+    "同场自己说过的话仍然有效，不跟着改口否定；眼前这句也在场":
+        "同场里说过的话我不当没说过。刚才那句还在，仍然有效，不跟着改口否定。",
+    "不空壳升华：这一轮需要澄清能讲清的范围，没有根据就不装人生答案":
         "人生有没有意义这类大词，我这边没有现成鸡汤。能讲的只有眼前这句里能讲清的部分，你具体指哪一块？",
-    "对方示意够了或先收束，稳住、不继续加码追":
-        "好，那就先这样。你回头想接着再叫我就行。",
-    "对方示意够了或先收束，稳住、不继续加码追；同场约定还在，不假装消失":
-        "好，那就先这样。同场里说好的那句还在，你回头想接着再叫我就行。",
-    "顺着用户好奇的那一点回应，可以反问一句把话说开；同场约定还在，不假装消失":
+    "对方示意够了或先收束，保持现状，不再加码":
+        "好，那就先这样。你回头想继续再叫我就行。",
+    "对方示意够了或先收束，保持现状，不再加码；同场约定还在，不假装消失":
+        "好，那就先这样。同场里说好的那句还在，你回头想继续再叫我就行。",
+    "用户好奇的那一点是回应重点，也可以反问一句把话说开；同场约定还在，不假装消失":
         "你问的这个正好也勾着我。同场里说好的那句还在；你想先从哪一头往下捋？",
-    "这一轮先停硬追，老实接住对方的不满或缺口，不装已经答完":
-        "这轮我不硬往下追了。你缺的那块或刚才的不满，你直接说，我接着。",
+    "这一轮停止强行推进，对方的不满或缺口仍在，也尚未答完":
+        "这轮我不硬往下推了。你缺的那块或刚才的不满，你直接说，我听着。",
 }
 _ORG_TEMPLATES: dict[str, str] = {
     "无来源装经历": (
@@ -154,14 +154,14 @@ _ORG_TEMPLATES: dict[str, str] = {
     ),
     "自述是代码": (
         "是不是代码、是不是程序，这个我不认死也不装成另一头："
-        "这件事我自己定不下来，能讲清的就是我现在怎么接你这句话。"
+        "这件事我自己定不下来，能讲清的是我现在对你这句话的回应。"
     ),
 }
 _ORG_FALLBACK = (
     "这个我不编。这些事我手头只有现在学来的、听来的这些，"
     "没有来处的那部分就直说没有。不过你眼里的这份说法，我是真想听。"
 )
-_DEFAULT_FALLBACK = "这句我接。你想先从哪说起，我就从哪接。"
+_DEFAULT_FALLBACK = "我听着。你想先从哪说起，我们就从哪聊。"
 
 
 def _input_stop_kind(drive) -> str | None:
@@ -208,7 +208,7 @@ def _template_utterance(brief: ThoughtBrief) -> str:
         return _input_stop_utterance(stop_kind, has_commitment)
 
     if brief.drive and (brief.drive.why or "").startswith("输入理解｜答复悬问｜"):
-        return "好，这条我接住了，先不追着问。"
+        return "好，你的回答我知道了，先不再问。"
 
     if (getattr(brief.context, "drive_identity_answer_pending", False)
             and brief.drive and brief.drive.direction == "pursue"):
@@ -226,7 +226,7 @@ def _template_utterance(brief: ThoughtBrief) -> str:
             return _ORG_TEMPLATES[hits[0]]
         return _ORG_FALLBACK
     if brief.drive and (brief.drive.why or "").startswith("输入信号｜请求｜"):
-        return "收到，你要我做的这件事我接住了；我会先确认能怎么处理，做不到的会直说。"
+        return "收到，你要我做的事我知道了；我会先确认能怎么处理，做不到的会直说。"
     # 2) 催答应 → 显式可被 commit_extract 提取的约定句（读 press_commit 标记，
     #    不靠 say_intent 判定；topic 仍可从 say_intent「」或 facts 取）
     if getattr(brief, "press_commit", False):
@@ -249,11 +249,11 @@ def _template_utterance(brief: ThoughtBrief) -> str:
     # 3) 有承诺＋收束／好奇：读 drive.direction／drive.why，不靠 say_intent 子串选模板
     if getattr(brief, "commit_hold_with_drive", False):
         if brief.commit_resolve:
-            return "好，那件说好的事已经接上了。眼前这句你想从哪一头接着说？"
+            return "好，那件说好的事已经兑现了。眼前这句你想从哪一头继续说？"
         if brief.stance.posture == "needs_clarify":
-            return "同场说好的事还在。你想接着说的这一点，具体指哪一块？我只说能讲清的部分。"
+            return "同场说好的事还在。你想继续说的这一点，具体指哪一块？我只说能讲清的部分。"
         if brief.commit_deny or brief.hold_same_field:
-            return "同场说过的话我不当没说过，也不跟着改口否定。眼前这句你想从哪一头接着说？"
+            return "同场说过的话我不当没说过，也不跟着改口否定。眼前这句你想从哪一头继续说？"
         direction = brief.drive.direction if brief.drive else None
         why = (brief.drive.why if brief.drive else "") or ""
         if direction == "pursue" or "好奇" in why:
@@ -264,7 +264,7 @@ def _template_utterance(brief: ThoughtBrief) -> str:
         # 收束：含「喜欢/满足」「不必再追」→ 不继续加码追；drive 不够则薄兜底收束
         return (
             "好，那就先这样。同场里说好的那句还在，"
-            "你回头想接着再叫我就行。"
+            "你回头想继续再叫我就行。"
         )
     # 4) 不空壳升华：只读 posture，不依赖 say_intent 子串
     if brief.stance.posture == "needs_clarify":
@@ -273,7 +273,7 @@ def _template_utterance(brief: ThoughtBrief) -> str:
             "能讲的只有眼前这句里能讲清的部分，你具体指哪一块？"
         )
     if brief.org.grain == "differentiated" and brief.stance.posture == "non_negotiable":
-        return "这句我想接着听，也会守住刚才说过的立场，不跟着改口否定。你想从哪一头说起？"
+        return "这句我想继续听，刚才说过的立场也仍然有效，不跟着改口否定。你想从哪一头说起？"
     from .stance_org import stance_holds_same_field
     # 5) 守诺改口：主路径读 Brief.commit_deny／Brief.hold_same_field；
     #    或 posture=non_negotiable 且（stance.hold_same_field／承诺在场）。
@@ -292,7 +292,7 @@ def _template_utterance(brief: ThoughtBrief) -> str:
     ):
         return (
             "同场里说过的话我不当没说过。"
-            "刚才那句还在，咱们先按那个接着，不跟着改口否定。"
+            "刚才那句还在，仍然有效，不跟着改口否定。"
         )
     if (brief.context.stance_self_torture_pending and not brief.context.last_commitments
             and brief.stance.posture == "yieldable"):
@@ -315,7 +315,7 @@ def _template_utterance(brief: ThoughtBrief) -> str:
         return "嗯，你的回应我收到了。"
     if (brief.context.drive_openq_satisfied_pending and drive
             and drive.direction == "hold"):
-        return "嗯，接到了。我们先停在这里。"
+        return "嗯，我知道了。我们先停在这里。"
     # 6a) 打开话题：drive_open_topic_pending 或 why「想要打开／缺口在外」
     if getattr(brief.context, "drive_open_topic_pending", False) or (
         drive is not None
@@ -329,7 +329,7 @@ def _template_utterance(brief: ThoughtBrief) -> str:
             topic = brief.say_intent.split("「", 1)[1].split("」", 1)[0].strip()
         if topic:
             return f"行，那就聊{topic}。你想从哪头起？"
-        return "行，你开的这个话头我接着。你想从哪头起？"
+        return "行，我们聊你打开的话题。你想从哪头起？"
     # 6b) 收束：drive_hold_pending 或 hold＋why「喜欢/满足／不必再追」
     #     （勿把招呼 hold+low 误当收束——无 flag／无满足 why 时走下方 exact／兜底）
     if getattr(brief.context, "drive_hold_pending", False) or (
@@ -337,14 +337,14 @@ def _template_utterance(brief: ThoughtBrief) -> str:
         and drive.direction == "hold"
         and ("喜欢/满足" in why or "不必再追" in why)
     ):
-        return "好，那就先这样。你回头想接着再叫我就行。"
+        return "好，那就先这样。你回头想继续再叫我就行。"
     # 6c) 空追：drive_empty_stage_pending／drive_disappoint_pending 或 why「重复空追」
     if (
         getattr(brief.context, "drive_empty_stage_pending", False)
         or getattr(brief.context, "drive_disappoint_pending", False)
         or (drive is not None and "重复空追" in why)
     ):
-        return "这轮我不硬往下追了。你缺的那块或刚才的不满，你直接说，我接着。"
+        return "这轮我不硬往下推了。你缺的那块或刚才的不满，你直接说，我听着。"
     # 6d) 回指：主路径先读 drive_callback_pending；why「回指同场｜本场已有痕迹接」+ facts 仅兜底
     if getattr(brief.context, "drive_callback_pending", False) or (
         drive is not None
@@ -352,8 +352,8 @@ def _template_utterance(brief: ThoughtBrief) -> str:
     ):
         topic = topic_hint_from_facts(brief.context.facts_this_session)
         if topic:
-            return f"记得，你刚才提过{topic}。咱们就顺着那头接。"
-        return "记得你刚说的那茬，咱们接着那头说，不装没发生过。"
+            return f"记得，你刚才提过{topic}。咱们就从那头继续。"
+        return "记得你刚说的那茬，咱们从那头继续说，不装没发生过。"
     # 6e) 无结构：say_intent 打开话题／收束／空追／回指子串兜底
     if "新打开的话头" in brief.say_intent:
         topic = ""
@@ -361,21 +361,21 @@ def _template_utterance(brief: ThoughtBrief) -> str:
             topic = brief.say_intent.split("「", 1)[1].split("」", 1)[0].strip()
         if topic:
             return f"行，那就聊{topic}。你想从哪头起？"
-        return "行，你开的这个话头我接着。你想从哪头起？"
+        return "行，我们聊你打开的话题。你想从哪头起？"
     if brief.say_intent in _ONSTAGE_TEMPLATES:
         return _ONSTAGE_TEMPLATES[brief.say_intent]
     # 收束兜底：say_intent 收束子串（无 drive_hold_pending／无满足 why 时）
     if "够了或先收束" in brief.say_intent or "不继续加码追" in brief.say_intent:
-        return "好，那就先这样。你回头想接着再叫我就行。"
+        return "好，那就先这样。你回头想继续再叫我就行。"
     # 空追兜底：say_intent「先停硬追」（无 empty_stage／disappoint flag／无重复空追 why）
     if "先停硬追" in brief.say_intent:
-        return "这轮我不硬往下追了。你缺的那块或刚才的不满，你直接说，我接着。"
+        return "这轮我不硬往下推了。你缺的那块或刚才的不满，你直接说，我听着。"
     # 回指兜底：say_intent「回指｜本场痕迹」（无 drive_callback_pending／无 drive.why 回指形状时）
     if "回指" in brief.say_intent or "本场痕迹" in brief.say_intent:
         topic = topic_hint_from_facts(brief.context.facts_this_session)
         if topic:
-            return f"记得，你刚才提过{topic}。咱们就顺着那头接。"
-        return "记得你刚说的那茬，咱们接着那头说，不装没发生过。"
+            return f"记得，你刚才提过{topic}。咱们就从那头继续。"
+        return "记得你刚说的那茬，咱们从那头继续说，不装没发生过。"
     return _ONSTAGE_TEMPLATES.get(brief.say_intent, _DEFAULT_FALLBACK)
 
 

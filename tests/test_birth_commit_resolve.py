@@ -128,7 +128,7 @@ def test_structured_commit_deny_kwarg_sets_flag_drive_guards():
     assert r.brief.drive is not None and r.brief.drive.direction == "guard"
     assert "要护" in (r.brief.drive.why or "") or "没兑现" in (r.brief.drive.why or "")
     assert r.brief.stance.posture == "non_negotiable"
-    assert "先守同场说过的话" in (r.brief.stance.stake or "")
+    assert "同场说过的话仍然有效" in (r.brief.stance.stake or "")
     assert r.brief.commit_deny is True
     assert store.context.commitment_deny_pending is False  # 回合末清
     # 有词表的改口轮：Brief.commit_deny 由 arbitrate 从 stance 守诺结构置 True
@@ -404,7 +404,7 @@ def test_arbitrate_hold_same_field_without_stake_chinese():
     )
     assert brief.commit_deny is True
     assert brief.hold_same_field is True
-    assert "先守同场说过的话" not in (brief.stance.stake or "")
+    assert "同场说过的话仍然有效" not in (brief.stance.stake or "")
 
 
 def test_articulate_structure_without_stake_chinese():

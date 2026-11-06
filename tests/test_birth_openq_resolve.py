@@ -191,7 +191,7 @@ def test_answered_topic_settles_and_does_not_reask():
     assert not active_store().snapshot().curiosity_hang_pending
     assert (r.brief.drive.direction, r.brief.drive.salience) == ("hold", "low")
     assert "悬问被接住|喜欢/满足侧到了，不必再追" in r.brief.drive.why
-    assert "不再追问" in r.brief.say_intent
+    assert "不再发问" in r.brief.say_intent
     assert "？" not in r.utterance and "?" not in r.utterance
     assert not active_store().snapshot().drive_openq_satisfied_pending
 
@@ -229,7 +229,7 @@ def test_answer_settles_even_if_other_open_question_remains():
     r = turn("月亮离我们很远", stub=True)
     assert active_store().pending_questions() == ["星空是什么颜色？"]
     assert r.brief.drive.direction == "hold"
-    assert "不再追问" in r.brief.say_intent
+    assert "不再发问" in r.brief.say_intent
     assert "？" not in r.utterance
 
 

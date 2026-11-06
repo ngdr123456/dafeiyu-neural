@@ -107,7 +107,7 @@ def brief_to_prompt(brief: ThoughtBrief, *, correction: str = "") -> str:
         "不要说「这些话是程序生成的／代码算出来的／语言模型在生成」；"
         "招呼里也不要自报底层。"
         "身份问：不认死成说明书，也不装另一头；可以说从自己这边看不着、说不清。"
-        "接同场回指时，用上面的本场痕迹点一下话题，不装没发生过，也不编场外经历。"
+        "同场回指以本场痕迹为依据，话题不装没发生过，也不编场外经历。"
     )
     if getattr(brief, "press_commit", False):
         return (

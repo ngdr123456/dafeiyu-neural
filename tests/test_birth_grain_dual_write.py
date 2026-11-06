@@ -60,7 +60,7 @@ def test_clarify_needs_commitment_to_differentiate():
     both = make_brief(ThinContext(last_commitments=["说好补月亮"]), stance)
     assert both.org.grain == "differentiated"
     assert _drive_say_intent(both.drive) in both.say_intent
-    assert "先澄清" in both.say_intent and both.commit_hold_with_drive
+    assert "需要澄清" in both.say_intent and both.commit_hold_with_drive
 
 
 def test_rule_does_not_force_dual_write():
@@ -71,7 +71,7 @@ def test_rule_does_not_force_dual_write():
     brief = arbitrate(drive, stance, org, ctx, user_text="接着说")
     assert org.grain == "rule"
     assert not brief.commit_hold_with_drive
-    assert brief.say_intent == "先守住同场说过的话，把住的判断不顺势放下；再接新的"
+    assert brief.say_intent == "同场说过的话仍然有效，把住的判断不顺势放下；新的内容也在场"
 
 
 def test_org_conflict_remains_dominant_with_differentiated_grain():
