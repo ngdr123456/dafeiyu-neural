@@ -38,11 +38,13 @@ def _fake_turn_factory():
                 "stub": stub,
             }
         )
-        return SimpleNamespace(
+        result = SimpleNamespace(
             utterance=f"U{len(calls)}:{user_text}",
             articulate_source="stub",
             brief=SimpleNamespace(),  # debug 路径另测；默认不用 asdict
         )
+        kwargs["output"](result)
+        return result
 
     return calls, _fake_turn
 
@@ -144,3 +146,118 @@ def test_repl_exit_capacity_error_is_reported(capsys):
     ):
         assert main(["--stub"]) == 0
     assert "[记忆容量不足]" in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("failure", [KeyboardInterrupt, OSError])
+@pytest.mark.parametrize("phase", ["write", "flush"])
+def test_real_cli_output_failure_saves_only_confirmed_turns(failure, phase, tmp_path, monkeypatch, capsys):
+    """真 main→turn→stdout；中断走 finish，I/O 失败后显式保存也不能污染记忆。"""
+    import sys
+    from birth.memory import BirthMemoryStore
+    from birth.pipeline import active_store, end_session
+
+    first = "我答应晚点再聊月亮。你想聊什么？"
+    unheard = "我答应回头再聊星空。你想看哪里？"
+    stdout = sys.stdout
+    before = []
+
+    class Output:
+        failing = False
+
+        def write(self, text):
+            if text == unheard:
+                before.append(active_store().snapshot())
+                self.failing = True
+                if phase == "write":
+                    raise failure()
+            return stdout.write(text)
+
+        def flush(self):
+            if self.failing:
+                self.failing = False
+                raise failure()
+            return stdout.flush()
+
+    monkeypatch.setattr(sys, "stdout", Output())
+    with patch("birth.pipeline.articulate", side_effect=[first, unheard]), patch(
+        "builtins.input", side_effect=["你好", "接着说", "q"]
+    ):
+        if failure is KeyboardInterrupt:
+            assert main(["--stub"]) == 0
+        else:
+            with pytest.raises(OSError):
+                main(["--stub"])
+            assert end_session() is True
+    assert len(before) == 1
+    ctx = active_store().snapshot()
+    assert ctx.last_commitments == before[0].last_commitments
+    assert ctx.open_questions == before[0].open_questions
+    assert ctx.her_questions == before[0].her_questions
+    assert ctx.stance_traces == before[0].stance_traces
+    assert ctx.want_seen_pending == before[0].want_seen_pending
+    assert ctx.last_commitments and ctx.her_questions
+    prior = BirthMemoryStore(path=tmp_path / "memory.json").latest_prior()
+    assert "台上说：" + first in prior.facts
+    assert "台上说：" + unheard not in prior.facts
+    assert "星空" not in str(prior)
+    assert "月亮" in str(prior.commitments_pending)
+    assert first in prior.her_questions
+    if phase == "write":
+        assert unheard not in capsys.readouterr().out
+
+
+def test_real_cli_confirmation_precedes_debug_and_survives_new_session(monkeypatch, tmp_path):
+    import sys
+    from birth.memory import BirthMemoryStore
+    from birth.pipeline import active_store
+
+    line = "我答应晚点再聊月亮。你想聊什么？"
+    stdout = sys.stdout
+    snapshots = []
+
+    class Output:
+        def write(self, text):
+            if text == line:
+                snapshots.append(active_store().snapshot())
+            return stdout.write(text)
+
+        def flush(self):
+            assert not active_store().context.last_commitments
+            return stdout.flush()
+
+    # 单轮实际输出成功后才可见承诺／悬问；debug 不参与确认。
+    monkeypatch.setattr(sys, "stdout", Output())
+    with patch("birth.pipeline.articulate", return_value=line):
+        assert main(["你好", "--stub", "--debug"]) == 0
+    assert snapshots[0].last_commitments == []
+    assert snapshots[0].open_questions == []
+    monkeypatch.setattr(sys, "stdout", stdout)
+    seen = []
+    def sense(text, *, context):
+        seen.append(context)
+        return None
+    monkeypatch.setattr("birth.pipeline.sense_input", sense)
+    from birth.pipeline import turn
+    from birth.memory import configure_memory
+    configure_memory(enabled=True, path=tmp_path / "confirmed.json")
+    turn("接着说", stub=True, sense=True)
+    assert "台上说：" + line in seen[-1].facts_this_session
+    turn("新场", new_session=True, stub=True, sense=True)
+    assert "台上说：" + line in seen[-1].prior_session.facts
+    assert "月亮" in str(seen[-1].prior_session.commitments_pending)
+    assert line in BirthMemoryStore(path=tmp_path / "confirmed.json").latest_prior().her_questions
+
+
+def test_debug_failure_keeps_already_printed_experience(tmp_path, capsys):
+    from birth.memory import BirthMemoryStore
+    from birth.pipeline import active_store, end_session
+    line = "我答应晚点再聊月亮。"
+    with patch("birth.pipeline.articulate", return_value=line), patch(
+        "birth.__main__._print_debug", side_effect=KeyboardInterrupt
+    ), patch("builtins.input", side_effect=["你好"]):
+        with pytest.raises(KeyboardInterrupt):
+            main(["--stub", "--debug"])
+    assert line in capsys.readouterr().out
+    assert active_store().pending_commitments() == [line]
+    assert end_session() is True
+    assert "台上说：" + line in BirthMemoryStore(path=tmp_path / "memory.json").latest_prior().facts

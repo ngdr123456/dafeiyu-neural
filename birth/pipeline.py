@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Callable
 import os
 
 from .arbitrate import arbitrate
@@ -120,9 +121,16 @@ def turn(
     drive_bypass: bool = False,
     input_signal: InputSignal | None = None,
     sense: bool | None = None,
+    output: Callable[[TurnResult], None] | None = None,
 ) -> TurnResult:
     """跑完一轮完整闭环。new_session=True 显式开新场（唯一清空入口）。
 
+    output：同步输出确认回调；必须在完整输出成功（含缓冲 flush）后才正常返回，
+    中断／失败须抛异常。回调期间不得重入 turn、清场或修改 result／store。
+    正常返回后才记录台词及其承诺、悬问、守诺和已出话体验；异常不回流这些副作用。
+    非 CLI 调用不传 output 时，沿用旧接口：调用 turn 即隐式确认消费返回台词，立即回流；
+    需要实际交付确认的调用方必须传 output，不能先 turn 再自行打印。
+    用户输入及其已触发的状态更新不依赖输出确认，不回滚。
     structured_want_seen=True 表示对方已接住，False 表示仍未接住；None 才用极薄口语兜底。
     structured_want_seen_answered 如有值则覆盖上述判断；structured_want_seen_hang=True
     标记本轮开口在等对方的看法，False 禁止开口指纹兜底。
@@ -355,10 +363,24 @@ def turn(
                       understanding=input_signal)
     brief = arbitrate(drive=drive, stance=stance, org=org, context=context,
                       user_text=user_text, understanding=input_signal)
+    utterance = articulate(brief, stub=stub)
+    result = TurnResult(
+        utterance=utterance,
+        brief=brief,
+        articulate_source=last_articulate_source(),
+        input_signal=input_signal,
+    )
+    # 拒收确实发生过；先取走反馈，避免输出失败后串到下一轮。
+    reject_tags = take_reject_feedback()
+    if reject_tags:
+        _STORE.record_articulate_rejects(reject_tags)
+    _STORE.append_fact(f"用户说：{_clip(user_text)}")
+    if output is not None:
+        output(result)
+
+    # 以下均依赖这句话已交付；输出异常时 end_session 只能保存此前经历。
     if brief.drive is not None and bool(getattr(brief.drive, "prior_her_question", False)):
         _STORE.set_drive_prior_her_question_used()
-
-    utterance = articulate(brief, stub=stub)
 
     stance_now = brief.stance
     if stance_now.posture == "non_negotiable":
@@ -383,11 +405,7 @@ def turn(
     if opening_hang and not context.drive_want_seen_satisfied_pending:
         _STORE.set_want_seen_pending(True)
 
-    # 开口拒收回流薄体验（工程师通道）：短标签进 ThinContext；不拼 say_intent；不落盘。
-    # 策略：同场累加 articulate_reject_count；本轮曾拒但已出话 → recovered=True（不清 count）。
-    reject_tags = take_reject_feedback()
-    if reject_tags:
-        _STORE.record_articulate_rejects(reject_tags)
+    # 拒收标签已在输出前记录；确认已出话后才标记 recovered（不清 count）。
     _STORE.mark_articulate_uttered(rejected_this_turn=bool(reject_tags))
 
     # 悬问收放（可检验；对齐承诺宁缺——拿不准不清）：
@@ -446,9 +464,8 @@ def turn(
         if live_prior is not None and live_prior.her_questions:
             _STORE.remove_prior_her_question(live_prior.her_questions[0])
 
-    # 开口后回流薄情境：本轮用户的话头 + 台上这句都 clip 进同场事实；
+    # 用户话头已记录；确认输出后再将台上这句 clip 进同场事实；
     # 动力层好奇追问入库；台上薄提取承诺/悬问（宁缺毋滥）
-    _STORE.append_fact(f"用户说：{_clip(user_text)}")
     _STORE.append_fact(f"台上说：{_clip(utterance)}")
     if commitment:
         if frame is None:
@@ -502,9 +519,4 @@ def turn(
     _STORE.set_drive_prior_her_question_pending(False)
     _STORE.set_drive_bypass(False)
 
-    return TurnResult(
-        utterance=utterance,
-        brief=brief,
-        articulate_source=last_articulate_source(),
-        input_signal=input_signal,
-    )
+    return result

@@ -55,10 +55,13 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _print_result(result, *, debug: bool) -> None:
-    """台上只印 utterance；debug 另开工程师通道。"""
-    print(result.utterance)
+def _print_utterance(result) -> None:
+    """同步交付台词；flush 成功才允许管线回流。"""
+    print(result.utterance, flush=True)
 
+
+def _print_debug(result, *, debug: bool) -> None:
+    """工程师通道独立于台词确认，打印失败不撤销已说经历。"""
     if not debug:
         return
 
@@ -125,6 +128,7 @@ def _run_repl(args: argparse.Namespace) -> int:
                 debug=args.debug,
                 stub=True if args.stub else None,
                 sense=(not args.stub and not args.no_sense),
+                output=_print_utterance,
             )
         except PendingCommitmentCapacityError:
             print("[记忆容量不足] 未结承诺超限，未写盘、未清场；仍在原场，可核对销账后再 /new。")
@@ -132,7 +136,7 @@ def _run_repl(args: argparse.Namespace) -> int:
         except KeyboardInterrupt:
             print()
             return finish()
-        _print_result(result, debug=args.debug)
+        _print_debug(result, debug=args.debug)
 
     return 0  # pragma: no cover
 
@@ -158,8 +162,9 @@ def main(argv: list[str] | None = None) -> int:
         debug=args.debug,
         stub=True if args.stub else None,
         sense=(not args.stub and not args.no_sense),
+        output=_print_utterance,
     )
-    _print_result(result, debug=args.debug)
+    _print_debug(result, debug=args.debug)
     return 0
 
 

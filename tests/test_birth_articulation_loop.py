@@ -184,3 +184,68 @@ def test_end_session_disabled_empty_and_capacity(tmp_path):
         end_session()
     assert path.read_bytes() == before
     assert len(active_store().pending_commitments()) == 2
+
+
+@pytest.mark.parametrize("effect", ["resolve", "candidate", "curiosity"])
+def test_explicit_output_failure_has_no_speech_side_effects(effect, monkeypatch, tmp_path):
+    """非 CLI 显式确认失败：不销账、不挂候选、不消费上场问题、不记守诺已出话。"""
+    from birth.types import OrgConstraint, StanceSignal
+
+    store = active_store()
+    commitment = "我答应晚点再聊月亮。"
+    store.append_commitment(commitment)
+    store.append_her_question("月亮呢？")
+    store.set_prior_session(PriorSessionTrace(her_questions=["星空呢？"]))
+    before = store.snapshot()
+    brief = ThoughtBrief(
+        dominant="stance",
+        drive=DriveSignal(prior_her_question=True),
+        stance=StanceSignal(posture="non_negotiable", held_commitment=commitment),
+        org=OrgConstraint(),
+        context=before,
+        hold_same_field=True,
+    )
+    if effect == "resolve":
+        brief.openq_resolve_target = "月亮呢？"
+        brief.commit_resolve = True
+        brief.recognized_same_commitment = commitment
+    elif effect == "candidate":
+        brief.press_commit = True
+        brief.pressed_commitment = commitment
+    else:
+        brief.openq_curiosity_hang = True
+    monkeypatch.setattr("birth.pipeline.arbitrate", lambda **kwargs: brief)
+    monkeypatch.setattr("birth.pipeline.articulate", lambda *args, **kwargs: "我答应回头再聊星空。")
+    seen = []
+    def output(result):
+        seen.append(result.utterance)
+        raise OSError("delivery failed")
+    configure_memory(enabled=True, path=tmp_path / "failure.json")
+    with pytest.raises(OSError, match="delivery failed"):
+        turn("接着说", output=output, structured_want_seen_hang=True)
+    assert seen == ["我答应回头再聊星空。"]
+    after = store.snapshot()
+    for field in ("last_commitments", "commitment_candidates", "open_questions", "her_questions",
+                  "stance_traces", "stance_kept_counts", "want_seen_pending", "curiosity_hang_pending",
+                  "identity_ask_awaiting_answer", "drive_prior_her_question_used",
+                  "articulate_reject_recovered", "prior_session"):
+        assert getattr(after, field) == getattr(before, field), field
+    assert store.resolved_commitments() == []
+    assert not any(f.startswith("台上说：") for f in after.facts_this_session)
+    assert end_session() is True
+    prior = BirthMemoryStore(path=tmp_path / "failure.json").latest_prior()
+    assert "星空" not in str(prior.commitments_pending)
+    assert prior.commitments_resolved == []
+    assert prior.commitment_candidates == []
+
+
+def test_explicit_output_confirms_before_return_and_legacy_remains_immediate():
+    delivered = []
+    def output(result):
+        assert not any(f.startswith("台上说：") for f in active_store().context.facts_this_session)
+        delivered.append(result.utterance)
+    result = turn("你好", stub=True, output=output)
+    assert delivered == [result.utterance]
+    assert "台上说：" + result.utterance in active_store().context.facts_this_session
+    legacy = turn("接着说", stub=True)
+    assert "台上说：" + legacy.utterance in active_store().context.facts_this_session
