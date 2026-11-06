@@ -133,20 +133,26 @@ def user_presses_prior_pending(user_text: str, prior) -> bool:
     return False
 
 
+_TOPIC_FUNCTION_CHARS = frozenset(
+    "的了呢吧吗啊呀哦嘛和与跟同是在我你他她它您咱就都也还又很太把被让给对从到这那个一上下来去会要想说聊讲"
+)
+
+
 def topic_from_pending_commitment(commitment: str) -> str:
-    """从 pending 短摘抠可点到的话题（去约定壳）；抠不出则空。"""
+    """从 pending 短摘抠可点到的话题（去约定壳）；抠不出则空。
+
+    只保留两个 char 都不在虚词／代词／功能字集合里的二元组，取位置最靠后的
+    内容词；不用「最后一个二元组」，否则「…海边的事」会落成「的事」。
+    """
     toks = _pending_topic_tokens(commitment)
     if not toks:
         return ""
-    # 去掉同场壳噪声；优先更长、更靠后的 token（中文约定句题眼多在尾）
     noise = {"同场", "场说", "同场说"}
-    content = [t for t in toks if t not in noise] or list(toks)
-    ranked = sorted(
-        enumerate(content),
-        key=lambda iv: (len(iv[1]), iv[0]),
-        reverse=True,
-    )
-    return ranked[0][1]
+    content = [
+        t for t in toks
+        if t not in noise and all(ch not in _TOPIC_FUNCTION_CHARS for ch in t)
+    ]
+    return content[-1] if content else ""
 
 
 def user_presses_commitment(user_text: str) -> bool:

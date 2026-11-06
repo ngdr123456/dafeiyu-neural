@@ -328,12 +328,22 @@ class ThinContextStore:
             done = prior.commitments_pending.pop(0)
         else:
             from .commit_extract import utterance_covers_pending_commitment
-            for i, p in enumerate(list(prior.commitments_pending)):
-                if p == match or utterance_covers_pending_commitment(match, p):
-                    done = prior.commitments_pending.pop(i)
-                    break
-            if done is None:
-                return None
+
+            # 先全表找精确相等：两笔互相包含时，不能让主题覆盖先命中前一笔。
+            exact_index = next(
+                (i for i, p in enumerate(prior.commitments_pending) if p == match),
+                None,
+            )
+            if exact_index is not None:
+                done = prior.commitments_pending.pop(exact_index)
+            else:
+                # 没有精确相等，再按主题覆盖挑；保持原有回退。
+                for i, p in enumerate(list(prior.commitments_pending)):
+                    if utterance_covers_pending_commitment(match, p):
+                        done = prior.commitments_pending.pop(i)
+                        break
+                if done is None:
+                    return None
         self._remove_candidates({done})
         self._append_unique(prior.commitments_resolved, done)
         return done

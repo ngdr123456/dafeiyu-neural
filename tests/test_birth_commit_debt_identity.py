@@ -9,7 +9,7 @@ from __future__ import annotations
 import pytest
 
 from birth.articulate import clear_llm_hook, set_stub_mode
-from birth.commit_extract import match_pending_commitment
+from birth.commit_extract import match_pending_commitment, topic_from_pending_commitment
 from birth.memory import configure_memory
 from birth.pipeline import active_store, turn
 from birth.types import PriorSessionTrace
@@ -17,6 +17,8 @@ from birth.types import PriorSessionTrace
 A = "我答应你周末讲那个故事"
 B = "我答应你明天聊月亮"
 ASK = "你上次答应我的事呢"
+OVERLAP_A = "我答应你下次聊月亮"
+OVERLAP_B = "我答应你下次聊月亮和海边的事"
 
 
 @pytest.fixture(autouse=True)
@@ -74,6 +76,34 @@ def test_named_done_resolves_only_that_debt():
     assert ctx.prior_session.commitments_pending == [A]
     assert B in ctx.prior_session.commitments_resolved
     assert A not in ctx.prior_session.commitments_resolved
+
+
+def test_topic_from_long_debt_uses_last_content_word():
+    assert topic_from_pending_commitment(OVERLAP_B) == "海边"
+    assert topic_from_pending_commitment(A) == "故事"
+    assert topic_from_pending_commitment("我答应你明天聊二段") == "二段"
+    assert topic_from_pending_commitment("我答应你") == ""
+
+
+def test_overlapping_debts_resolve_only_named_one():
+    prior(OVERLAP_A, OVERLAP_B)
+    r = turn("海边那事已经补了", stub=True)
+    ctx = active_store().snapshot()
+    assert ctx.prior_session.commitments_pending == [OVERLAP_A]
+    assert ctx.prior_session.commitments_resolved == [OVERLAP_B]
+    assert r.brief.pressed_commitment == OVERLAP_B
+    assert OVERLAP_B in (r.brief.drive.why or "")
+    assert "海边" in r.brief.say_intent
+    assert "海边" in r.utterance
+    assert "聊的事" not in r.utterance
+
+
+def test_long_debt_topic_in_stub():
+    prior(OVERLAP_B)
+    r = turn("海边那事呢", stub=True)
+    assert r.brief.pressed_commitment == OVERLAP_B
+    assert "海边" in r.utterance
+    assert "聊的事" not in r.utterance
 
 
 def test_single_debt_unchanged():
