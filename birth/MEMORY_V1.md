@@ -15,6 +15,8 @@
 - 具体异常为 `PendingCommitmentCapacityError(OverflowError)`；REPL 捕获后留在原场，提示核对销账再 `/new`，不因未捕获异常退出。直接 API 调用者须保留 store 并处理该异常。
 - 每次导出合并 prior pending 与同场 pending，因此会话历史淘汰不会淘汰续存的债；prior resolved 与本场 resolved 精确去重合并后再按历史容量截尾。候选在导出、写盘、读盘都只留 target 仍在 pending 的项，销账同步清对应候选。
 
+损坏的账本会拒绝写入并保留原始字节，不会自动备份。手动恢复时，请先备份损坏文件，再删除或重命名它。
+
 ## 读入（结构字段）
 新场开局灌入 `ThinContext.prior_session: PriorSessionTrace`：
 - `facts` / `commitments_pending` / `commitments_resolved` / `open_questions` / `ended_at`

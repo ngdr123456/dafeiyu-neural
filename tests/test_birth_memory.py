@@ -489,3 +489,23 @@ def test_append_accepts_missing_and_valid_empty_ledgers(tmp_path):
         store = BirthMemoryStore(path)
         store.append_session(facts=["new fact"])
         assert store.latest().facts == ["new fact"]
+
+
+def test_failed_replace_preserves_ledger_and_cleans_temporary_file(tmp_path, monkeypatch):
+    from birth import memory
+
+    path = tmp_path / "ledger.json"
+    original = b'{"sessions": []}'
+    path.write_bytes(original)
+
+    def fail_replace(source, destination):
+        assert Path(source).parent == path.parent
+        assert Path(source).read_bytes() != original
+        assert Path(destination) == path
+        raise OSError("replace failed")
+
+    monkeypatch.setattr(memory.os, "replace", fail_replace)
+    with pytest.raises(OSError, match="replace failed"):
+        BirthMemoryStore(path).append_session(facts=["new fact"])
+    assert path.read_bytes() == original
+    assert list(tmp_path.iterdir()) == [path]

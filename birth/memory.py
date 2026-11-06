@@ -11,6 +11,8 @@ from __future__ import annotations
 
 import json
 import os
+import secrets
+import stat
 from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime, timezone
 from pathlib import Path
@@ -121,10 +123,29 @@ class BirthMemoryStore:
     def _write_raw(self, sessions: list[dict]) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         payload = {"version": 1, "sessions": sessions}
-        self.path.write_text(
-            json.dumps(payload, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
+        contents = json.dumps(payload, ensure_ascii=False, indent=2)
+        try:
+            mode = stat.S_IMODE(self.path.stat().st_mode)
+        except FileNotFoundError:
+            mode = None
+        while True:
+            temp_path = self.path.parent / f".{self.path.name}.{secrets.token_hex(8)}.tmp"
+            try:
+                fd = os.open(temp_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o666)
+                break
+            except FileExistsError:
+                continue
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                handle.write(contents)
+            if mode is not None:
+                os.chmod(temp_path, mode)
+            os.replace(temp_path, self.path)
+        finally:
+            if temp_path.exists():
+                if os.name == "nt":
+                    os.chmod(temp_path, stat.S_IWRITE | stat.S_IREAD)
+                temp_path.unlink()
 
     def list_sessions(self) -> list[SessionTraceRecord]:
         out: list[SessionTraceRecord] = []

@@ -12,7 +12,8 @@ import subprocess
 import tempfile
 from typing import Optional
 
-from .types import ThoughtBrief
+from .commit_extract import match_pending_commitment
+from .types import PriorSessionTrace, ThoughtBrief
 
 DEFAULT_MODEL = os.environ.get("BIRTH_OPENCODE_MODEL", "opencode/deepseek-v4.1-flash-free")
 DEFAULT_TIMEOUT_S = float(os.environ.get("BIRTH_OPENCODE_TIMEOUT", "90"))
@@ -34,7 +35,13 @@ def brief_to_prompt(brief: ThoughtBrief, *, correction: str = "") -> str:
             extras.append(f"上场你问出去、还没被接住的一句：{prior.her_questions[0]}")
     if ctx.open_questions:
         extras.append(f"同场悬着：{ctx.open_questions[0]}")
-    commitment = brief.stance.held_commitment or (ctx.last_commitments[0] if ctx.last_commitments else "")
+    commitment = brief.stance.held_commitment
+    if not commitment and len(ctx.last_commitments) == 1:
+        commitment = ctx.last_commitments[0]
+    elif not commitment and len(ctx.last_commitments) > 1:
+        commitment = match_pending_commitment(
+            brief.focus, PriorSessionTrace(commitments_pending=list(ctx.last_commitments))
+        )
     if commitment:
         extras.append(f"同场说过要做的：{commitment}")
     extra_block = ("\n".join(extras) + "\n") if extras else ""

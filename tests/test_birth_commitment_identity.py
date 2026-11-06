@@ -130,4 +130,12 @@ def test_prompt_selects_held_commitment_and_falls_back():
     assert label + B in brief_to_prompt(brief)
     assert label + A not in brief_to_prompt(brief)
     brief.stance.held_commitment = ""
-    assert label + A in brief_to_prompt(brief)
+    brief.context.last_commitments = [B]
+    assert label + B in brief_to_prompt(brief)
+    brief.context.last_commitments = [A, B]
+    brief.focus = "\u661f\u661f"
+    assert label + B in brief_to_prompt(brief)
+    assert label + A not in brief_to_prompt(brief)
+    for focus in ("\u65e0\u5173\u8bdd\u9898", "\u6708\u4eae\u548c\u661f\u661f"):
+        brief.focus = focus
+        assert label not in brief_to_prompt(brief)
