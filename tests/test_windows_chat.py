@@ -1,0 +1,222 @@
+"""OFFLINE: real Tk/main/birth pipeline; all model calls stubbed or mocked."""
+import time
+import gc
+import tkinter as tk
+from unittest.mock import patch
+
+import pytest
+
+from birth import pipeline
+from birth.articulate import clear_llm_hook
+from birth.memory import BirthMemoryStore, configure_memory
+from birth.windows_chat import BackendUnavailable, ChatSession, ChatWindow, main
+
+
+@pytest.fixture(autouse=True)
+def isolated():
+    pipeline.active_store().new_session()
+    configure_memory(enabled=False)
+    yield
+    pipeline.active_store().new_session()
+    configure_memory(enabled=False)
+    clear_llm_hook()
+    # Tcl objects from destroyed test windows must be collected on the UI thread.
+    gc.collect()
+
+
+def pump(root, predicate, timeout=5):
+    deadline = time.monotonic() + timeout
+    while not predicate():
+        root.update()
+        if time.monotonic() > deadline:
+            pytest.fail("Tk worker did not finish")
+        time.sleep(.005)
+    root.update()
+
+
+def window(tmp_path, offline=True):
+    root = tk.Tk()
+    app = ChatWindow(root, memory_path=tmp_path / "memory.json", offline=offline)
+    pump(root, lambda: not app.busy)
+    return root, app
+
+
+def test_actual_main_entry_and_normal_exit(tmp_path, monkeypatch):
+    """Actual main event loop, controls, pipeline output, shutdown persistence."""
+    real_window = ChatWindow
+    evidence = []
+
+    def launch(root, **kwargs):
+        app = real_window(root, **kwargs)
+
+        def scenario():
+            if app.busy:
+                root.after(10, scenario)
+                return
+            app.entry.insert("1.0", "你好")
+            app.send_button.invoke()
+            root.after(10, finish)
+
+        def finish():
+            if app.busy:
+                root.after(10, finish)
+                return
+            evidence.append(app.history.get("1.0", "end"))
+            app.close()
+        root.after(10, scenario)
+        return app
+
+    monkeypatch.setattr("birth.windows_chat.ChatWindow", launch)
+    assert main(["--offline", "--memory-path", str(tmp_path / "main.json")]) == 0
+    assert "离线模板（非真实模型）" in evidence[0]
+    assert BirthMemoryStore(tmp_path / "main.json").latest_prior().facts
+
+
+def test_real_pipeline_render_precedes_feedback_and_new_saves(tmp_path):
+    root, app = window(tmp_path)
+    line = "我答应晚点再聊月亮。你想聊什么？"
+    original = app._append
+    before = []
+
+    def append(who, text):
+        if text == line:
+            before.append(pipeline.active_store().snapshot())
+        original(who, text)
+    app._append = append
+    try:
+        with patch("birth.pipeline.articulate", return_value=line):
+            app.entry.insert("1.0", "你好")
+            app.send()
+            pump(root, lambda: not app.busy)
+        assert before and not before[0].last_commitments
+        assert pipeline.active_store().pending_commitments()
+        assert line in app.history.get("1.0", "end")
+        app.new()
+        pump(root, lambda: not app.busy)
+        assert not pipeline.active_store().context.facts_this_session
+        assert "台上说：" + line in BirthMemoryStore(tmp_path / "memory.json").latest_prior().facts
+        assert pipeline.active_store().context.prior_session
+    finally:
+        root.destroy()
+
+
+def test_render_failure_does_not_confirm_and_preserves_input(tmp_path):
+    root, app = window(tmp_path)
+    line = "我答应晚点再聊月亮。"
+    original = app._append
+
+    def broken(who, text):
+        if text == line:
+            raise OSError("OFFLINE display failure")
+        original(who, text)
+    app._append = broken
+    try:
+        with patch("birth.pipeline.articulate", return_value=line):
+            app.entry.insert("1.0", "你好")
+            app.send()
+            pump(root, lambda: not app.busy)
+        assert not pipeline.active_store().pending_commitments()
+        assert app.entry.get("1.0", "end").strip() == "你好"
+        app.session.close()
+        assert "台上说：" + line not in BirthMemoryStore(tmp_path / "memory.json").latest_prior().facts
+    finally:
+        root.destroy()
+
+
+@pytest.mark.parametrize("action", ["new", "close"])
+def test_save_failure_keeps_window_and_session(tmp_path, action):
+    root, app = window(tmp_path)
+    try:
+        app.entry.insert("1.0", "你好")
+        app.send()
+        pump(root, lambda: not app.busy)
+        facts = list(pipeline.active_store().context.facts_this_session)
+        with patch("birth.pipeline.end_session", side_effect=OSError("OFFLINE disk failure")):
+            getattr(app, action)()
+            pump(root, lambda: not app.busy)
+        assert root.winfo_exists()
+        assert pipeline.active_store().context.facts_this_session == facts
+        assert "操作失败" in app.status.get()
+    finally:
+        root.destroy()
+
+
+def test_default_backend_error_never_calls_deepseek_or_delivers_template(tmp_path):
+    session = ChatSession(memory_path=tmp_path / "memory.json")
+    with patch("birth.windows_chat.shutil.which", return_value=None), patch(
+        "birth.llm_deepseek.generate_utterance", side_effect=AssertionError("Forbidden")
+    ):
+        with pytest.raises(BackendUnavailable):
+            session.send("你好", lambda result: pytest.fail("must not display"))
+    session.model = "opencode/OFFLINE-mock"
+    with patch("birth.windows_chat.shutil.which", return_value="OFFLINE"), patch(
+        "birth.llm_opencode.generate_utterance", return_value=None
+    ):
+        from birth.articulate import set_llm_hook
+        set_llm_hook(lambda brief: None)
+        with pytest.raises(BackendUnavailable):
+            session.send("你好", lambda result: pytest.fail("must not display fallback"))
+    assert not any(f.startswith("台上说：") for f in pipeline.active_store().context.facts_this_session)
+
+
+def test_slow_mock_backend_keeps_ui_alive_and_queued_close_saves(tmp_path):
+    import threading
+    from birth.articulate import set_llm_hook
+    root, app = window(tmp_path, offline=False)
+    gate = threading.Event()
+    app.session.model = "opencode/OFFLINE-mock"
+    def backend(brief):
+        assert gate.wait(5)
+        return "你好，我在这里听着。"
+    set_llm_hook(backend)
+    try:
+        with patch("birth.windows_chat.shutil.which", return_value="OFFLINE"):
+            app.entry.insert("1.0", "你好")
+            app.send()
+            ticks = []
+            root.after(10, lambda: ticks.append(True))
+            pump(root, lambda: bool(ticks))
+            assert app.busy
+            app.close()
+            assert app.closing and root.winfo_exists()
+            gate.set()
+            deadline = time.monotonic() + 5
+            while root.winfo_exists():
+                root.update()
+                if time.monotonic() > deadline:
+                    pytest.fail("Close did not complete")
+                time.sleep(.005)
+    except tk.TclError:
+        # Interpreter reports destroyed root after successful queued close.
+        pass
+    finally:
+        gate.set()
+        try:
+            root.destroy()
+        except tk.TclError:
+            pass
+    assert BirthMemoryStore(tmp_path / "memory.json").latest_prior().facts
+
+
+def test_corrupt_memory_is_not_overwritten(tmp_path):
+    path = tmp_path / "broken.json"
+    path.write_text("{bad", encoding="utf-8")
+    with pytest.raises(ValueError):
+        ChatSession(memory_path=path)
+    assert path.read_text(encoding="utf-8") == "{bad"
+
+
+def test_opencode_windows_transport_offline(monkeypatch):
+    from birth import llm_opencode
+    from types import SimpleNamespace
+    from pathlib import Path
+    calls = []
+    monkeypatch.setattr(llm_opencode.shutil, "which", lambda name: "OFFLINE-opencode")
+    monkeypatch.setattr(llm_opencode, "brief_to_prompt", lambda brief, **kwargs: "离线测试")
+    def run(cmd, **kwargs):
+        calls.append((cmd, kwargs))
+        return SimpleNamespace(returncode=0, stdout='{"type":"text","part":{"text":"你好"}}')
+    monkeypatch.setattr(llm_opencode.subprocess, "run", run)
+    assert llm_opencode.generate_utterance(object()) == "你好"
+    assert calls[0][1]["encoding"] == "utf-8"
+    assert Path(calls[0][1]["cwd"]).is_dir()

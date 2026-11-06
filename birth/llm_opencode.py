@@ -9,6 +9,7 @@ import json
 import os
 import shutil
 import subprocess
+import tempfile
 from typing import Optional
 
 from .types import ThoughtBrief
@@ -150,8 +151,10 @@ def generate_utterance(brief: ThoughtBrief, *, correction: str = "") -> Optional
             cmd,
             capture_output=True,
             text=True,
+            encoding="utf-8",
             timeout=DEFAULT_TIMEOUT_S,
-            cwd="/tmp",
+            cwd=tempfile.gettempdir(),
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
             env={**os.environ, "NO_COLOR": "1"},
         )
     except (subprocess.TimeoutExpired, OSError):
