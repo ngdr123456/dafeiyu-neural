@@ -1,26 +1,40 @@
 """Windows grey-test shell. All brain operations run on one worker.
 
 No engine imports; the existing birth pipeline and articulation validators remain
-the authority. DeepSeek is deliberately disabled for this grey test (known 402).
+the authority. Real mode uses DeepSeek only, with explicit failure reporting.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import queue
-import shutil
 import threading
 import tkinter as tk
 from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
 
-from . import llm_opencode, pipeline
+from . import llm_deepseek, pipeline
+from .input_sense import sense_input
 from .articulate import set_llm_hook, set_stub_mode
 from .memory import configure_memory, default_memory_path
 
 
 class BackendUnavailable(RuntimeError):
-    pass
+    def __init__(self, code="validation"):
+        self.code = code if code in BACKEND_MESSAGES else "backend"
+        super().__init__(self.code)
+
+
+BACKEND_MESSAGES = {
+    "no_key": "未配置 DeepSeek 密钥。请按使用说明在本机安全配置。",
+    "quota": "DeepSeek 额度不足（HTTP 402），本轮未交付。",
+    "auth": "DeepSeek 身份验证失败，请检查本机凭证。",
+    "http": "DeepSeek 服务请求失败，本轮未交付。",
+    "network": "DeepSeek 网络连接失败或超时，本轮未交付。",
+    "invalid_output": "DeepSeek 返回格式无效，本轮未交付。",
+    "validation": "DeepSeek 输出未通过现有校验，本轮未交付。",
+    "backend": "DeepSeek 后端失败，本轮未交付。",
+}
 
 
 class ChatSession:
@@ -32,26 +46,49 @@ class ChatSession:
             if not (isinstance(raw, list) or isinstance(raw, dict) and isinstance(raw.get("sessions"), list)):
                 raise ValueError("Invalid memory file; refusing overwrite")
         self.offline = offline
-        self.model = llm_opencode.DEFAULT_MODEL
+        self.model = llm_deepseek.resolve_model()
+        self.backend_error = None
         configure_memory(enabled=True, path=memory_path)
         set_stub_mode(offline)
-        # Use the existing extension point, never the DeepSeek cascade.
-        set_llm_hook(None if offline else llm_opencode.generate_utterance)
+        set_llm_hook(None if offline else self._generate)
         pipeline._persist_and_reset_session()
 
+    def _generate(self, brief, *, correction=""):
+        # articulate catches hook exceptions; retain only a safe code so that its
+        # template fallback can never conceal a transport failure at delivery.
+        if self.backend_error:
+            return None
+        try:
+            return llm_deepseek.generate_utterance(brief, correction=correction, strict=True)
+        except llm_deepseek.DeepSeekUnavailable as exc:
+            self.backend_error = BackendUnavailable(str(exc))
+        except Exception:
+            self.backend_error = BackendUnavailable("backend")
+        return None
+
     def send(self, text, display):
-        if not self.offline and (
-            not shutil.which("opencode") or "deepseek" in self.model.lower()
-        ):
-            raise BackendUnavailable()
+        self.backend_error = None
+        signal = None
+        if not self.offline:
+            signal = sense_input(text, context=pipeline.active_store().snapshot())
+            reason = signal.reason if signal is not None else "invalid_output"
+            if reason and reason != "low_confidence":
+                code = ("quota" if reason == "http_402" else
+                        "auth" if reason in ("http_401", "http_403") else
+                        "http" if reason.startswith("http_") else
+                        "network" if reason == "timeout" else
+                        "invalid_output" if reason == "invalid_json" else reason)
+                raise BackendUnavailable(code)
 
         def confirmed(result):
+            if self.backend_error:
+                raise self.backend_error
             if not self.offline and result.articulate_source != "hook":
                 # Raising here prevents fallback templates becoming spoken facts.
                 raise BackendUnavailable()
             display(result)
 
-        return pipeline.turn(text, stub=self.offline, sense=False, output=confirmed)
+        return pipeline.turn(text, stub=self.offline, input_signal=signal, sense=False, output=confirmed)
 
     def new(self):
         pipeline._persist_and_reset_session()
@@ -131,7 +168,7 @@ class ChatWindow:
                 operation()
             except Exception as exc:
                 # Never transfer backend exception strings (may contain credentials).
-                self.events.put(("error", kind, isinstance(exc, BackendUnavailable)))
+                self.events.put(("error", kind, exc.code if isinstance(exc, BackendUnavailable) else None))
             else:
                 self.events.put(("done", kind, None))
         threading.Thread(target=run, daemon=True).start()
@@ -166,7 +203,7 @@ class ChatWindow:
                 self._controls()
                 if event == "error":
                     self.closing = False
-                    message = ("后端不可用或输出未通过校验；未交付模板。需本机 OpenCode 及非 DeepSeek 模型配置。"
+                    message = (BACKEND_MESSAGES[extra]
                                if extra else "操作失败；内容保留，未完成保存或输出确认。请重试，检查本机文件权限。")
                     self.status.set(message)
                     try:
@@ -182,7 +219,7 @@ class ChatWindow:
                     if kind == "new":
                         self._append("状态", "本场已保存，已开始新场。")
                     source = ("离线模板验证，未请求模型" if self.offline else
-                              f"OpenCode · {llm_opencode.DEFAULT_MODEL}；DeepSeek 已停用；输入感知降级为原有规则")
+                              "DeepSeek · 输入理解已启用；失败不会交付模板")
                     self.status.set(source)
                     if self.closing:
                         self.close()

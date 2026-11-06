@@ -81,11 +81,20 @@ def _extract_content(payload: dict) -> Optional[str]:
     return None
 
 
-def generate_utterance(brief: ThoughtBrief, *, correction: str = "") -> Optional[str]:
+class DeepSeekUnavailable(RuntimeError):
+    """Only a fixed, non-secret failure code may cross the UI boundary."""
+
+
+def generate_utterance(brief: ThoughtBrief, *, correction: str = "", strict: bool = False) -> Optional[str]:
     """有密钥则 POST /chat/completions；失败返回 None（由调用方兜底）。"""
+    def failed(code):
+        if strict:
+            raise DeepSeekUnavailable(code) from None
+        return None
+
     key = load_api_key()
     if not key:
-        return None
+        return failed("no_key")
 
     body = {
         "model": resolve_model(),
@@ -110,9 +119,13 @@ def generate_utterance(brief: ThoughtBrief, *, correction: str = "") -> Optional
     try:
         with urllib.request.urlopen(req, timeout=DEFAULT_TIMEOUT_S) as resp:
             payload = json.loads(resp.read().decode("utf-8"))
-    except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, OSError, ValueError):
-        return None
+    except urllib.error.HTTPError as exc:
+        return failed("quota" if exc.code == 402 else "auth" if exc.code in (401, 403) else "http")
+    except (urllib.error.URLError, TimeoutError, OSError):
+        return failed("network")
+    except ValueError:
+        return failed("invalid_output")
     except Exception:
-        return None
+        return failed("backend")
 
-    return _extract_content(payload)
+    return _extract_content(payload) or failed("invalid_output")

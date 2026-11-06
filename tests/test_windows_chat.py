@@ -9,11 +9,15 @@ import pytest
 from birth import pipeline
 from birth.articulate import clear_llm_hook
 from birth.memory import BirthMemoryStore, configure_memory
+from birth.input_contract import InputSignal
 from birth.windows_chat import BackendUnavailable, ChatSession, ChatWindow, main
 
 
 @pytest.fixture(autouse=True)
-def isolated():
+def isolated(monkeypatch):
+    # Never inspect local credentials or allow a real network request in this file.
+    monkeypatch.setattr("birth.llm_deepseek.load_api_key", lambda: "OFFLINE-TEST-ONLY")
+    monkeypatch.setattr("urllib.request.urlopen", lambda *a, **k: pytest.fail("Network forbidden"))
     pipeline.active_store().new_session()
     configure_memory(enabled=False)
     yield
@@ -141,19 +145,14 @@ def test_save_failure_keeps_window_and_session(tmp_path, action):
         root.destroy()
 
 
-def test_default_backend_error_never_calls_deepseek_or_delivers_template(tmp_path):
+def test_default_backend_error_never_delivers_template(tmp_path):
+    from birth.input_contract import InputSignal
     session = ChatSession(memory_path=tmp_path / "memory.json")
-    with patch("birth.windows_chat.shutil.which", return_value=None), patch(
-        "birth.llm_deepseek.generate_utterance", side_effect=AssertionError("Forbidden")
+    with patch("birth.windows_chat.sense_input", return_value=InputSignal(
+        "tell", "other", "mock", "mock"
+    )), patch("birth.llm_deepseek.generate_utterance", return_value=None), patch(
+        "birth.llm_opencode.generate_utterance", side_effect=AssertionError("Forbidden")
     ):
-        with pytest.raises(BackendUnavailable):
-            session.send("你好", lambda result: pytest.fail("must not display"))
-    session.model = "opencode/OFFLINE-mock"
-    with patch("birth.windows_chat.shutil.which", return_value="OFFLINE"), patch(
-        "birth.llm_opencode.generate_utterance", return_value=None
-    ):
-        from birth.articulate import set_llm_hook
-        set_llm_hook(lambda brief: None)
         with pytest.raises(BackendUnavailable):
             session.send("你好", lambda result: pytest.fail("must not display fallback"))
     assert not any(f.startswith("台上说：") for f in pipeline.active_store().context.facts_this_session)
@@ -164,13 +163,12 @@ def test_slow_mock_backend_keeps_ui_alive_and_queued_close_saves(tmp_path):
     from birth.articulate import set_llm_hook
     root, app = window(tmp_path, offline=False)
     gate = threading.Event()
-    app.session.model = "opencode/OFFLINE-mock"
     def backend(brief):
         assert gate.wait(5)
         return "你好，我在这里听着。"
     set_llm_hook(backend)
     try:
-        with patch("birth.windows_chat.shutil.which", return_value="OFFLINE"):
+        with patch("birth.windows_chat.sense_input", return_value=InputSignal("tell", "other", "mock", "mock")):
             app.entry.insert("1.0", "你好")
             app.send()
             ticks = []
@@ -220,3 +218,67 @@ def test_opencode_windows_transport_offline(monkeypatch):
     assert llm_opencode.generate_utterance(object()) == "你好"
     assert calls[0][1]["encoding"] == "utf-8"
     assert Path(calls[0][1]["cwd"]).is_dir()
+
+
+@pytest.mark.parametrize("failure", ["quota", "display"])
+def test_deepseek_gui_failure_no_confirmation_and_retry_input(tmp_path, monkeypatch, failure):
+    from birth.llm_deepseek import DeepSeekUnavailable
+    root, app = window(tmp_path, offline=False)
+    monkeypatch.setattr("birth.windows_chat.sense_input", lambda *a, **k: InputSignal(
+        "tell", "other", "model:mock", "mock"
+    ))
+    line = "我答应晚点再聊月亮。"
+    def generate(*args, **kwargs):
+        assert kwargs["strict"] is True
+        if failure == "quota":
+            raise DeepSeekUnavailable("quota")
+        return line
+    monkeypatch.setattr("birth.llm_deepseek.generate_utterance", generate)
+    original = app._append
+    def append(who, text):
+        if failure == "display" and text == line:
+            raise OSError("PRIVATE display failure")
+        original(who, text)
+    app._append = append
+    try:
+        app.entry.insert("1.0", "你好")
+        app.send()
+        pump(root, lambda: not app.busy)
+        assert app.entry.get("1.0", "end").strip() == "你好"
+        assert not pipeline.active_store().pending_commitments()
+        assert "PRIVATE" not in app.status.get()
+        assert ("额度不足" if failure == "quota" else "操作失败") in app.status.get()
+        app.new()
+        pump(root, lambda: not app.busy)
+        prior = BirthMemoryStore(tmp_path / "memory.json").latest_prior()
+        assert not any(f.startswith("台上说：") for f in prior.facts)
+    finally:
+        root.destroy()
+
+
+def test_deepseek_gui_real_adapters_mock_transport(tmp_path, monkeypatch):
+    import io
+    import json
+    root, app = window(tmp_path, offline=False)
+    line = "我答应晚点再聊月亮。"
+    contents = iter([
+        json.dumps({"act": "tell", "addressee": "other", "confidence": "high"}),
+        line,
+    ])
+    def transport(*args, **kwargs):
+        return io.BytesIO(json.dumps({"choices": [{"message": {
+            "content": next(contents)
+        }}]}).encode())
+    monkeypatch.setattr("urllib.request.urlopen", transport)
+    try:
+        app.entry.insert("1.0", "你好")
+        app.send()
+        pump(root, lambda: not app.busy)
+        assert line in app.history.get("1.0", "end")
+        assert app.entry.get("1.0", "end").strip() == ""
+        assert pipeline.active_store().pending_commitments()
+        app.new()
+        pump(root, lambda: not app.busy)
+        assert "台上说：" + line in pipeline.active_store().snapshot().prior_session.facts
+    finally:
+        root.destroy()
