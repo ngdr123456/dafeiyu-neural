@@ -13,7 +13,7 @@ import re
 from dataclasses import dataclass
 
 from .context import ThinContextStore  # noqa: F401  (类型提示用)
-from .input_contract import InputSignal, drive_signal_from_input
+from .input_contract import InputSignal, credible_open_question_answer, drive_signal_from_input
 from .session_trace import (
     is_prior_session_backref,
     is_session_backref,
@@ -506,6 +506,7 @@ def infer_drive(
     *,
     drive_bypass: bool | None = None,
     input_signal: InputSignal | None = None,
+    understanding: InputSignal | None = None,
 ) -> DriveSignal:
     """DRIVE_V1 优先级：结构化阶段先行；无结构信号时才走 MARKS 兜底。
 
@@ -577,6 +578,19 @@ def infer_drive(
             direction="hold",
             salience="low",
             why=f"输入信号｜{label}｜{input_signal.source}｜{asked}",
+        )
+
+    target = credible_open_question_answer(understanding)
+    if target and understanding.act in ("tell", "ack"):
+        if context.last_commitments:
+            first = context.last_commitments[0]
+            return DriveSignal(
+                direction="guard", salience="mid",
+                why=f"输入理解｜答复悬问｜{understanding.source}｜同场还有没兑现的话（{first}）",
+            )
+        return DriveSignal(
+            direction="hold", salience="low",
+            why=f"输入理解｜答复悬问｜{understanding.source}｜对方答上了，先接住这轮，不再追问",
         )
 
     # Identity questions do not enter the neutral-filler path. §6 still wins

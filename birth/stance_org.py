@@ -8,6 +8,7 @@ OrgConstraint 只约束表达粒度，不永久否决动力。
 from __future__ import annotations
 
 from .drive import is_neutral_filler
+from .input_contract import InputSignal, credible_open_question_answer, credible_topic
 from .session_trace import is_session_backref, recent_facts, topic_hint_from_facts
 from .types import DriveSignal, OrgConstraint, StanceSignal, StanceTrace, ThinContext
 
@@ -129,7 +130,8 @@ def _asks_empty_sublime(user_text: str) -> bool:
     return any(mark in text for mark in SUBLIME_MARKS)
 
 
-def default_stance(user_text: str, context: ThinContext | None = None) -> StanceSignal:
+def default_stance(user_text: str, context: ThinContext | None = None,
+                   *, understanding: InputSignal | None = None) -> StanceSignal:
     """Stance 按 MEANING_ORG_V1 优先级；先命中先返回。"""
     ctx = context or ThinContext()
     conflicts = detect_org_conflict(user_text)
@@ -204,6 +206,13 @@ def default_stance(user_text: str, context: ThinContext | None = None) -> Stance
             why="态度价值｜承认无法改变的事实，在眼前选择如何陪伴，不替对方规定意义",
         )
 
+    if credible_open_question_answer(understanding):
+        return StanceSignal(
+            posture="yieldable",
+            stake="接住对方给出的回答，把这一轮收好",
+            why="本轮理解｜对方直接回答了薄痕中的悬问，先接住回答",
+        )
+
     # 4) 悬问或回指 → 可退让，但不装失忆
     if ctx.open_questions or is_session_backref(user_text, ctx):
         return StanceSignal(
@@ -226,6 +235,7 @@ def default_org(
     drive: DriveSignal | None = None,
     stance: StanceSignal | None = None,
     user_text: str = "",
+    understanding: InputSignal | None = None,
 ) -> OrgConstraint:
     """Org 按 MEANING_ORG_V1：grain 匹配议题；facts 扩 can_name；不否决动力。"""
     ctx = context or ThinContext()
@@ -270,6 +280,10 @@ def default_org(
             bits = recent_facts(ctx, 2)
             topic = "；".join(bits)[:40]
         can_name.append(f"本场已出现的话头：{topic}")
+
+    understood_topic = credible_topic(understanding)
+    if understood_topic:
+        can_name.append(f"本轮话题：{understood_topic}（来自本轮理解）")
 
     cannot_fake = [
         "没有来处的人生经历：去过哪、经历过什么大事",

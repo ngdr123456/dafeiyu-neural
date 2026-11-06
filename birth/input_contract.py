@@ -18,7 +18,19 @@ class InputSignal:
     reason: str = ""
     scope: Literal["conversation", "task", "unclear"] = "unclear"
 
+    topic: str = ""
+    target_open_question: str = ""
+    target_commitment: str = ""
+    confidence: Literal["high", "medium", "low"] = "high"
+    quoted_or_negated: bool = False
+
     def __post_init__(self) -> None:
+        if self.confidence not in ("high", "medium", "low"):
+            raise ValueError("invalid confidence")
+        if not isinstance(self.quoted_or_negated, bool):
+            raise ValueError("quoted_or_negated must be bool")
+        for name in ("topic", "target_open_question", "target_commitment"):
+            object.__setattr__(self, name, getattr(self, name).strip())
         if self.scope not in ("conversation", "task", "unclear"):
             raise ValueError("invalid scope")
         if self.act not in ("ask", "request", "pause", "stop", "ack", "tell", "unknown"):
@@ -53,3 +65,24 @@ def drive_signal_from_input(signal: InputSignal | None) -> DriveSignal | None:
         return DriveSignal(direction="hold", salience="low",
                            why=f"输入信号｜终止｜{signal.source}｜对方要终止")
     return None
+
+
+def credible_topic(signal: InputSignal | None) -> str:
+    if (signal is not None and not signal.degraded and signal.confidence == "high"
+            and not signal.quoted_or_negated):
+        return signal.topic
+    return ""
+
+
+def credible_open_question_answer(signal: InputSignal | None) -> str:
+    if (signal is not None and not signal.degraded and signal.confidence == "high"
+            and not signal.quoted_or_negated and signal.addressee == "other"):
+        return signal.target_open_question
+    return ""
+
+
+def credible_commitment_target(signal: InputSignal | None) -> str:
+    if (signal is not None and not signal.degraded and signal.confidence == "high"
+            and not signal.quoted_or_negated and signal.addressee == "other"):
+        return signal.target_commitment
+    return ""

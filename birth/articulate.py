@@ -203,6 +203,9 @@ def _template_utterance(brief: ThoughtBrief) -> str:
         has_commitment = "同场还有没兑现的话" in (brief.drive.why or "")
         return _input_stop_utterance(stop_kind, has_commitment)
 
+    if brief.drive and (brief.drive.why or "").startswith("输入理解｜答复悬问｜"):
+        return "好，这条我接住了，先不追着问。"
+
     if (getattr(brief.context, "drive_identity_answer_pending", False)
             and brief.drive and brief.drive.direction == "pursue"):
         return f"收到，你说『{brief.context.identity_answer_text}』。"

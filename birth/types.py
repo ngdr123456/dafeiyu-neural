@@ -9,7 +9,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Literal, Optional
+from typing import TYPE_CHECKING, Dict, List, Literal, Optional
+
+if TYPE_CHECKING:
+    from .input_contract import InputSignal
 
 Direction = Optional[Literal["pursue", "guard", "hold"]]
 Salience = Literal["low", "mid", "high"]
@@ -171,6 +174,13 @@ class ThinContext:
 
 
 @dataclass
+class SourcedInput:
+    text: str
+    source: str = "user"
+    provenance: str = "birth/pipeline.py:turn"
+
+
+@dataclass
 class ThoughtBrief:
     """一条时间步的完整思想简报：仲裁的输出、开口的唯一依据。"""
 
@@ -209,3 +219,8 @@ class ThoughtBrief:
     # 认账身份独立于主导分支与催债动作；空＝未唯一识别（单笔可回落）。
     recognized_prior_commitment: str = ""
     recognized_same_commitment: str = ""
+
+    understanding: Optional["InputSignal"] = None
+    user_input: Optional[SourcedInput] = None
+    openq_resolve_target: str = ""
+    prior_openq_resolve_target: str = ""

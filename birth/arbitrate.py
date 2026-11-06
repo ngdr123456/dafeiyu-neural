@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 from .drive import _extract_open_topic, is_neutral_filler
+from .input_contract import InputSignal, credible_commitment_target, credible_open_question_answer
 from .commit_extract import (
     _pending_topic_tokens,
     match_pending_commitment,
@@ -32,6 +33,7 @@ from .types import (
     OrgConstraint,
     StanceSignal,
     ThoughtBrief,
+    SourcedInput,
     ThinContext,
     PriorSessionTrace,
 )
@@ -55,6 +57,8 @@ def _drive_say_intent(drive: DriveSignal) -> str:
         return "对方在叫停：先应一声就暂停，不问候、不邀请继续、不问要我做什么、不开新话头"
     if why.startswith("输入信号｜终止｜"):
         return "对方在收束这场：先应一声就停在点子上，不问候、不邀请继续、不问要我做什么、不开新话头"
+    if why.startswith("输入理解｜答复悬问｜"):
+        return "接住对方给出的回答，这轮不再追问同一个悬问"
     if why.startswith("输入信号｜问句｜"):
         return "对方在问我，先正面接住这个问题；能答就答，答不上来就说清"
     if why.startswith("输入信号｜请求｜"):
@@ -116,6 +120,10 @@ def _org_say_intent(conflicts: list[str]) -> str:
     return f"这轮不编：{joined}踩线，只在讲得清的直径里直说，给对方留继续说话的口子"
 
 
+def _clip_bounded(text: str, limit: int) -> str:
+    return (text or "").strip()[:limit]
+
+
 def arbitrate(
     drive: DriveSignal,
     stance: StanceSignal,
@@ -123,6 +131,7 @@ def arbitrate(
     context: ThinContext,
     *,
     user_text: str = "",
+    understanding: InputSignal | None = None,
 ) -> ThoughtBrief:
     """四路输入 → 一条 Brief。主导字段把冲突写明白，不藏在语气里。"""
     conflicts = detect_org_conflict(user_text)
@@ -160,9 +169,13 @@ def arbitrate(
     pending_all = list(dict.fromkeys(
         (prior.commitments_pending if prior else []) + context.last_commitments
     ))
-    recognized = match_pending_commitment(
+    target = credible_commitment_target(understanding)
+    recognized = target if target in pending_all else (match_pending_commitment(
         user_text, PriorSessionTrace(commitments_pending=pending_all)
-    ) or ""
+    ) or "")
+    q = credible_open_question_answer(understanding)
+    openq_target = q if q in context.open_questions else ""
+    prior_target = q if not openq_target and prior and q in prior.her_questions else ""
     recognized_prior = recognized if prior and recognized in prior.commitments_pending else ""
     recognized_same = recognized if recognized in context.last_commitments else ""
     done_same = recognized_same or (
@@ -314,6 +327,11 @@ def arbitrate(
             commit_hold_with_drive = True
 
     return ThoughtBrief(
+        understanding=understanding,
+        user_input=SourcedInput(text=_clip_bounded(user_text, 600), source="user",
+                                provenance="birth/pipeline.py:turn"),
+        openq_resolve_target=openq_target,
+        prior_openq_resolve_target=prior_target,
         dominant=dominant,
         drive=drive,
         stance=stance,

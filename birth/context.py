@@ -247,15 +247,18 @@ class ThinContextStore:
         """
         self._context.drive_bypass = pending
 
-    def resolve_open_question(self) -> str | None:
-        """接完第一条悬问：弹出并返回它；没有悬问时返回 None。
+    def resolve_open_question(self, match: str | None = None) -> str | None:
+        """接完悬问：match=None 弹第一条；指定目标只精确弹该条，未命中返回 None。
 
         用在「本轮因悬问说过话」之后——捡一次就该接完，不留着长期占领主导。
         好奇挂起 flag 一并清 False（宁缺毋滥：resolve 即视为挂起已接）。
         """
+        if match is not None and match not in self._context.open_questions:
+            return None
         if self._context.open_questions:
             self._context.curiosity_hang_pending = False
-            result = self._context.open_questions.pop(0)
+            index = self._context.open_questions.index(match) if match is not None else 0
+            result = self._context.open_questions.pop(index)
             self._context.her_questions = [q for q in self._context.her_questions if q in self._context.open_questions]
             return result
         self._context.her_questions = [q for q in self._context.her_questions if q in self._context.open_questions]

@@ -44,7 +44,7 @@ from .drive import (
     should_set_drive_topic_continue_pending,
 )
 from .memory import active_memory, memory_enabled
-from .input_contract import InputSignal
+from .input_contract import InputSignal, credible_open_question_answer
 from .input_sense import sense_input
 from .stance_org import (ATTITUDE_MARKS, commitment_point, conflict_point,
                          default_org, default_stance)
@@ -177,8 +177,12 @@ def turn(
         _STORE.set_commitment_deny_pending(True)
 
     context = _STORE.snapshot()
+    if sense is None:
+        sense = os.environ.get("BIRTH_INPUT_SENSE", "").strip().lower() in {"1", "true", "yes", "on"}
+    if input_signal is None and sense and not drive_bypass:
+        input_signal = sense_input(user_text, context=context)
     # 前移：先跑 stance，从守诺结构得到本轮结构化 deny（不经写入侧词表）
-    early_stance = default_stance(user_text, context)
+    early_stance = default_stance(user_text, context, understanding=input_signal)
     if (
         not _STORE.context.commitment_deny_pending
         and structured_deny_from_stance(
@@ -237,7 +241,7 @@ def turn(
         structured_openq_answered if structured_openq_answered is not None
         else answered_open_question(user_text, pending_openq.open_questions)
     )
-    if answered:
+    if answered and not credible_open_question_answer(input_signal):
         if pending_openq.open_questions:
             _STORE.resolve_open_question()
         else:
@@ -336,16 +340,14 @@ def turn(
         _STORE.set_drive_prior_press_pending(True)
     context = _STORE.snapshot()
 
-    if sense is None:
-        sense = os.environ.get("BIRTH_INPUT_SENSE", "").strip().lower() in {"1", "true", "yes", "on"}
-    if input_signal is None and sense and not drive_bypass:
-        input_signal = sense_input(user_text)
-    drive = infer_drive(user_text, context, drive_bypass=drive_bypass or None, input_signal=input_signal)
+    drive = infer_drive(user_text, context, drive_bypass=drive_bypass or None, input_signal=input_signal,
+                        understanding=input_signal)
     # 旗标可能刚被 early 守诺结构置位：重算 stance，使主路径读 flag（结构路径）
-    stance = default_stance(user_text, context)
-    org = default_org(context, drive=drive, stance=stance, user_text=user_text)
+    stance = default_stance(user_text, context, understanding=input_signal)
+    org = default_org(context, drive=drive, stance=stance, user_text=user_text,
+                      understanding=input_signal)
     brief = arbitrate(drive=drive, stance=stance, org=org, context=context,
-                      user_text=user_text)
+                      user_text=user_text, understanding=input_signal)
     if brief.drive is not None and bool(getattr(brief.drive, "prior_her_question", False)):
         _STORE.set_drive_prior_her_question_used()
 
@@ -380,7 +382,11 @@ def turn(
     # 悬问收放（可检验；对齐承诺宁缺——拿不准不清）：
     # - resolve：读 Brief.openq_resolve（禁止 say_intent 中文子串）；
     # - clear：读 Brief.openq_clear（arbitrate 已判放下／换题）；pipeline 不再扫放下词表。
-    if should_resolve_open_question(
+    if brief.openq_resolve_target:
+        _STORE.resolve_open_question(match=brief.openq_resolve_target)
+    elif brief.prior_openq_resolve_target:
+        _STORE.remove_prior_her_question(brief.prior_openq_resolve_target)
+    elif should_resolve_open_question(
         brief=brief, user_text=user_text, has_open=bool(context.open_questions)
     ):
         _STORE.resolve_open_question()
@@ -423,7 +429,8 @@ def turn(
             if done:
                 resolved_targets.add(done)
 
-    if structured_openq_answered is True and not answered:
+    if (structured_openq_answered is True and not answered
+            and not credible_open_question_answer(input_signal)):
         live_prior = _STORE.context.prior_session
         if live_prior is not None and live_prior.her_questions:
             _STORE.remove_prior_her_question(live_prior.her_questions[0])
