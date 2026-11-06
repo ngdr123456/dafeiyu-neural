@@ -32,7 +32,7 @@ def brief_to_prompt(brief: ThoughtBrief, *, correction: str = "") -> str:
     if brief.drive is not None and bool(getattr(brief.drive, "prior_her_question", False)):
         prior = ctx.prior_session
         if prior is not None and prior.her_questions:
-            extras.append(f"上场你问出去、还没被接住的一句：{prior.her_questions[0]}")
+            extras.append(f"上场你问过、尚未得到回应的一句：{prior.her_questions[0]}")
     if ctx.open_questions:
         extras.append(f"同场悬着：{ctx.open_questions[0]}")
     quoted_or_negated = bool(brief.understanding and brief.understanding.quoted_or_negated)
@@ -55,28 +55,28 @@ def brief_to_prompt(brief: ThoughtBrief, *, correction: str = "") -> str:
         "non_negotiable": "不可交",
         "needs_clarify": "需澄清",
     }.get(brief.stance.posture, "可退")
-    stake = (brief.stance.stake or "接住这一轮").strip()
-    # 动力人话：想接着追／先守着／先停下；禁止 pursue 等枚举漏出
+    stake = (brief.stance.stake or "回应这一轮").strip()
+    # 动力状态；禁止枚举漏出
     drive = brief.drive
     why = (drive.why if drive else "") or ""
     if drive is None or drive.direction is None:
-        drive_zh = "没有硬要追的劲"
+        drive_zh = ""
     elif "重复空追" in why:
         drive_zh = "先停下"
     elif drive.direction == "pursue":
-        drive_zh = "想接着追"
+        drive_zh = "有继续的意愿"
     elif drive.direction == "guard":
-        # 守承诺／把住 → 先守着；勿把枚举字面写进 prompt
-        drive_zh = "先守着"
+        drive_zh = "保持现有立场"
     else:
-        drive_zh = "先守着"
+        drive_zh = "保持现状"
+    drive_line = f"这一轮劲头：{drive_zh}\n" if drive_zh else ""
     reassert_note = (
-        "这一条你本场已经守过，不用重新解释，短一点说完就行。\n"
+        "这一条本场已有坚持，不用重新解释，短一点说完就行。\n"
         if brief.stance.reasserts_kept
         else ""
     )
     stopped = why.startswith(("输入信号｜暂停｜", "输入信号｜终止｜"))
-    focus_block = "这一轮先停住，不追问、不提新话头、不邀请继续。\n" if stopped else (
+    focus_block = "这一轮停下，不再继续，不提新话头，不邀请继续。\n" if stopped else (
         f"这一轮要回应的具体内容：{brief.focus}（来源：{brief.focus_source}）\n"
         if brief.focus else ""
     )
@@ -94,9 +94,9 @@ def brief_to_prompt(brief: ThoughtBrief, *, correction: str = "") -> str:
         f"这一轮要传达的意思：{brief.say_intent}\n"
         f"这一轮怎么站：{posture_zh}——{stake}\n"
         f"{reassert_note}"
-        f"这一轮劲头：{drive_zh}\n"
+        f"{drive_line}"
         f"这一轮能说清的边界：{'；'.join(brief.org.can_name) or '只说有根据、能讲清的部分'}。这些是表达边界，不是已具备能力或亲历的证明。\n"
-        "本场已知（薄，仅供接话，勿当性格/自传）：\n"
+        "本场已知（薄，仅供回应，勿当性格/自传）：\n"
         f"{fact_block}\n"
         f"{extra_block}"
         f"{focus_block}"

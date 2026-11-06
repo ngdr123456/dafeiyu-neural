@@ -52,7 +52,7 @@ def test_prompt_carries_reassertion_in_plain_words():
     result = turn("你老家在哪儿", stub=True)
     assert result.brief.stance.reasserts_kept is True
     prompt = brief_to_prompt(result.brief)
-    note = "这一条你本场已经守过，不用重新解释，短一点说完就行。"
+    note = "这一条本场已有坚持，不用重新解释，短一点说完就行。"
     assert note in prompt
 
     active_store().new_session()

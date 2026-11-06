@@ -96,7 +96,7 @@ def test_stop_prompt_and_hook_rejection(act, expected):
     result.brief.focus = "先停"
     prompt = brief_to_prompt(result.brief)
     assert "这一轮要回应的具体内容" not in prompt
-    assert "这一轮先停住，不追问、不提新话头、不邀请继续。" in prompt
+    assert "这一轮停下，不再继续，不提新话头，不邀请继续。" in prompt
     assert len(calls) == 2
     assert "stop_question" in active_store().context.last_reject_reasons
     assert result.utterance == expected

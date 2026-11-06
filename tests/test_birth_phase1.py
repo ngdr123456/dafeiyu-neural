@@ -786,13 +786,13 @@ def test_drive_prompt_no_enum_leak():
     r = turn("我想聊星空", new_session=True, stub=True)
     prompt = brief_to_prompt(r.brief)
     assert "这一轮劲头：" in prompt
-    assert "想接着追" in prompt
+    assert "有继续的意愿" in prompt
     for bad in ("pursue", "guard", "hold", "direction=", "salience="):
         assert bad not in prompt, bad
 
     r2 = turn("够了，先这样", new_session=True, stub=True)
     p2 = brief_to_prompt(r2.brief)
-    assert "先守着" in p2 or "没有硬要追" in p2
+    assert "保持现状" in p2 or "这一轮劲头：" not in p2
     for bad in ("pursue", "guard", "hold"):
         assert bad not in p2
 
