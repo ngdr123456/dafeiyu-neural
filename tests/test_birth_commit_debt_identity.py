@@ -82,6 +82,8 @@ def test_topic_from_long_debt_uses_last_content_word():
     assert topic_from_pending_commitment(OVERLAP_B) == "海边"
     assert topic_from_pending_commitment(A) == "故事"
     assert topic_from_pending_commitment("我答应你明天聊二段") == "二段"
+    assert topic_from_pending_commitment("我答应你下次去上海") == "上海"
+    assert topic_from_pending_commitment("我答应你下次聊小说") == "小说"
     assert topic_from_pending_commitment("我答应你") == ""
 
 
@@ -104,6 +106,20 @@ def test_long_debt_topic_in_stub():
     assert r.brief.pressed_commitment == OVERLAP_B
     assert "海边" in r.utterance
     assert "聊的事" not in r.utterance
+
+
+def test_shanghai_topic_not_whole_debt():
+    prior("我答应你下次去上海")
+    r = turn("上海那事呢", stub=True)
+    assert "上海" in r.utterance
+    assert "聊我答应" not in r.utterance
+
+
+def test_empty_topic_uses_this_matter():
+    prior("我答应你")
+    r = turn("你上次答应我的事呢", stub=True)
+    assert "这事" in r.utterance
+    assert "聊我答应" not in r.utterance
 
 
 def test_single_debt_unchanged():

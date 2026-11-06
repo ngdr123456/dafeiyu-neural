@@ -141,8 +141,10 @@ _TOPIC_FUNCTION_CHARS = frozenset(
 def topic_from_pending_commitment(commitment: str) -> str:
     """从 pending 短摘抠可点到的话题（去约定壳）；抠不出则空。
 
-    只保留两个 char 都不在虚词／代词／功能字集合里的二元组，取位置最靠后的
-    内容词；不用「最后一个二元组」，否则「…海边的事」会落成「的事」。
+    优先取位置最靠后的内容词（两个字都不在虚词／代词／功能字集合里）；
+    内容词为空时回落最后一个二元组（如「上海」「小说」），保留改前对这些
+    本身含功能字的真正内容词的识别。只有 toks 本身为空才返回空串，由
+    arbitrate 用「这事」兜底，不把整句债当话题。
     """
     toks = _pending_topic_tokens(commitment)
     if not toks:
@@ -152,7 +154,9 @@ def topic_from_pending_commitment(commitment: str) -> str:
         t for t in toks
         if t not in noise and all(ch not in _TOPIC_FUNCTION_CHARS for ch in t)
     ]
-    return content[-1] if content else ""
+    if content:
+        return content[-1]
+    return toks[-1]
 
 
 def user_presses_commitment(user_text: str) -> bool:

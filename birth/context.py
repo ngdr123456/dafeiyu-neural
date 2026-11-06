@@ -317,8 +317,8 @@ class ThinContextStore:
     def resolve_prior_commitment(self, match: str | None = None) -> str | None:
         """兑现上场 pending：从 prior_session.commitments_pending 弹出并记入 resolved。
 
-        不并进同场 last_commitments（§6 仍只看同场）。match 若给则按主题覆盖挑一条，
-        否则弹第一条。无 prior／无 pending → None。
+        不并进同场 last_commitments（§6 仍只看同场）。match 若给则先全表找精确相等，
+        找不到再按主题覆盖挑一条；否则弹第一条。无 prior／无 pending → None。
         """
         prior = self._context.prior_session
         if prior is None or not prior.commitments_pending:

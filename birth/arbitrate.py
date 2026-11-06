@@ -247,7 +247,7 @@ def arbitrate(
                 or prior.commitments_pending[0]
             )
             pending0 = pressed_commitment
-        topic = topic_from_pending_commitment(pending0) or pending0 or "这事"
+        topic = topic_from_pending_commitment(pending0) or "这事"
         # 截短话题，避免整句承诺塞进「」
         if len(topic) > 12:
             topic = topic[:12]
