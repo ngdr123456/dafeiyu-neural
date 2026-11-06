@@ -113,19 +113,10 @@ class BirthMemoryStore:
         self.max_traces = max(0, int(max_traces))
 
     def _read_raw(self) -> list[dict]:
-        if not self.path.exists():
-            return []
-        try:
-            data = json.loads(self.path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            return []
-        if isinstance(data, dict) and "sessions" in data:
-            sessions = data.get("sessions") or []
-        elif isinstance(data, list):
-            sessions = data
-        else:
-            sessions = []
-        return [s for s in sessions if isinstance(s, dict)]
+        # Import lazily: retrieval uses BirthMemoryStore to load validated records.
+        from .retrieval import _preflight_ledger
+
+        return _preflight_ledger(self.path)
 
     def _write_raw(self, sessions: list[dict]) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)

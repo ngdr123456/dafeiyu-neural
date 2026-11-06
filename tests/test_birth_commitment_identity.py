@@ -117,3 +117,17 @@ def test_tied_raw_targets_do_not_keep_either_commitment():
     seed(A, B)
     brief = turn("月亮和星星那件事不算", stub=True).brief
     assert_no_commitment_kept(brief)
+
+
+def test_prompt_selects_held_commitment_and_falls_back():
+    from birth.llm_opencode import brief_to_prompt
+
+    seed(A, B)
+    brief = turn("\u661f\u661f\u90a3\u4ef6\u4e8b\u4e0d\u7b97", stub=True).brief
+    assert brief.context.last_commitments == [A, B]
+    assert brief.stance.held_commitment == B
+    label = "\u540c\u573a\u8bf4\u8fc7\u8981\u505a\u7684\uff1a"
+    assert label + B in brief_to_prompt(brief)
+    assert label + A not in brief_to_prompt(brief)
+    brief.stance.held_commitment = ""
+    assert label + A in brief_to_prompt(brief)

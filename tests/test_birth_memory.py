@@ -444,3 +444,48 @@ def test_prior_press_field_leak():
     brief = _brief_with(ThinContext())
     reasons = validate(brief, "drive_prior_press_pending 真")
     assert any("漏" in r for r in reasons)
+
+
+@pytest.mark.parametrize("original", [
+    b"", b" \n", b"{broken", b"\xff", b"null", b"{}",
+    b'{"sessions": null}', b'{"sessions": [1]}',
+    b'{"sessions": [{"facts": "not a list"}]}',
+])
+def test_append_rejects_invalid_ledger_without_changing_bytes(tmp_path, original):
+    from birth.retrieval import LedgerInvalid
+
+    path = tmp_path / "ledger.json"
+    path.write_bytes(original)
+    with pytest.raises(LedgerInvalid):
+        BirthMemoryStore(path).append_session(facts=["new fact"])
+    assert path.read_bytes() == original
+
+
+def test_append_rejects_unreadable_ledger_without_changing_bytes(tmp_path, monkeypatch):
+    from birth.retrieval import LedgerUnreadable
+
+    path = tmp_path / "ledger.json"
+    original = b'{"sessions": []}'
+    path.write_bytes(original)
+    original_read = type(path).read_bytes
+
+    def deny_read(self):
+        if self == path:
+            raise PermissionError("access denied")
+        return original_read(self)
+
+    monkeypatch.setattr(type(path), "read_bytes", deny_read)
+    with pytest.raises(LedgerUnreadable):
+        BirthMemoryStore(path).append_session(facts=["new fact"])
+    assert original_read(path) == original
+
+
+def test_append_accepts_missing_and_valid_empty_ledgers(tmp_path):
+    for name, initial in (("missing", None), ("empty-list", b"[]"),
+                          ("empty-sessions", b'{"sessions": []}')):
+        path = tmp_path / name
+        if initial is not None:
+            path.write_bytes(initial)
+        store = BirthMemoryStore(path)
+        store.append_session(facts=["new fact"])
+        assert store.latest().facts == ["new fact"]

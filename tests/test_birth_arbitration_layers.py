@@ -4,7 +4,7 @@ from importlib import import_module
 
 import pytest
 
-from birth.__main__ import _print_result
+from birth.__main__ import _print_debug, _print_utterance
 from birth.arbitrate import _drive_say_intent, _org_say_intent, arbitrate
 from birth.articulate import clear_llm_hook, set_stub_mode
 from birth.input_contract import InputSignal
@@ -89,7 +89,8 @@ def test_actual_content_and_source_reach_prompt_and_debug(capsys):
     assert b.dominant_why not in prompt
     for word in ("pursue", "guard", "hold", "non_negotiable", "needs_clarify", "yieldable"):
         assert word not in prompt
-    _print_result(r, debug=True)
+    _print_utterance(r)
+    _print_debug(r, debug=True)
     out = capsys.readouterr().out
     assert f"[debug] 仲裁取舍：{b.dominant_why}" in out
     assert out.index("[debug] 仲裁取舍：") < out.index("[debug] 台下 ThoughtBrief")

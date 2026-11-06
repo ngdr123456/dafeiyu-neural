@@ -88,7 +88,7 @@ def _preflight_ledger(path):
     try:
         path.stat()
     except FileNotFoundError:
-        return
+        return []
     except OSError as exc:
         raise LedgerUnreadable(f"Cannot read ledger {path}: {exc}") from exc
     try:
@@ -126,6 +126,8 @@ def _preflight_ledger(path):
                 for field in ("kind", "point", "why"):
                     if field in trace and not isinstance(trace[field], str):
                         raise LedgerInvalid(f"Invalid ledger {path}: session {number} stance_traces.{field} must be a string")
+
+    return sessions
 
 
 def _fingerprint(path):

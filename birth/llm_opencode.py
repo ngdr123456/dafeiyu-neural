@@ -34,8 +34,9 @@ def brief_to_prompt(brief: ThoughtBrief, *, correction: str = "") -> str:
             extras.append(f"上场你问出去、还没被接住的一句：{prior.her_questions[0]}")
     if ctx.open_questions:
         extras.append(f"同场悬着：{ctx.open_questions[0]}")
-    if ctx.last_commitments:
-        extras.append(f"同场说过要做的：{ctx.last_commitments[0]}")
+    commitment = brief.stance.held_commitment or (ctx.last_commitments[0] if ctx.last_commitments else "")
+    if commitment:
+        extras.append(f"同场说过要做的：{commitment}")
     extra_block = ("\n".join(extras) + "\n") if extras else ""
     # 规格硬钉：prompt 里只要人话「可退／不可交／需澄清」+ stake；
     # 禁止把 non_negotiable 等枚举或 posture/stake 字段名写进 prompt。
