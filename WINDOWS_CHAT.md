@@ -1,6 +1,6 @@
 # Windows DeepSeek 灰测聊天
 
-新交付目录：`dist\BirthChat-DeepSeek-Windows-20261106`。双击其中的 `Start-BirthChat.cmd`；整份文件夹可移动，自带 CPython 3.12、Tk 和 birth 源码，无需 Python、pip 或 OpenCode。许可证在 `runtime\LICENSE.txt`。旧包不覆盖。本交付只经过离线 mock，真实模型由外层受控验收。
+新交付目录：`dist\BirthChat-Redesign-Windows-20261106-v2`。双击其中的 `Start-BirthChat.cmd`；整份文件夹可移动，自带 CPython 3.12、Tk 和 birth 源码，无需 Python、pip 或 OpenCode。许可证在 `runtime\LICENSE.txt`。旧包不覆盖。本交付只经过离线 mock，真实模型由外层受控验收。
 
 默认使用 birth 现有 DeepSeek HTTP 后端和输入理解，之后仍由原动力、立场、组织、仲裁、开口校验和记忆提取处理。普通成功轮次通常有输入理解和开口两次请求；开口校验可能重试。输入理解低置信度沿用 birth 的规则降级；连接故障、额度不足、身份验证错误、无效返回都会报错，不交付模板、不转 OpenCode。某些原有内部保护路径直接生成模板时，界面也拒绝确认并提示校验失败。
 
@@ -16,7 +16,7 @@
 $secret = Read-Host 'DeepSeek API key' -AsSecureString
 $env:DEEPSEEK_API_KEY = [System.Net.NetworkCredential]::new('', $secret).Password
 try {
-  & '.\dist\BirthChat-DeepSeek-Windows-20261106\runtime\python.exe' -I '.\dist\BirthChat-DeepSeek-Windows-20261106\start_birth_chat.pyw'
+  & '.\dist\BirthChat-Redesign-Windows-20261106-v2\runtime\python.exe' -I '.\dist\BirthChat-Redesign-Windows-20261106-v2\start_birth_chat.pyw'
 } finally {
   Remove-Item Env:DEEPSEEK_API_KEY -ErrorAction SilentlyContinue
   $secret.Dispose()
@@ -38,13 +38,13 @@ try {
 外层 GUI 真实验收：配置本机密钥后运行下列命令，发送带唯一姓名标记的自我介绍，观察真实回复，正常保存退出；用同一命令重启，询问“你还记得我是谁吗？”。这会实际调用模型及产生费用，本轮开发没有执行：
 
 ```powershell
-.\dist\BirthChat-DeepSeek-Windows-20261106\Start-BirthChat.cmd --memory-path "$env:LOCALAPPDATA\BirthChatGrey\acceptance-memory.json"
+.\dist\BirthChat-Redesign-Windows-20261106-v2\Start-BirthChat.cmd --memory-path "$env:LOCALAPPDATA\BirthChatGrey\acceptance-memory.json"
 ```
 
 可控控制台入口供外层只做一次真实聊天，之后在独立进程离线核对持久化记忆已加载：
 
 ```powershell
-$bundle = '.\dist\BirthChat-DeepSeek-Windows-20261106'
+$bundle = '.\dist\BirthChat-Redesign-Windows-20261106-v2'
 $memory = "$env:LOCALAPPDATA\BirthChatGrey\acceptance-console.json"
 # 仅此条显式授权真实网络；打印回复并 flush 成功才确认，随后保存。
 & "$bundle\runtime\python.exe" -I "$bundle\accept_birth_chat.py" --memory-path $memory --allow-network --send '我叫灰测小舟，今天想聊月亮。'
@@ -59,7 +59,7 @@ $memory = "$env:LOCALAPPDATA\BirthChatGrey\acceptance-console.json"
 ## 重建
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File tools\build_windows_chat.ps1 -OutputName BirthChat-DeepSeek-Windows-20261106
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\build_windows_chat.ps1 -OutputName BirthChat-Redesign-Windows-20261106-v2
 ```
 
 可传 `-PythonRoot <含Tk的CPython目录>`。目标存在时拒绝覆盖，后续重建换新 `-OutputName`，直接运行新包内入口。构建按白名单复制 birth 的 `.py`、三个入口、说明和标准运行时，排除状态、凭证、日志、测试和 site-packages；`dist/` 不入库。

@@ -10,7 +10,6 @@ import json
 import queue
 import threading
 import tkinter as tk
-from tkinter import ttk
 from tkinter.scrolledtext import ScrolledText
 
 from . import llm_deepseek, pipeline
@@ -118,25 +117,83 @@ class ChatWindow:
         self.closing = False
         self.session = None
         root.title("第一期 · 聊天" + (" [离线模板验证]" if offline else ""))
-        root.geometry("760x650")
-        root.minsize(520, 420)
-        frame = ttk.Frame(root, padding=16)
-        frame.pack(fill="both", expand=True)
-        ttk.Label(frame, text="第一期 · 聊天", font=("Microsoft YaHei UI", 18)).pack(anchor="w")
+        root.geometry("1000x720")
+        root.minsize(680, 500)
+        root.configure(bg="#edf0ee")
+        font = "Microsoft YaHei UI"
+        sidebar = tk.Frame(root, bg="#203b38", width=210, padx=22, pady=26)
+        sidebar.pack(side="left", fill="y")
+        sidebar.pack_propagate(False)
+        tk.Label(sidebar, text="●  BIRTH", bg="#203b38", fg="#b9d9cc",
+                 font=(font, 10, "bold")).pack(anchor="w")
+        tk.Label(sidebar, text="对话之间", bg="#203b38", fg="#ffffff",
+                 font=(font, 20, "bold")).pack(anchor="w", pady=(22, 3))
+        tk.Label(sidebar, text="给想法一点时间。", bg="#203b38", fg="#a8c4b8",
+                 font=(font, 9)).pack(anchor="w")
+        tk.Frame(sidebar, bg="#47615a", height=1).pack(fill="x", pady=26)
+        tk.Label(sidebar, text="当前空间", bg="#203b38", fg="#9fbcb0",
+                 font=(font, 9)).pack(anchor="w")
+        tk.Label(sidebar, text="  ●   与你对话", bg="#34534b", fg="#ffffff",
+                 font=(font, 10, "bold"), anchor="w", padx=10, pady=12).pack(fill="x", pady=(10, 0))
+        bottom = tk.Frame(sidebar, bg="#203b38")
+        bottom.pack(side="bottom", fill="x")
+        tk.Label(bottom, text="记忆", bg="#203b38", fg="#d8e8df",
+                 font=(font, 10, "bold")).pack(anchor="w")
+        tk.Label(bottom, text="结束本场或退出时保存。\n记忆是摘要，非完整聊天记录。",
+                 bg="#203b38", fg="#a8c4b8", justify="left", wraplength=165,
+                 font=(font, 9)).pack(anchor="w", pady=(6, 18))
+        self.new_button = tk.Button(bottom, text="＋  结束本场 / 新场", command=self.new,
+                                    bg="#34534b", fg="white", activebackground="#42665b",
+                                    activeforeground="white", relief="flat", anchor="w",
+                                    padx=10, pady=9, font=(font, 9), cursor="hand2")
+        self.new_button.pack(fill="x")
+        tk.Button(bottom, text="保存并退出  ↗", command=self.close, bg="#203b38",
+                  fg="#c6ddd2", activebackground="#34534b", activeforeground="white",
+                  relief="flat", anchor="w", padx=10, pady=9, font=(font, 9),
+                  cursor="hand2").pack(fill="x", pady=(6, 0))
+
+        main = tk.Frame(root, bg="#f7f8f5")
+        main.pack(side="left", fill="both", expand=True)
+        header = tk.Frame(main, bg="#f7f8f5", padx=30, pady=20)
+        header.pack(fill="x")
+        tk.Label(header, text="对话", bg="#f7f8f5", fg="#203b38",
+                 font=(font, 17, "bold")).pack(anchor="w")
         self.status = tk.StringVar(value="正在打开记忆…")
-        ttk.Label(frame, textvariable=self.status, wraplength=700).pack(anchor="w", pady=(6, 12))
-        self.history = ScrolledText(frame, wrap="word", state="disabled", font=("Microsoft YaHei UI", 11))
+        tk.Label(header, textvariable=self.status, bg="#f7f8f5", fg="#648078",
+                 font=(font, 9), anchor="w", justify="left", wraplength=550).pack(fill="x", pady=(3, 0))
+        tk.Frame(main, bg="#e1e8e1", height=1).pack(fill="x")
+        conversation = tk.Frame(main, bg="#f7f8f5", padx=30, pady=14)
+        conversation.pack(fill="both", expand=True)
+        self.history = ScrolledText(conversation, wrap="word", state="disabled",
+                                    bg="#f7f8f5", fg="#263d38", relief="flat", bd=0,
+                                    highlightthickness=0, font=(font, 11), padx=4, pady=4,
+                                    spacing1=3, spacing3=4, insertbackground="#203b38")
         self.history.pack(fill="both", expand=True)
-        self.entry = tk.Text(frame, height=4, wrap="word", font=("Microsoft YaHei UI", 11))
-        self.entry.pack(fill="x", pady=(12, 8))
+        self.history.tag_configure("speaker", foreground="#69857a", font=(font, 9, "bold"), spacing1=15)
+        self.history.tag_configure("user", foreground="#2d6e5a", font=(font, 9, "bold"), spacing1=15)
+        self.history.tag_configure("message", foreground="#263d38", lmargin1=0, lmargin2=0, spacing3=10)
+        self.history.tag_configure("notice", foreground="#71867e", font=(font, 9), spacing1=10, spacing3=10)
+        self._append("状态", "欢迎回来。在这里，慢慢说。")
+
+        composer = tk.Frame(main, bg="#f7f8f5", padx=30, pady=18)
+        composer.pack(fill="x")
+        card = tk.Frame(composer, bg="white", highlightbackground="#d7e2d9", highlightthickness=1)
+        card.pack(fill="x")
+        self.entry = tk.Text(card, height=4, wrap="word", font=(font, 11), bg="white",
+                             fg="#263d38", insertbackground="#203b38", relief="flat", bd=0,
+                             padx=14, pady=12, highlightthickness=0)
+        self.entry.pack(fill="x")
         self.entry.bind("<Control-Return>", self.send)
-        buttons = ttk.Frame(frame)
-        buttons.pack(fill="x")
-        self.send_button = ttk.Button(buttons, text="发送 (Ctrl+Enter)", command=self.send)
-        self.send_button.pack(side="left")
-        self.new_button = ttk.Button(buttons, text="结束本场 / 新场", command=self.new)
-        self.new_button.pack(side="left", padx=8)
-        ttk.Button(buttons, text="保存并退出", command=self.close).pack(side="right")
+        actions = tk.Frame(card, bg="white", padx=12, pady=9)
+        actions.pack(fill="x")
+        tk.Label(actions, text="Enter 换行  ·  Ctrl + Enter 发送", bg="white", fg="#8a9c94",
+                 font=(font, 9)).pack(side="left")
+        self.send_button = tk.Button(actions, text="发送  ↑", command=self.send,
+                                     bg="#397a64", fg="white", activebackground="#2c6552",
+                                     activeforeground="white", disabledforeground="#b9ccc1",
+                                     relief="flat", padx=20, pady=7, font=(font, 10, "bold"),
+                                     cursor="hand2")
+        self.send_button.pack(side="right")
         root.protocol("WM_DELETE_WINDOW", self.close)
         self._controls()
         root.after(20, self._poll)
@@ -148,7 +205,11 @@ class ChatWindow:
     def _append(self, speaker, text):
         self.history.configure(state="normal")
         try:
-            self.history.insert("end", f"{speaker}\n{text}\n\n")
+            if speaker == "状态":
+                self.history.insert("end", f"{text}\n", "notice")
+            else:
+                self.history.insert("end", f"{speaker}\n", "user" if speaker == "你" else "speaker")
+                self.history.insert("end", f"{text}\n", "message")
             self.history.see("end")
         finally:
             self.history.configure(state="disabled")
