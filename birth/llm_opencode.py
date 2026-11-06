@@ -35,13 +35,16 @@ def brief_to_prompt(brief: ThoughtBrief, *, correction: str = "") -> str:
             extras.append(f"上场你问出去、还没被接住的一句：{prior.her_questions[0]}")
     if ctx.open_questions:
         extras.append(f"同场悬着：{ctx.open_questions[0]}")
-    commitment = brief.stance.held_commitment
-    if not commitment and len(ctx.last_commitments) == 1:
-        commitment = ctx.last_commitments[0]
-    elif not commitment and len(ctx.last_commitments) > 1:
-        commitment = match_pending_commitment(
-            brief.focus, PriorSessionTrace(commitments_pending=list(ctx.last_commitments))
-        )
+    quoted_or_negated = bool(brief.understanding and brief.understanding.quoted_or_negated)
+    commitment = ""
+    if not quoted_or_negated:
+        commitment = brief.stance.held_commitment
+        if not commitment and len(ctx.last_commitments) == 1:
+            commitment = ctx.last_commitments[0]
+        elif not commitment and len(ctx.last_commitments) > 1:
+            commitment = match_pending_commitment(
+                brief.focus, PriorSessionTrace(commitments_pending=list(ctx.last_commitments))
+            )
     if commitment:
         extras.append(f"同场说过要做的：{commitment}")
     extra_block = ("\n".join(extras) + "\n") if extras else ""

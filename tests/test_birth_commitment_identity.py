@@ -160,3 +160,15 @@ def test_prompt_selects_held_commitment_and_falls_back():
     for focus in ("\u65e0\u5173\u8bdd\u9898", "\u6708\u4eae\u548c\u661f\u661f"):
         brief.focus = focus
         assert label not in brief_to_prompt(brief)
+
+
+@pytest.mark.parametrize("commitments", [(B,), (A, B)])
+def test_prompt_does_not_name_commitment_for_quoted(commitments):
+    from birth.llm_opencode import brief_to_prompt
+
+    seed(*commitments)
+    brief = turn("我朋友说星星那件事不算", stub=True,
+                 input_signal=signal(quoted_or_negated=True)).brief
+    prompt = brief_to_prompt(brief)
+    assert "同场说过要做的：" not in prompt
+    assert B not in prompt
