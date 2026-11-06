@@ -100,7 +100,7 @@ def test_prior_callback_blocked_without_trace():
 
 
 def test_lived_bio_allows_when_prior_facts_source():
-    prior = PriorSessionTrace(facts=["用户说：我小时候住在海边"])
+    prior = PriorSessionTrace(facts=["用户说：你小时候住在海边"])
     brief = _brief_with(ThinContext(prior_session=prior))
     assert validate(brief, "我小时候住在海边") == []
     # 「上次你说过…」本身不是亲历自传形状，应放行

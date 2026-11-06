@@ -61,10 +61,10 @@ def resolve_base() -> str:
     ).rstrip("/")
 
 
-def _brief_prompt(brief: ThoughtBrief) -> str:
+def _brief_prompt(brief: ThoughtBrief, *, correction: str = "") -> str:
     from .llm_opencode import brief_to_prompt
 
-    return brief_to_prompt(brief)
+    return brief_to_prompt(brief, correction=correction)
 
 
 def _extract_content(payload: dict) -> Optional[str]:
@@ -81,7 +81,7 @@ def _extract_content(payload: dict) -> Optional[str]:
     return None
 
 
-def generate_utterance(brief: ThoughtBrief) -> Optional[str]:
+def generate_utterance(brief: ThoughtBrief, *, correction: str = "") -> Optional[str]:
     """有密钥则 POST /chat/completions；失败返回 None（由调用方兜底）。"""
     key = load_api_key()
     if not key:
@@ -90,7 +90,7 @@ def generate_utterance(brief: ThoughtBrief) -> Optional[str]:
     body = {
         "model": resolve_model(),
         "messages": [
-            {"role": "user", "content": _brief_prompt(brief)},
+            {"role": "user", "content": _brief_prompt(brief, correction=correction)},
         ],
         "max_tokens": 256,
         # 开口不是填表：略高于理解层 temperature=0；thinking 关掉省预算

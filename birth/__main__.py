@@ -21,7 +21,7 @@ from dataclasses import asdict
 
 from .articulate import set_stub_mode
 from .memory import PendingCommitmentCapacityError, configure_memory
-from .pipeline import turn
+from .pipeline import end_session, turn
 
 
 _EXIT_WORDS = frozenset({"exit", "quit", "q"})
@@ -89,19 +89,26 @@ def _run_repl(args: argparse.Namespace) -> int:
     first = True
     force_new = False
 
+    def finish() -> int:
+        try:
+            end_session()
+        except PendingCommitmentCapacityError:
+            print("[记忆容量不足] 未结承诺超限，未写盘、未清场；仍在原场，可核对销账后再 /new。")
+        return 0
+
     while True:
         try:
             line = input("> ")
         except EOFError:
             print()
-            return 0
+            return finish()
         except KeyboardInterrupt:
             print()
-            return 0
+            return finish()
 
         text = line.strip()
         if not text or text in _EXIT_WORDS:
-            return 0
+            return finish()
         if text == "/new":
             force_new = True
             print("[新场]")
@@ -122,6 +129,9 @@ def _run_repl(args: argparse.Namespace) -> int:
         except PendingCommitmentCapacityError:
             print("[记忆容量不足] 未结承诺超限，未写盘、未清场；仍在原场，可核对销账后再 /new。")
             continue
+        except KeyboardInterrupt:
+            print()
+            return finish()
         _print_result(result, debug=args.debug)
 
     return 0  # pragma: no cover

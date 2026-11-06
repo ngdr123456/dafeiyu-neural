@@ -10,6 +10,22 @@ import pytest
 from birth.__main__ import main
 
 
+@pytest.fixture(autouse=True)
+def _isolate_repl_memory(monkeypatch, tmp_path):
+    from birth.articulate import clear_llm_hook, set_stub_mode
+    from birth.memory import configure_memory
+    from birth.pipeline import active_store
+    monkeypatch.setenv("BIRTH_MEMORY_PATH", str(tmp_path / "memory.json"))
+    configure_memory(enabled=False)
+    active_store().new_session()
+    clear_llm_hook()
+    yield
+    configure_memory(enabled=False)
+    active_store().new_session()
+    clear_llm_hook()
+    set_stub_mode(True)
+
+
 def _fake_turn_factory():
     calls: list[dict] = []
 
@@ -105,3 +121,26 @@ def test_single_shot_with_debug_prints_brief(capsys):
     out = capsys.readouterr().out
     assert "ThoughtBrief" in out
     assert "开口来源" in out
+
+
+@pytest.mark.parametrize("ending", ["quit", "exit", "q", "", EOFError, KeyboardInterrupt])
+def test_real_repl_exit_persists_final_utterance(ending, tmp_path, capsys):
+    from birth.memory import BirthMemoryStore
+    from birth.pipeline import active_store
+    with patch("builtins.input", side_effect=["你好", ending]):
+        assert main(["--stub"]) == 0
+    path = tmp_path / "memory.json"
+    assert path.exists()
+    final_facts = [f for f in active_store().context.facts_this_session if f.startswith("台上说：")]
+    assert len(final_facts) == 1
+    assert final_facts[0] in BirthMemoryStore(path=path).latest_prior().facts
+    assert final_facts[0][len("台上说："):] in capsys.readouterr().out
+
+
+def test_repl_exit_capacity_error_is_reported(capsys):
+    from birth.memory import PendingCommitmentCapacityError
+    with patch("builtins.input", side_effect=["q"]), patch(
+        "birth.__main__.end_session", side_effect=PendingCommitmentCapacityError("full")
+    ):
+        assert main(["--stub"]) == 0
+    assert "[记忆容量不足]" in capsys.readouterr().out

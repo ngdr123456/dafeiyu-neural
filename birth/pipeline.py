@@ -58,12 +58,19 @@ def active_store() -> ThinContextStore:
     return _STORE
 
 
+def end_session() -> bool:
+    """记忆开启且本场有内容时落盘；不清场，容量异常原样交给调用方。"""
+    mem = active_memory() if memory_enabled() else None
+    if mem is None or not _STORE.has_session_content():
+        return False
+    mem.append_session(**_STORE.export_session_trace())
+    return True
+
+
 def _persist_and_reset_session() -> None:
     """场结束：可选落盘 → 清场 → 读入上一场为 prior_session 结构。"""
     mem = active_memory() if memory_enabled() else None
-    if mem is not None and _STORE.has_session_content():
-        trace = _STORE.export_session_trace()
-        mem.append_session(**trace)
+    end_session()
     _STORE.new_session()
     if mem is not None:
         prior = mem.latest_prior()

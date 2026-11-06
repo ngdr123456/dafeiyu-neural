@@ -17,7 +17,7 @@ DEFAULT_MODEL = os.environ.get("BIRTH_OPENCODE_MODEL", "opencode/deepseek-v4.1-f
 DEFAULT_TIMEOUT_S = float(os.environ.get("BIRTH_OPENCODE_TIMEOUT", "90"))
 
 
-def brief_to_prompt(brief: ThoughtBrief) -> str:
+def brief_to_prompt(brief: ThoughtBrief, *, correction: str = "") -> str:
     """say_intent + 同场薄痕迹 + 不可装作；不把 Brief 字段名说出口。"""
     must_not = "、".join(brief.must_not_pretend) or "无"
     ctx = brief.context
@@ -63,7 +63,8 @@ def brief_to_prompt(brief: ThoughtBrief) -> str:
         if brief.stance.reasserts_kept
         else ""
     )
-    focus_block = (
+    stopped = why.startswith(("输入信号｜暂停｜", "输入信号｜终止｜"))
+    focus_block = "这一轮先停住，不追问、不提新话头、不邀请继续。\n" if stopped else (
         f"这一轮要回应的具体内容：{brief.focus}（来源：{brief.focus_source}）\n"
         if brief.focus else ""
     )
@@ -102,8 +103,10 @@ def brief_to_prompt(brief: ThoughtBrief) -> str:
             + "这一轮对方在催一个可核对的约定：用一两句中文明确答应下一件能对得上的事"
             "（例如晚点再聊某个本场话头），宁缺毋滥，不要空壳敷衍、不要含糊「再说吧」；"
             "仍禁止自述是模型/代码/程序。只输出台上那句话。"
+            + (f"\n上一版没通过：{correction}。请按上述意思重说。" if correction else "")
         )
-    return base + "紧贴上面的意思，只输出台上那句话。"
+    return (base + "紧贴上面的意思，只输出台上那句话。"
+            + (f"\n上一版没通过：{correction}。请按上述意思重说。" if correction else ""))
 
 
 def _parse_json_lines(stdout: str) -> str:
@@ -125,13 +128,13 @@ def _parse_json_lines(stdout: str) -> str:
     return "\n".join(chunks).strip()
 
 
-def generate_utterance(brief: ThoughtBrief) -> Optional[str]:
+def generate_utterance(brief: ThoughtBrief, *, correction: str = "") -> Optional[str]:
     """调用 OpenCode 免费模型；成功返回人话，否则 None。"""
     binary = shutil.which("opencode")
     if not binary:
         return None
 
-    prompt = brief_to_prompt(brief)
+    prompt = brief_to_prompt(brief, correction=correction)
     cmd = [
         binary,
         "run",

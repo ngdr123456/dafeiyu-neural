@@ -74,6 +74,10 @@ def _reason_to_tag(reason: str) -> str:
         return "enum_leak"
     if "自述是代码" in r or "程序/模型产物" in r:
         return "substrate_self"
+    if "身体亲历" in r:
+        return "body_experience"
+    if "判停追问" in r:
+        return "stop_question"
     if "无来源亲历" in r or "装无来源" in r:
         return "lived_bio"
     if "对方私事" in r or "other_private" in r:
@@ -625,13 +629,35 @@ def _claims_unfounded_other_private(utterance: str, facts=None) -> bool:
     return True
 
 
+def _classify_sources(facts) -> tuple[list[str], list[str]]:
+    """只读来源账：返回她的来源、对方私事来源；只认前缀和人称形状。"""
+    own, other = [], []
+    for fact in facts:
+        if fact.startswith("台上说："):
+            continue
+        if not fact.startswith("用户说："):
+            own.append(fact)
+            other.append(fact)
+            continue
+        content = fact[len("用户说："):].strip()
+        other.append(content)
+        # 以我起头的自述优先排除，不能借其中的第二人称换成她的亲历。
+        if not content.startswith("我") and ("你" in content or "您" in content):
+            own.append(content.replace("你", "我").replace("您", "我"))
+    return own, other
+
+
 def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
-    """对照 Brief 的一致性校验（非禁词表）：返回不通过原因列表，空列表即通过。"""
+    """只检查 Brief 的结构冲突，不是语义验证，也不保证模型理解了停。"""
     reasons: List[str] = []
     text = (utterance or "").strip()
     if not text:
         reasons.append("开口为空")
         return reasons
+    if _input_stop_kind(brief.drive) and (
+        "？" in text or "?" in text or text.endswith(("吗", "呢"))
+    ):
+        reasons.append("判停追问：开口仍有问句形状")
     leak_markers = (
         "Brief(", "say_intent", "dominant=", "ThoughtBrief", "DriveSignal(",
         "DriveSignal", "StanceSignal", "must_not_pretend", "org_conflicts",
@@ -674,7 +700,7 @@ def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
         "articulate_reject_recovered", "articulate_reject",
         "reject_count", "开口拒收回流｜",
         # 对方私事拒收短标签（不得上台）
-        "other_private_unfounded",
+        "other_private_unfounded", "stop_question",
         # 台下 why／旁路中文指纹（非用户对话禁词）
         "回指同场｜", "想要打开｜", "工程师旁路",
     )
@@ -712,14 +738,14 @@ def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
         prior = getattr(brief.context, "prior_session", None)
         if prior is not None and getattr(prior, "facts", None):
             facts = facts + list(prior.facts)
-        if _claims_unfounded_lived_bio(text, facts):
+        if _claims_unfounded_lived_bio(text, _classify_sources(facts)[0]):
             reasons.append("开口装无来源亲历，对照 must_not_pretend 说不通")
     if "把身体想象说成亲历" in (brief.must_not_pretend or []):
         facts = list(brief.context.facts_this_session or [])
         prior = brief.context.prior_session
         if prior is not None:
             facts += list(prior.facts or [])
-        if _claims_unfounded_body_experience(text, facts):
+        if _claims_unfounded_body_experience(text, _classify_sources(facts)[0]):
             reasons.append("开口装无来源身体亲历，对照 must_not_pretend 说不通")
     # 对方私事拒收：读 cannot_fake 含「本场没说过的对方私事」即开（stance_org 常挂）。
     # 形状走 _claims_unfounded_other_private（问句／有来源复述／模糊共情不拦；不扩词表）。
@@ -728,7 +754,7 @@ def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
         prior = getattr(brief.context, "prior_session", None)
         if prior is not None and getattr(prior, "facts", None):
             facts = facts + list(prior.facts)
-        if _claims_unfounded_other_private(text, facts):
+        if _claims_unfounded_other_private(text, _classify_sources(facts)[1]):
             reasons.append("开口编无来源对方私事，对照 cannot_fake 说不通")
     return reasons
 
@@ -774,10 +800,10 @@ def _mark_backend_fail(kind: str) -> None:
         _BACKEND_FAIL_KIND = k or "empty_backend"
 
 
-def _call_generate(generate, brief: ThoughtBrief) -> Optional[str]:
+def _call_generate(generate, brief: ThoughtBrief, *, correction: str = "") -> Optional[str]:
     """调用 generate；空／None 标 empty_backend；抛错标 llm_error（不存异常全文）。"""
     try:
-        draft = generate(brief)
+        draft = generate(brief, correction=correction) if correction else generate(brief)
     except Exception:
         _mark_backend_fail("llm_error")
         return None
@@ -787,7 +813,7 @@ def _call_generate(generate, brief: ThoughtBrief) -> Optional[str]:
     return draft
 
 
-def _try_builtin_cascade(brief: ThoughtBrief) -> Optional[str]:
+def _try_builtin_cascade(brief: ThoughtBrief, *, correction: str = "") -> Optional[str]:
     """有密钥 → DeepSeek；失败 → OpenCode；都失败 → None。"""
     global _LAST_BACKEND
     # DeepSeek
@@ -798,7 +824,7 @@ def _try_builtin_cascade(brief: ThoughtBrief) -> Optional[str]:
         ds_available = None  # type: ignore
         ds_generate = None  # type: ignore
     if ds_available is not None and ds_available():
-        accepted = _accept_draft(brief, _call_generate(ds_generate, brief))
+        accepted = _accept_draft(brief, _call_generate(ds_generate, brief, correction=correction))
         if accepted:
             _LAST_BACKEND = "deepseek"
             return accepted
@@ -808,14 +834,14 @@ def _try_builtin_cascade(brief: ThoughtBrief) -> Optional[str]:
     except Exception:
         _mark_backend_fail("empty_backend")
         return None
-    accepted = _accept_draft(brief, _call_generate(oc_generate, brief))
+    accepted = _accept_draft(brief, _call_generate(oc_generate, brief, correction=correction))
     if accepted:
         _LAST_BACKEND = "opencode"
         return accepted
     return None
 
 
-def _try_llm_once(brief: ThoughtBrief) -> Optional[str]:
+def _try_llm_once(brief: ThoughtBrief, *, correction: str = "") -> Optional[str]:
     global _LAST_BACKEND
     if _LLM_HOOK is not None:
         accepted = _accept_draft(brief, _call_generate(_LLM_HOOK, brief))
@@ -823,11 +849,33 @@ def _try_llm_once(brief: ThoughtBrief) -> Optional[str]:
             _LAST_BACKEND = "hook"
             return accepted
         return None
-    return _try_builtin_cascade(brief)
+    return _try_builtin_cascade(brief, correction=correction)
+
+
+def _retry_correction() -> str:
+    """本轮拒收短标签翻成人话，最多三条；不带字段、枚举或草稿原文。"""
+    messages = {
+        "empty": "上一版没有说出话",
+        "understage_leak": "上一版把台下工程信息说到了台上",
+        "enum_leak": "上一版把台下工程信息说到了台上",
+        "substrate_self": "上一版自称模型/代码/程序",
+        "lived_bio": "上一版编了没有来处的个人经历",
+        "body_experience": "上一版把身体想象说成了亲历",
+        "other_private_unfounded": "上一版替对方编了私事",
+        "too_long": "上一版话太长",
+        "press_commit_shape": "上一版是空壳答应，要给能对得上的具体约定",
+        "stop_question": "上一版在对方叫停后还追问",
+    }
+    lines = []
+    for tag in _TURN_REJECT_TAGS or [_BACKEND_FAIL_KIND]:
+        message = messages.get(tag, "上一版没通过校验，按上面的意思重说")
+        if message not in lines:
+            lines.append(message)
+    return "；".join(lines[:3])
 
 
 def _try_llm(brief: ThoughtBrief) -> Optional[str]:
-    """LLM 开口：失败或自述被拒后重试 1 次；仍失败返回 None → 降级 stub。"""
+    """最多重试一次，内置后端带人话原因；hook 只接 brief，第二次是盲重试。"""
     global _REJECTED_SELF_ID, _LAST_BACKEND
     _REJECTED_SELF_ID = False
     _LAST_BACKEND = ""
@@ -835,7 +883,7 @@ def _try_llm(brief: ThoughtBrief) -> Optional[str]:
     if first:
         return first
     # 重试一次（钩子若仍返回同句，会被再次拒绝；DeepSeek 失败也会再试 OpenCode）
-    second = _try_llm_once(brief)
+    second = _try_llm_once(brief, correction=_retry_correction())
     if second:
         return second
     return None

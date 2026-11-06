@@ -194,7 +194,28 @@ def extract_commitment(utterance: str) -> str | None:
             if any(mark in text for mark in ("嗨", "我在呢", "够了", "先这样", "不用了", "嗯，听着", "记得，你刚才")):
                 return None
 
-    if not any(shape in text for shape in _COMMIT_SHAPES):
+    # 只在最终开口侧检查引号位置和紧邻否定；用户侧识别与形状表不变。
+    quoted = set()
+    stack = []
+    pairs = {"「": "」", "『": "』", "“": "”", '"': '"', "'": "'"}
+    for i, char in enumerate(text):
+        if stack:
+            quoted.add(i)
+        if stack and char == stack[-1]:
+            stack.pop()
+        elif char in pairs:
+            stack.append(pairs[char])
+            quoted.add(i)
+    positions = []
+    for shape in _COMMIT_SHAPES:
+        for match in re.finditer(re.escape(shape), text):
+            idx = match.start()
+            if any(i in quoted for i in range(idx, match.end())):
+                continue
+            if any(n in text[max(0, idx - 4):idx] for n in ("没", "不", "别", "并非", "不是")):
+                continue
+            positions.append(idx)
+    if not positions:
         return None
 
     # 还要有一点「后续可核对」：再…／聊…／跟你…／把…／补…
@@ -202,12 +223,7 @@ def extract_commitment(utterance: str) -> str | None:
         return None
 
     # 短摘：优先截含约定线索的那一段
-    clip = text
-    for shape in _COMMIT_SHAPES:
-        idx = text.find(shape)
-        if idx >= 0:
-            clip = text[idx:]
-            break
+    clip = text[positions[0]:]
     clip = clip.strip()
     if len(clip) > 40:
         clip = clip[:40] + "…"
