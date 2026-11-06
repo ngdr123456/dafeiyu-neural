@@ -229,7 +229,9 @@ def _template_utterance(brief: ThoughtBrief) -> str:
             prior = getattr(brief.context, "prior_session", None)
             if prior is not None and prior.commitments_pending:
                 from .commit_extract import topic_from_pending_commitment
-                prior_topic = topic_from_pending_commitment(prior.commitments_pending[0])
+                # 债有身份：先用本轮认出的那笔，认不出才回落最老一笔。
+                target = getattr(brief, "pressed_commitment", "") or prior.commitments_pending[0]
+                prior_topic = topic_from_pending_commitment(target)
                 if prior_topic:
                     topic = prior_topic
         if not topic:

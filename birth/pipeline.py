@@ -410,7 +410,8 @@ def turn(
         and prior_now.commitments_pending
         and bool(getattr(context, "drive_prior_press_pending", False))
     ):
-        prior_p0 = prior_now.commitments_pending[0]
+        # 债有身份：只销本轮认出的那一笔；认不出才销最老一笔（同改前）。
+        prior_p0 = getattr(brief, "pressed_commitment", "") or prior_now.commitments_pending[0]
         if user_marks_commitment_done(user_text):
             done = _STORE.resolve_prior_commitment(match=prior_p0)
             if done:

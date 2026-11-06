@@ -78,6 +78,30 @@ _EXCLUDE_MARKS = (
 )
 
 
+def match_pending_commitment(user_text: str, prior) -> str | None:
+    """认出本轮用户话点到账上哪一笔未兑现（债有身份，不是只认第一条）。
+
+    只做账内身份识别：拿每笔债的主题词与用户话比对，不扫用户句式、不扩禁词。
+    命中多笔时取命中词数多者；同数取更长词；再同取更早入账（稳定）。
+    一笔都没命中 → None（调用方回落最老一笔，不猜）。
+    """
+    pending = list(getattr(prior, "commitments_pending", None) or [])
+    text = (user_text or "").strip()
+    if not pending or not text:
+        return None
+    best: str | None = None
+    best_key: tuple[int, int, int] | None = None
+    for idx, p in enumerate(pending):
+        toks = _pending_topic_tokens(p)
+        hits = [t for t in toks if t and t in text]
+        if not hits:
+            continue
+        key = (len(hits), max(len(t) for t in hits), -idx)
+        if best_key is None or key > best_key:
+            best, best_key = p, key
+    return best
+
+
 def user_presses_prior_pending(user_text: str, prior) -> bool:
     """用户话压到上场未兑现承诺（结构闸；不扩禁词堵嘴）。
 
@@ -97,10 +121,8 @@ def user_presses_prior_pending(user_text: str, prior) -> bool:
     if not text:
         return False
     # 1) 主题重叠
-    for p in pending:
-        toks = _pending_topic_tokens(p)
-        if toks and any(tok in text for tok in toks):
-            return True
+    if match_pending_commitment(text, prior) is not None:
+        return True
     # 2/3) 跨场回指 + 催答应／约定壳
     from .session_trace import PRIOR_BACKREF_MARKS
     if any(m in text for m in PRIOR_BACKREF_MARKS):
@@ -229,9 +251,8 @@ def _pending_topic_tokens(commitment: str) -> list[str]:
         tok = compact[i : i + 2]
         if tok.strip() and tok not in tokens:
             tokens.append(tok)
-    # 也收 3 字若有
-    if len(compact) >= 3:
-        tokens.append(compact[:3])
+    # 不再追加 compact[:3] 这类「前三字」伪词：它不是词，只是句子开头，
+    # 会把「你明天」当成题眼，盖住真正在尾部的题眼（如「月亮」）。
     return [t for t in tokens if len(t) >= 2]
 
 
@@ -274,7 +295,9 @@ def pressed_frame(brief) -> tuple[str, str] | None:
     why = getattr(getattr(brief, "drive", None), "why", "") or ""
     if (getattr(brief, "press_commit", False) and prior and prior.commitments_pending
             and (getattr(context, "drive_prior_press_pending", False) or "上场承诺｜" in why)):
-        return ("prior_press", prior.commitments_pending[0])
+        # 债有身份：认出的那笔优先；认不出才回落最老一笔（同改前）。
+        target = getattr(brief, "pressed_commitment", "") or prior.commitments_pending[0]
+        return ("prior_press", target)
     if (getattr(brief, "commit_deliverable", False)
             and getattr(brief, "commit_deliver_intent", False) and context.last_commitments):
         return ("same_session_press", context.last_commitments[0])

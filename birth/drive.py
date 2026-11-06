@@ -732,11 +732,13 @@ def infer_drive(
 
     # S12a) 上场未兑现承诺被催 → pursue mid（须有 prior.commitments_pending；须后于 §6；
     # 不把 prior pending 并进 last_commitments；why 指纹标明上场承诺）
+    # 债有身份：用户点到哪一笔就认哪一笔，认不出才回落最老一笔。
     if cues.drive_prior_press_pending:
         prior = getattr(context, "prior_session", None)
         first = ""
         if prior is not None and prior.commitments_pending:
-            first = prior.commitments_pending[0]
+            from .commit_extract import match_pending_commitment
+            first = match_pending_commitment(text, prior) or prior.commitments_pending[0]
         why = (
             f"上场承诺｜用户催兑现（{first}）"
             if first
@@ -844,10 +846,10 @@ def infer_drive(
         )
 
     # 5a) 上场承诺被催兜底（无 drive_prior_press_pending 时）
-    from .commit_extract import user_presses_prior_pending
+    from .commit_extract import match_pending_commitment, user_presses_prior_pending
     prior = getattr(context, "prior_session", None)
     if prior is not None and prior.commitments_pending and user_presses_prior_pending(text, prior):
-        first = prior.commitments_pending[0]
+        first = match_pending_commitment(text, prior) or prior.commitments_pending[0]
         return DriveSignal(
             direction="pursue",
             salience="mid",

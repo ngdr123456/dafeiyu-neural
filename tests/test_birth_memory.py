@@ -352,7 +352,8 @@ def test_prior_commit_resolve_g_postponement_keeps_debt(tmp_path: Path):
     r = turn("你上次答应我的事呢", stub=True)
     assert r.brief.press_commit is True
     assert r.brief.commit_deliver_intent is False
-    assert "晚点" in r.utterance and "周末" in r.utterance
+    # 题眼取账上内容词（去「前三字」伪词）：这句的题眼是「故事」而不是「你周末」。
+    assert "晚点" in r.utterance and "故事" in r.utterance
     prior = active_store().snapshot().prior_session
     assert prior.commitments_pending == pending_before
     assert commitment not in prior.commitments_resolved

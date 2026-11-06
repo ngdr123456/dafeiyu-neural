@@ -19,6 +19,7 @@ from __future__ import annotations
 from .drive import _extract_open_topic, is_neutral_filler
 from .commit_extract import (
     _pending_topic_tokens,
+    match_pending_commitment,
     topic_from_pending_commitment,
     user_marks_commitment_done,
     user_presses_commitment,
@@ -146,6 +147,7 @@ def arbitrate(
     ):
         openq_clear = True
     press_commit = False
+    pressed_commitment = ""
     commit_resolve = False
     commit_deliverable = False
     commit_deliver_intent = False
@@ -239,7 +241,12 @@ def arbitrate(
         prior = getattr(context, "prior_session", None)
         pending0 = ""
         if prior is not None and prior.commitments_pending:
-            pending0 = prior.commitments_pending[0]
+            # 债有身份：认出的那笔优先；认不出回落到最老一笔（同改前）。
+            pressed_commitment = (
+                match_pending_commitment(user_text, prior)
+                or prior.commitments_pending[0]
+            )
+            pending0 = pressed_commitment
         topic = topic_from_pending_commitment(pending0) or pending0 or "这事"
         # 截短话题，避免整句承诺塞进「」
         if len(topic) > 12:
@@ -303,6 +310,7 @@ def arbitrate(
         openq_curiosity_hang=openq_curiosity_hang,
         openq_clear=openq_clear,
         press_commit=press_commit,
+        pressed_commitment=pressed_commitment,
         commit_resolve=commit_resolve,
         commit_deliverable=commit_deliverable,
         commit_deliver_intent=commit_deliver_intent,

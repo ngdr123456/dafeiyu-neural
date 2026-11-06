@@ -192,6 +192,8 @@ class ThoughtBrief:
     openq_clear: bool = False
     # 结构化：本轮用户催可核对约定（articulate 拒空壳／stub 模板读此标记）
     press_commit: bool = False
+    # 结构化：本轮被催的是上场账上哪一笔原文（债有身份；空＝认不出，回落最老一笔）
+    pressed_commitment: str = ""
     # 结构化：用户示意约定已兑现 → 开口后 resolve
     commit_resolve: bool = False
     # 结构化：本轮用户改口／否认同场承诺（arbitrate 写；pipeline／commit_extract 读；勿主靠 COMMIT_DENY_MARKS）
