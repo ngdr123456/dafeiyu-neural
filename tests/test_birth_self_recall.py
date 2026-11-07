@@ -26,6 +26,24 @@ def signal(target="蓝色纸船"):
     return InputSignal("ask", "other", "test", "test", recall_self=True, recall_target=target)
 
 
+def test_ledger_file_boundary_is_isolated(tmp_path):
+    from dataclasses import asdict
+    from birth.context import ThinContextStore
+    from birth.self_recall import recall
+    from birth.types import HerUtterance
+
+    a = BirthMemoryStore(tmp_path / "a.json")
+    b = BirthMemoryStore(tmp_path / "b.json")
+    a.append_session(her_utterances=[asdict(HerUtterance("蓝色纸船在A账本", "", "", "", "stub", complete=True))])
+    b.append_session(her_utterances=[asdict(HerUtterance("蓝色纸船在B账本", "", "", "", "stub", complete=True))])
+    q = "你说过蓝色纸船什么？"
+    sig = signal("蓝色纸船")
+    ev_a = recall(sig, q, ThinContextStore(), a)
+    ev_b = recall(sig, q, ThinContextStore(), b)
+    assert ev_a and ev_a.text == "蓝色纸船在A账本" and "B账本" not in ev_a.text
+    assert ev_b and ev_b.text == "蓝色纸船在B账本" and "A账本" not in ev_b.text
+
+
 def test_full_delivery_same_and_cross_session(tmp_path, monkeypatch):
     path = tmp_path / "ledger.json"
     configure_memory(enabled=True, path=path)
