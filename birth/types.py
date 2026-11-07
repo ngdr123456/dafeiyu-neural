@@ -111,6 +111,7 @@ class PriorSessionTrace:
     her_questions: List[str] = field(default_factory=list)
 
     commitment_candidates: List[CommitmentCandidate] = field(default_factory=list)
+    record_metadata: dict | None = None
 
     def has_trace(self) -> bool:
         return bool(

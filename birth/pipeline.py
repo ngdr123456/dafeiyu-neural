@@ -490,11 +490,11 @@ def turn(
         ))
     if commitment:
         if frame is None:
-            _STORE.append_commitment(commitment)
+            _STORE.append_commitment(commitment, metadata=record_meta("her_utterance", commitment != utterance.strip()))
         elif frame[1] not in resolved_targets:
             _STORE.append_commitment_candidate(CommitmentCandidate(
                 text=commitment, target=frame[1], frame=frame[0], source=last_articulate_source()
-            ))
+            ), metadata=record_meta("her_utterance", commitment != utterance.strip()))
     # 好奇挂起：读 Brief.openq_curiosity_hang（禁止 pipeline 再扫 CURIOSITY_MARKS）
     if getattr(brief, "openq_curiosity_hang", False):
         # 新好奇挂起替换旧悬问（可检验的「新话头」，避免只进不出堆黏）

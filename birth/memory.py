@@ -69,6 +69,34 @@ class SessionTraceRecord:
         )
 
     def to_prior(self) -> PriorSessionTrace:
+        def by_value(name, items, key=lambda item: item, nested=False):
+            values = self.record_metadata.get(name) if isinstance(self.record_metadata, dict) else None
+            if not isinstance(values, list) or len(values) != len(items):
+                return {}
+            if nested:
+                # 复合键必须是 JSON 安全的字符串嵌套，不能是 tuple：
+                # PriorSessionTrace 会被 asdict→json.dumps 直接打印（birth/__main__.py）。
+                buckets: dict = {}
+                for item, meta in zip(items, values):
+                    outer, inner = key(item)
+                    bucket = buckets.setdefault(outer, {})
+                    if inner not in bucket:
+                        bucket[inner] = meta
+                    elif bucket[inner] != meta:
+                        bucket[inner] = None
+                return {
+                    outer: {inner: dict(meta) for inner, meta in bucket.items() if isinstance(meta, dict)}
+                    for outer, bucket in buckets.items()
+                }
+            result = {}
+            for item, meta in zip(items, values):
+                k = key(item)
+                if k not in result:
+                    result[k] = meta
+                elif result[k] != meta:
+                    result[k] = None
+            return {k: dict(v) for k, v in result.items() if isinstance(v, dict)}
+
         return PriorSessionTrace(
             commitment_candidates=[replace(c) for c in self.commitment_candidates],
             facts=list(self.facts),
@@ -78,6 +106,11 @@ class SessionTraceRecord:
             her_questions=list(self.her_questions),
             ended_at=self.ended_at,
             stance_traces=[StanceTrace(t.kind, t.point, t.why) for t in self.stance_traces],
+            record_metadata={
+                "commitments_pending": by_value("commitments_pending", self.commitments_pending),
+                "commitments_resolved": by_value("commitments_resolved", self.commitments_resolved),
+                "commitment_candidates": by_value("commitment_candidates", self.commitment_candidates, lambda c: (c.target, c.text), nested=True),
+            },
         )
 
 
@@ -185,9 +218,16 @@ class BirthMemoryStore:
                             and target.strip() and frame in ("prior_press", "same_session_press")
                             and isinstance(source, str)):
                         candidates.append(CommitmentCandidate(text, target, frame, source))
+            retained_candidates = [c for c in candidates if c.target in (raw.get("commitments_pending") or [])]
+            metadata = raw.get("record_metadata")
+            if (isinstance(metadata, dict) and isinstance(raw_candidates, list)
+                    and len(retained_candidates) != len(raw_candidates)):
+                # Filtering invalid records makes the raw metadata indexes unsafe.
+                metadata = dict(metadata)
+                metadata["commitment_candidates"] = None
             out.append(
                 SessionTraceRecord(
-                    commitment_candidates=[c for c in candidates if c.target in (raw.get("commitments_pending") or [])],
+                    commitment_candidates=retained_candidates,
                     facts=list(raw.get("facts") or []),
                     commitments_pending=list(raw.get("commitments_pending") or []),
                     commitments_resolved=list(raw.get("commitments_resolved") or []),
@@ -196,7 +236,7 @@ class BirthMemoryStore:
                     ended_at=str(raw.get("ended_at") or ""),
                     stance_traces=traces,
                     her_utterances=utterances,
-                    record_metadata=raw.get("record_metadata"),
+                    record_metadata=metadata,
                 )
             )
         return out
@@ -280,6 +320,9 @@ class BirthMemoryStore:
                 "open_questions": aligned("open_questions", list(open_questions or []), rec.open_questions),
                 "her_questions": aligned("her_questions", list(her_questions or []), rec.her_questions),
                 "stance_traces": aligned("stance_traces", list(stance_traces or []), rec.stance_traces, lambda t: (t.kind, t.point)),
+                "commitments_pending": aligned("commitments_pending", list(commitments_pending or []), rec.commitments_pending),
+                "commitments_resolved": aligned("commitments_resolved", list(commitments_resolved or []), rec.commitments_resolved),
+                "commitment_candidates": aligned("commitment_candidates", list(commitment_candidates or []), rec.commitment_candidates, lambda c: (c.target, c.text)),
             }
         sessions = self._read_raw()
         serialized = asdict(rec)

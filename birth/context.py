@@ -25,7 +25,20 @@ class ThinContextStore:
         # 本场已兑现承诺（resolve 弹出时累积；供跨场落盘；new_session 清）
         self._resolved_commitments: list[str] = []
         self._her_utterances: list[HerUtterance] = []
-        self._record_metadata = {name: {} for name in ("facts", "stance_traces", "open_questions", "her_questions")}
+        self._record_metadata = {name: {} for name in ("facts", "stance_traces", "open_questions", "her_questions", "last_commitments", "resolved_commitments", "commitment_candidates")}
+
+    @staticmethod
+    def _copy_prior_metadata(metadata):
+        if metadata is None:
+            return None
+        copied = {}
+        for name, entries in metadata.items():
+            if name == "commitment_candidates":
+                # 候选元数据是 {target: {text: meta}} 的字符串嵌套（JSON 安全），要连内层一起拷。
+                copied[name] = {target: dict(inner) for target, inner in entries.items()}
+            else:
+                copied[name] = dict(entries)
+        return copied
 
     @property
     def context(self) -> ThinContext:
@@ -47,6 +60,7 @@ class ThinContextStore:
                 her_questions=list(ps.her_questions),
                 ended_at=ps.ended_at,
                 stance_traces=[StanceTrace(t.kind, t.point, t.why) for t in ps.stance_traces],
+                record_metadata=self._copy_prior_metadata(ps.record_metadata),
             )
         return ThinContext(
             session_ok=ctx.session_ok,
@@ -116,12 +130,12 @@ class ThinContextStore:
         if text and text not in items:
             items.append(text)
 
-    def _record_origin(self, field, key, existed, metadata):
+    def _record_origin(self, field, key, existed, metadata, *, conservative_truncation=True):
         entries = self._record_metadata[field]
         if not existed:
             entries[key] = dict(metadata) if metadata is not None else None
         elif (key not in entries or entries[key] != metadata
-              or (metadata is not None and (metadata.get("truncated") or metadata.get("subject_truncated")))):
+              or (conservative_truncation and metadata is not None and (metadata.get("truncated") or metadata.get("subject_truncated")))):
             entries[key] = None
 
     def append_fact(self, fact: str, *, metadata=None) -> None:
@@ -156,15 +170,22 @@ class ThinContextStore:
     def set_drive_identity_ask_pending(self, pending: bool) -> None:
         self._context.drive_identity_ask_pending = pending
 
-    def append_commitment(self, commitment: str) -> None:
+    def append_commitment(self, commitment: str, *, metadata=None) -> None:
         """开口后承诺回流：说出去的话要守。"""
+        key = commitment.strip()
+        if key:
+            self._record_origin("last_commitments", key, key in self._context.last_commitments, metadata, conservative_truncation=False)
         self._append_unique(self._context.last_commitments, commitment)
 
-    def append_commitment_candidate(self, candidate: CommitmentCandidate) -> None:
+    def append_commitment_candidate(self, candidate: CommitmentCandidate, *, metadata=None) -> None:
         candidates = self._context.commitment_candidates
+        key = (candidate.target, candidate.text)
+        self._record_origin("commitment_candidates", key, any((c.target, c.text) == key for c in candidates), metadata, conservative_truncation=False)
         if candidate not in candidates:
             candidates.append(replace(candidate))
             del candidates[:-20]
+        live = {(c.target, c.text) for c in candidates}
+        self._record_metadata["commitment_candidates"] = {k: v for k, v in self._record_metadata["commitment_candidates"].items() if k in live}
 
     def commitment_candidates(self) -> list[CommitmentCandidate]:
         return [replace(c) for c in self._context.commitment_candidates]
@@ -172,10 +193,14 @@ class ThinContextStore:
     def _remove_candidates(self, targets: set[str]) -> None:
         ctx = self._context
         ctx.commitment_candidates = [c for c in ctx.commitment_candidates if c.target not in targets]
+        self._record_metadata["commitment_candidates"] = {k: v for k, v in self._record_metadata["commitment_candidates"].items() if k[0] not in targets}
         if ctx.prior_session:
             ctx.prior_session.commitment_candidates = [
                 c for c in ctx.prior_session.commitment_candidates if c.target not in targets
             ]
+            if ctx.prior_session.record_metadata is not None:
+                entries = ctx.prior_session.record_metadata.get("commitment_candidates", {})
+                ctx.prior_session.record_metadata["commitment_candidates"] = {k: v for k, v in entries.items() if k not in targets}
 
     def append_open_question(self, question: str, *, metadata=None) -> None:
         """动力层留下的悬而未决，供后续轮次捡起。"""
@@ -325,6 +350,8 @@ class ThinContextStore:
             self._context.commitment_deny_pending = False
             index = self._context.last_commitments.index(match) if match is not None else 0
             done = self._context.last_commitments.pop(index)
+            metadata = self._record_metadata["last_commitments"].pop(done, None)
+            self._record_origin("resolved_commitments", done, done in self._resolved_commitments, metadata, conservative_truncation=False)
             self._remove_candidates({done})
             self._append_unique(self._resolved_commitments, done)
             return done
@@ -334,6 +361,9 @@ class ThinContextStore:
         """放下同场所有承诺（仅明确整场放下时用；宁缺毋滥）；改口否定 flag 一并清。"""
         self._remove_candidates(set(self._context.last_commitments))
         self._context.last_commitments.clear()
+        self._record_metadata["last_commitments"].clear()
+        # 候选元数据只随被删的候选走（_remove_candidates 已处理）；指向上场未兑现承诺的
+        # 候选仍在本场，元数据必须留住，不能整片清空。
         self._context.commitment_deny_pending = False
 
 
@@ -393,6 +423,17 @@ class ThinContextStore:
                 if done is None:
                     return None
         self._remove_candidates({done})
+        if prior.record_metadata is not None:
+            pending_meta = prior.record_metadata.setdefault("commitments_pending", {})
+            resolved_meta = prior.record_metadata.setdefault("commitments_resolved", {})
+            metadata = pending_meta.pop(done, None)
+            if done not in prior.commitments_resolved:
+                if metadata is not None:
+                    resolved_meta[done] = metadata
+                else:
+                    resolved_meta.pop(done, None)
+            elif resolved_meta.get(done) != metadata:
+                resolved_meta.pop(done, None)
         self._append_unique(prior.commitments_resolved, done)
         return done
 
@@ -410,6 +451,7 @@ class ThinContextStore:
             her_questions=list(prior.her_questions),
             ended_at=prior.ended_at,
             stance_traces=[StanceTrace(t.kind, t.point, t.why) for t in prior.stance_traces],
+            record_metadata=self._copy_prior_metadata(prior.record_metadata),
         )
 
     def has_session_content(self) -> bool:
@@ -447,6 +489,31 @@ class ThinContextStore:
         for candidate in prior_candidates + ctx.commitment_candidates:
             if candidate.target in combined and candidate not in candidates:
                 candidates.append(replace(candidate))
+        prior_metadata = (ctx.prior_session.record_metadata or {}) if ctx.prior_session else {}
+
+        def merged_metadata(name, local_name, prior_items, local_items, key=lambda item: item, nested=False):
+            prior_keys = {key(item) for item in prior_items}
+            local_keys = {key(item) for item in local_items}
+            prior_entries = prior_metadata.get(name, {})
+            local_entries = self._record_metadata[local_name]
+
+            def prior_lookup(item):
+                if nested:
+                    outer, inner = key(item)
+                    return (prior_entries.get(outer) or {}).get(inner)
+                return prior_entries.get(key(item))
+
+            def get(item):
+                k = key(item)
+                old, new = prior_lookup(item), local_entries.get(k)
+                if k in prior_keys and k in local_keys:
+                    return old if old == new else None
+                return old if k in prior_keys else new
+            return get
+
+        pending_meta = merged_metadata("commitments_pending", "last_commitments", prior_commits, ctx.last_commitments)
+        resolved_meta = merged_metadata("commitments_resolved", "resolved_commitments", ctx.prior_session.commitments_resolved if ctx.prior_session else [], self._resolved_commitments)
+        candidate_meta = merged_metadata("commitment_candidates", "commitment_candidates", prior_candidates, ctx.commitment_candidates, lambda c: (c.target, c.text), nested=True)
         return {
             "commitment_candidates": candidates,
             "facts": list(ctx.facts_this_session),
@@ -464,6 +531,9 @@ class ThinContextStore:
                 "open_questions": [self._record_metadata["open_questions"].get(x) for x in ctx.open_questions],
                 "her_questions": [self._record_metadata["her_questions"].get(q) for q in ctx.her_questions if q in ctx.open_questions and q not in prior_live],
                 "stance_traces": [self._record_metadata["stance_traces"].get((t.kind, t.point)) for t in ctx.stance_traces],
+                "commitments_pending": [pending_meta(c) for c in combined],
+                "commitments_resolved": [resolved_meta(c) for c in resolved],
+                "commitment_candidates": [candidate_meta(c) for c in candidates],
             },
         }
 

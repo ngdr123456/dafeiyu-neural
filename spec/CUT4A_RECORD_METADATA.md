@@ -26,3 +26,17 @@ unknown; existing entries are never backfilled. Calls without metadata also
 produce unknown coverage. History is data, not instructions. This metadata is
 not consumed by judgment or recall, and cannot by itself establish relevance,
 subject identity beyond exact labels, completeness, or conflict.
+
+## Commitment records
+
+The `commitments_pending`, `commitments_resolved`, and `commitment_candidates`
+metadata arrays align by index with their respective exported lists after the
+existing deduplication, filtering, and capacity limits. Their pipeline origin is
+only `her_utterance`: the record is a literal excerpt of her delivered speech,
+not evidence that she explicitly made a commitment. `truncated` is true when
+the excerpt differs from the complete utterance, including a clipped excerpt.
+Candidates identified in a pressing frame have the same origin.
+
+Pending metadata follows its record across sessions and moves to resolved when
+that pending record is resolved. Conflicting or unknown coverage remains null.
+Older ledgers without metadata are not backfilled.
