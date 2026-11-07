@@ -377,7 +377,15 @@ def turn(
     reject_tags = take_reject_feedback()
     if reject_tags:
         _STORE.record_articulate_rejects(reject_tags)
-    _STORE.append_fact(f"用户说：{_clip(user_text)}")
+    topic = input_signal.topic if input_signal is not None else ""
+    def record_meta(origin, truncated=False):
+        result = {"origin": origin, "subject": topic[:80], "truncated": truncated}
+        if len(topic) > 80:
+            result["subject_truncated"] = True
+        if topic and input_signal is not None and input_signal.degraded:
+            result["subject_degraded"] = True
+        return result
+    _STORE.append_fact(f"用户说：{_clip(user_text)}", metadata=record_meta("user_statement", len(user_text.strip()) > 40))
     if output is not None:
         output(result)
 
@@ -398,7 +406,7 @@ def turn(
             if target and target in context.last_commitments:
                 kept_point = commitment_point(target)
         if kept_point:
-            _STORE.append_stance_trace("kept", kept_point, stance_now.why)
+            _STORE.append_stance_trace("kept", kept_point, stance_now.why, metadata=record_meta("system_observation", kept_point.endswith("…")))
             _STORE.record_stance_kept(kept_point)
 
     # Only a concrete opening asking for the other's side creates a wait.
@@ -470,7 +478,7 @@ def turn(
 
     # 用户话头已记录；确认输出后再将台上这句 clip 进同场事实；
     # 动力层好奇追问入库；台上薄提取承诺/悬问（宁缺毋滥）
-    _STORE.append_fact(f"台上说：{_clip(utterance)}")
+    _STORE.append_fact(f"台上说：{_clip(utterance)}", metadata=record_meta("her_utterance", len(utterance.strip()) > 40))
     if utterance.strip():
         _STORE.append_her_utterance(HerUtterance(
             text=utterance,
@@ -496,13 +504,13 @@ def turn(
         # 不强制写「待接的话头：」前缀（drive/stub 已读 flag）。前缀仅无 flag 时的
         # 人类可读／旧快照兜底（drive_cues_from_context），本路径不写。
         _STORE.set_curiosity_hang_pending(True)
-        _STORE.append_open_question(_clip(user_text))
+        _STORE.append_open_question(_clip(user_text), metadata=record_meta("user_statement", len(user_text.strip()) > 40))
     elif (not (opening_hang and not context.drive_want_seen_satisfied_pending)
           and "想被看见｜" not in (drive.why or "")
           and not (context.open_questions and is_neutral_filler(user_text))):
         open_q = extract_open_question(utterance)
         if open_q:
-            _STORE.append_her_question(open_q)
+            _STORE.append_her_question(open_q, metadata=record_meta("her_utterance", open_q != utterance.strip()))
 
     # 改口否定／非 S3 drive flags 只服务本轮 drive：回合末清，不漏到下一轮
     _STORE.set_commitment_deny_pending(False)

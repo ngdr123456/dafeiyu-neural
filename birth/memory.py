@@ -54,6 +54,7 @@ class SessionTraceRecord:
 
     commitment_candidates: List[CommitmentCandidate] = field(default_factory=list)
     her_utterances: List[HerUtterance] = field(default_factory=list)
+    record_metadata: dict | None = None
 
     def is_empty(self) -> bool:
         return not (
@@ -195,6 +196,7 @@ class BirthMemoryStore:
                     ended_at=str(raw.get("ended_at") or ""),
                     stance_traces=traces,
                     her_utterances=utterances,
+                    record_metadata=raw.get("record_metadata"),
                 )
             )
         return out
@@ -219,6 +221,7 @@ class BirthMemoryStore:
         stance_traces: List[StanceTrace] | None = None,
         commitment_candidates: List[CommitmentCandidate] | None = None,
         her_utterances: List[dict] | None = None,
+        record_metadata: dict | None = None,
     ) -> SessionTraceRecord | None:
         """写入一场痕迹；历史有界，未结债超限拒绝写入并保留现场。"""
         unique_traces = []
@@ -256,8 +259,33 @@ class BirthMemoryStore:
         )
         if rec.is_empty():
             return None
+        if record_metadata is not None:
+            # Align after the same capacity limits and trace deduplication as the records.
+            def aligned(name, original, retained, key=lambda x: x):
+                values = record_metadata.get(name)
+                if not isinstance(values, list) or len(values) != len(original):
+                    return [None] * len(retained)
+                lookup = {}
+                originals = {}
+                for item, meta in zip(original, values):
+                    k = key(item)
+                    if k not in lookup:
+                        lookup[k], originals[k] = meta, item
+                    elif (lookup[k] != meta or originals[k] != item
+                          or (isinstance(meta, dict) and (meta.get("truncated") or meta.get("subject_truncated")))):
+                        lookup[k] = None
+                return [lookup.get(key(item)) for item in retained]
+            rec.record_metadata = {
+                "facts": aligned("facts", list(facts or []), rec.facts),
+                "open_questions": aligned("open_questions", list(open_questions or []), rec.open_questions),
+                "her_questions": aligned("her_questions", list(her_questions or []), rec.her_questions),
+                "stance_traces": aligned("stance_traces", list(stance_traces or []), rec.stance_traces, lambda t: (t.kind, t.point)),
+            }
         sessions = self._read_raw()
-        sessions.append(asdict(rec))
+        serialized = asdict(rec)
+        if rec.record_metadata is None:
+            serialized.pop("record_metadata")
+        sessions.append(serialized)
         if len(sessions) > self.max_sessions:
             sessions = sessions[-self.max_sessions :]
         self._write_raw(sessions)

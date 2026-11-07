@@ -25,6 +25,7 @@ class ThinContextStore:
         # 本场已兑现承诺（resolve 弹出时累积；供跨场落盘；new_session 清）
         self._resolved_commitments: list[str] = []
         self._her_utterances: list[HerUtterance] = []
+        self._record_metadata = {name: {} for name in ("facts", "stance_traces", "open_questions", "her_questions")}
 
     @property
     def context(self) -> ThinContext:
@@ -100,6 +101,7 @@ class ThinContextStore:
         self._context = ThinContext()
         self._resolved_commitments = []
         self._her_utterances = []
+        self._record_metadata = {name: {} for name in self._record_metadata}
 
     def append_her_utterance(self, entry: HerUtterance) -> None:
         self._her_utterances = _clip_list(
@@ -114,16 +116,37 @@ class ThinContextStore:
         if text and text not in items:
             items.append(text)
 
-    def append_fact(self, fact: str) -> None:
+    def _record_origin(self, field, key, existed, metadata):
+        entries = self._record_metadata[field]
+        if not existed:
+            entries[key] = dict(metadata) if metadata is not None else None
+        elif (key not in entries or entries[key] != metadata
+              or (metadata is not None and (metadata.get("truncated") or metadata.get("subject_truncated")))):
+            entries[key] = None
+
+    def append_fact(self, fact: str, *, metadata=None) -> None:
         """开口后事实回流：本轮发生了什么，下一轮可用。"""
+        key = fact.strip()
+        if key:
+            self._record_origin("facts", key, key in self._context.facts_this_session, metadata)
         self._append_unique(self._context.facts_this_session, fact)
 
-    def append_stance_trace(self, kind: str, point: str, why: str = "") -> None:
+    def append_stance_trace(self, kind: str, point: str, why: str = "", *, metadata=None) -> None:
         point = point.strip()
-        if not point or any(t.kind == kind and t.point == point for t in self._context.stance_traces):
+        if not point:
+            return
+        key = (kind, point)
+        existed = any(t.kind == kind and t.point == point for t in self._context.stance_traces)
+        self._record_origin("stance_traces", key, existed, metadata)
+        if existed:
+            if any(t.kind == kind and t.point == point and t.why != (why or "").strip()
+                   for t in self._context.stance_traces):
+                self._record_metadata["stance_traces"][key] = None
             return
         self._context.stance_traces.append(StanceTrace(kind=kind, point=point, why=(why or "").strip()))
         del self._context.stance_traces[:-20]
+        live = {(t.kind, t.point) for t in self._context.stance_traces}
+        self._record_metadata["stance_traces"] = {k: v for k, v in self._record_metadata["stance_traces"].items() if k in live}
 
     def record_stance_kept(self, point: str) -> None:
         if point:
@@ -154,11 +177,18 @@ class ThinContextStore:
                 c for c in ctx.prior_session.commitment_candidates if c.target not in targets
             ]
 
-    def append_open_question(self, question: str) -> None:
+    def append_open_question(self, question: str, *, metadata=None) -> None:
         """动力层留下的悬而未决，供后续轮次捡起。"""
+        key = question.strip()
+        if key:
+            self._record_origin("open_questions", key, key in self._context.open_questions, metadata)
         self._append_unique(self._context.open_questions, question)
 
-    def append_her_question(self, q: str) -> None:
+    def append_her_question(self, q: str, *, metadata=None) -> None:
+        key = q.strip()
+        if key:
+            self._record_origin("open_questions", key, key in self._context.open_questions, metadata)
+            self._record_origin("her_questions", key, key in self._context.her_questions, metadata)
         self._append_unique(self._context.open_questions, q)
         self._append_unique(self._context.her_questions, q)
 
@@ -267,6 +297,8 @@ class ThinContextStore:
             self._context.curiosity_hang_pending = False
             index = self._context.open_questions.index(match) if match is not None else 0
             result = self._context.open_questions.pop(index)
+            self._record_metadata["open_questions"].pop(result, None)
+            self._record_metadata["her_questions"].pop(result, None)
             self._context.her_questions = [q for q in self._context.her_questions if q in self._context.open_questions]
             return result
         self._context.her_questions = [q for q in self._context.her_questions if q in self._context.open_questions]
@@ -275,6 +307,8 @@ class ThinContextStore:
     def clear_open_questions(self) -> None:
         """放下同场所有悬问（用户换题、开了新话头时用）；好奇挂起 flag 一并清。"""
         self._context.open_questions.clear()
+        self._record_metadata["open_questions"].clear()
+        self._record_metadata["her_questions"].clear()
         self._context.her_questions = [q for q in self._context.her_questions if q in self._context.open_questions]
         self._context.curiosity_hang_pending = False
 
@@ -425,6 +459,12 @@ class ThinContextStore:
             ],
             "stance_traces": list(ctx.stance_traces),
             "her_utterances": [asdict(entry) for entry in self._her_utterances],
+            "record_metadata": {
+                "facts": [self._record_metadata["facts"].get(x) for x in ctx.facts_this_session],
+                "open_questions": [self._record_metadata["open_questions"].get(x) for x in ctx.open_questions],
+                "her_questions": [self._record_metadata["her_questions"].get(q) for q in ctx.her_questions if q in ctx.open_questions and q not in prior_live],
+                "stance_traces": [self._record_metadata["stance_traces"].get((t.kind, t.point)) for t in ctx.stance_traces],
+            },
         }
 
 
