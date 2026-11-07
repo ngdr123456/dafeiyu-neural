@@ -44,6 +44,32 @@ def test_ledger_file_boundary_is_isolated(tmp_path):
     assert ev_b and ev_b.text == "蓝色纸船在B账本" and "A账本" not in ev_b.text
 
 
+def test_switch_partner_clears_current_session(tmp_path):
+    from dataclasses import asdict
+    from birth.context import ThinContextStore
+    from birth.self_recall import recall
+    from birth.types import HerUtterance
+
+    store = ThinContextStore()
+    a = BirthMemoryStore(tmp_path / "a.json")
+    b = BirthMemoryStore(tmp_path / "b.json")
+    a_current = "蓝色纸船停在A这里"
+    a_ended = "蓝色纸船在A账本"
+    b_ended = "蓝色纸船停在B这里"
+    store.append_her_utterance(HerUtterance(a_current, "", "", "", "stub", complete=True))
+    a.append_session(her_utterances=[asdict(HerUtterance(a_ended, "", "", "", "stub", complete=True))])
+    b.append_session(her_utterances=[asdict(HerUtterance(b_ended, "", "", "", "stub", complete=True))])
+
+    store.new_session()
+    q = "你说过蓝色纸船什么？"
+    sig = signal("蓝色纸船")
+    evidence = recall(sig, q, store, b)
+    assert evidence is not None
+    assert evidence.text == b_ended
+    assert a_current not in evidence.text
+    assert a_ended not in evidence.text
+
+
 def test_full_delivery_same_and_cross_session(tmp_path, monkeypatch):
     path = tmp_path / "ledger.json"
     configure_memory(enabled=True, path=path)
