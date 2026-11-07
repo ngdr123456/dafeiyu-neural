@@ -32,7 +32,7 @@ def test_stub_turn_records_concrete_context_and_keeps_facts():
     entries = active_store().export_session_trace()["her_utterances"]
     assert entries == [{
         "text": result.utterance, "drive_direction": "hold",
-        "stance_posture": "yieldable", "org_grain": "simple", "source": "stub",
+        "stance_posture": "yieldable", "org_grain": "simple", "source": "stub", "complete": True,
     }]
     assert result.brief.drive.direction == "hold"
     assert result.brief.stance.posture == "yieldable"
@@ -56,7 +56,7 @@ def test_missing_drive_on_brief_is_recorded_as_empty(monkeypatch):
     entry, = active_store().export_session_trace()["her_utterances"]
     assert result.brief.drive is None
     assert entry == {"text": result.utterance, "drive_direction": "",
-                     "stance_posture": "yieldable", "org_grain": "simple", "source": "stub"}
+                     "stance_posture": "yieldable", "org_grain": "simple", "source": "stub", "complete": True}
 
 
 def test_rejected_drafts_record_only_delivered_fallback():
@@ -144,10 +144,10 @@ def test_delivery_failure_and_empty_output_do_not_enter_ledger(monkeypatch):
     assert active_store().export_session_trace()["her_utterances"] == []
 
 
-def test_delivered_long_text_is_clipped_like_fact(monkeypatch):
+def test_delivered_long_text_is_complete_but_fact_is_clipped(monkeypatch):
     monkeypatch.setattr(pipeline, "articulate", lambda *_args, **_kwargs: "字" * 45)
     result = turn("你好", new_session=True, stub=True)
     entry, = active_store().export_session_trace()["her_utterances"]
     assert result.utterance == "字" * 45
-    assert entry["text"] == "字" * 40 + "…"
-    assert "台上说：" + entry["text"] in active_store().snapshot().facts_this_session
+    assert entry["text"] == "字" * 45
+    assert "台上说：" + "字" * 40 + "…" in active_store().snapshot().facts_this_session

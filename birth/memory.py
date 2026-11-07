@@ -171,7 +171,8 @@ class BirthMemoryStore:
                 fields = ("text", "drive_direction", "stance_posture", "org_grain", "source")
                 for item in raw_utterances:
                     if isinstance(item, dict) and all(isinstance(item.get(key), str) for key in fields):
-                        utterances.append(HerUtterance(**{key: item[key] for key in fields}))
+                        utterances.append(HerUtterance(**{key: item[key] for key in fields},
+                                                       complete=item.get("complete") is True))
             raw_candidates = raw.get("commitment_candidates")
             if isinstance(raw_candidates, list):
                 for item in raw_candidates:

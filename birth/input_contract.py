@@ -23,12 +23,16 @@ class InputSignal:
     target_commitment: str = ""
     confidence: Literal["high", "medium", "low"] = "high"
     quoted_or_negated: bool = False
+    recall_self: bool = False
+    recall_target: str = ""
 
     def __post_init__(self) -> None:
         if self.confidence not in ("high", "medium", "low"):
             raise ValueError("invalid confidence")
         if not isinstance(self.quoted_or_negated, bool):
             raise ValueError("quoted_or_negated must be bool")
+        if not isinstance(self.recall_self, bool) or not isinstance(self.recall_target, str):
+            raise ValueError("invalid recall fields")
         for name in ("topic", "target_open_question", "target_commitment"):
             object.__setattr__(self, name, getattr(self, name).strip())
         if self.scope not in ("conversation", "task", "unclear"):

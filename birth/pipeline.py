@@ -363,6 +363,9 @@ def turn(
                       understanding=input_signal)
     brief = arbitrate(drive=drive, stance=stance, org=org, context=context,
                       user_text=user_text, understanding=input_signal)
+    from .self_recall import recall, recall_request
+    brief.recall_requested = recall_request(input_signal, user_text)
+    brief.recall_evidence = recall(input_signal, user_text, _STORE, active_memory() if memory_enabled() else None)
     utterance = articulate(brief, stub=stub)
     result = TurnResult(
         utterance=utterance,
@@ -468,14 +471,14 @@ def turn(
     # 用户话头已记录；确认输出后再将台上这句 clip 进同场事实；
     # 动力层好奇追问入库；台上薄提取承诺/悬问（宁缺毋滥）
     _STORE.append_fact(f"台上说：{_clip(utterance)}")
-    clipped_utterance = _clip(utterance)
-    if clipped_utterance:
+    if utterance.strip():
         _STORE.append_her_utterance(HerUtterance(
-            text=clipped_utterance,
+            text=utterance,
             drive_direction=(brief.drive.direction or "") if brief.drive else "",
             stance_posture=brief.stance.posture or "",
             org_grain=brief.org.grain or "",
             source=result.articulate_source,
+            complete=True,
         ))
     if commitment:
         if frame is None:

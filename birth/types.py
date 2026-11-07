@@ -66,6 +66,15 @@ class HerUtterance:
     stance_posture: str
     org_grain: str
     source: str
+    complete: bool = False  # Missing in old ledgers: completeness is unknown.
+
+
+@dataclass(frozen=True)
+class RecallEvidence:
+    text: str
+    session: str
+    ended_at: str
+    complete: bool
 
 
 @dataclass
@@ -244,3 +253,5 @@ class ThoughtBrief:
     focus: str = ""
     # 本轮理解／本轮原话／同场悬问／同场承诺／上场承诺／同场事实／无实质内容。
     focus_source: str = ""
+    recall_evidence: Optional[RecallEvidence] = None
+    recall_requested: bool = False
