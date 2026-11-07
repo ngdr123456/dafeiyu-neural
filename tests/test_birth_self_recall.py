@@ -115,7 +115,8 @@ def test_legacy_ambiguity_and_degraded_abstention(tmp_path):
     path.write_text(json.dumps({"sessions": [{"her_utterances": [old, old2]}]}, ensure_ascii=False), encoding="utf-8")
     ambiguous = pipeline.turn(question, input_signal=signal(), stub=True)
     assert ambiguous.brief.recall_evidence is None
-    assert "没有找到可可靠定位" in brief_to_prompt(ambiguous.brief)
+    assert ambiguous.brief.recall_status == "unavailable"  # legacy texts may be incomplete
+    assert "无法完整可靠地检索" in brief_to_prompt(ambiguous.brief)
 
 
 def test_unreadable_ledger_is_unchanged(tmp_path):

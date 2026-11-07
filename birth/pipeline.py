@@ -363,9 +363,11 @@ def turn(
                       understanding=input_signal)
     brief = arbitrate(drive=drive, stance=stance, org=org, context=context,
                       user_text=user_text, understanding=input_signal)
-    from .self_recall import recall, recall_request
+    from .self_recall import recall_result, recall_request
     brief.recall_requested = recall_request(input_signal, user_text)
-    brief.recall_evidence = recall(input_signal, user_text, _STORE, active_memory() if memory_enabled() else None)
+    recalled = recall_result(input_signal, user_text, _STORE, active_memory() if memory_enabled() else None)
+    brief.recall_status = recalled.status
+    brief.recall_evidence = recalled.evidence
     utterance = articulate(brief, stub=stub)
     result = TurnResult(
         utterance=utterance,

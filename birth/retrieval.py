@@ -84,7 +84,23 @@ def _read_ledger_bytes(path):
         raise LedgerUnreadable(f"Cannot read ledger {path}: {exc}") from exc
 
 
-def _preflight_ledger(path):
+def _preflight_ledger(path, *, max_bytes=None):
+    if max_bytes is not None:
+        try:
+            with path.open("rb") as handle:
+                data = handle.read(max_bytes + 1)
+        except FileNotFoundError:
+            return []
+        except OSError as exc:
+            raise LedgerUnreadable(f"Cannot read ledger {path}: {exc}") from exc
+        if len(data) > max_bytes:
+            raise LedgerInvalid("Ledger exceeds retrieval size limit")
+    else:
+        return _preflight_ledger_unbounded(path)
+    return _validate_ledger_data(path, data)
+
+
+def _preflight_ledger_unbounded(path):
     try:
         path.stat()
     except FileNotFoundError:
@@ -95,6 +111,10 @@ def _preflight_ledger(path):
         data = _read_ledger_bytes(path)
     except OSError as exc:
         raise LedgerUnreadable(f"Cannot read ledger {path}: {exc}") from exc
+    return _validate_ledger_data(path, data)
+
+
+def _validate_ledger_data(path, data):
     if not data:
         raise LedgerInvalid(f"Invalid ledger {path}: empty file")
     try:

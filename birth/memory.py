@@ -172,11 +172,13 @@ class BirthMemoryStore:
         self.max_traces = max(0, int(max_traces))
         self.max_utterances = max(0, int(max_utterances))
 
-    def _read_raw(self) -> list[dict]:
+    def _read_raw(self, *, max_bytes: int | None = None) -> list[dict]:
         # Import lazily: retrieval uses BirthMemoryStore to load validated records.
         from .retrieval import _preflight_ledger
 
-        return _preflight_ledger(self.path)
+        if max_bytes is None:
+            return _preflight_ledger(self.path)
+        return _preflight_ledger(self.path, max_bytes=max_bytes)
 
     def _write_raw(self, sessions: list[dict]) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)

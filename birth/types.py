@@ -78,6 +78,12 @@ class RecallEvidence:
     complete: bool
 
 
+@dataclass(frozen=True)
+class RecallResult:
+    status: Literal["not_requested", "unique", "no_match", "multiple", "unavailable"]
+    evidence: Optional[RecallEvidence] = None
+
+
 @dataclass
 class StanceTrace:
     """一条真守住过的取舍点（结构化标识；同场／跨场只用于连续性，不是语义匹配）。"""
@@ -257,3 +263,4 @@ class ThoughtBrief:
     focus_source: str = ""
     recall_evidence: Optional[RecallEvidence] = None
     recall_requested: bool = False
+    recall_status: Literal["not_requested", "unique", "no_match", "multiple", "unavailable"] = "not_requested"
