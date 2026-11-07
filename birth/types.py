@@ -60,6 +60,15 @@ class OrgConstraint:
 
 
 @dataclass
+class HerUtterance:
+    text: str
+    drive_direction: str
+    stance_posture: str
+    org_grain: str
+    source: str
+
+
+@dataclass
 class StanceTrace:
     """一条真守住过的取舍点（结构化标识；同场／跨场只用于连续性，不是语义匹配）。"""
 

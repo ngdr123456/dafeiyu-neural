@@ -11,9 +11,10 @@
 
 from __future__ import annotations
 
-from dataclasses import replace
+from dataclasses import asdict, replace
 
-from .types import CommitmentCandidate, PriorSessionTrace, StanceTrace, ThinContext
+from .memory import DEFAULT_MAX_UTTERANCES, _clip_list
+from .types import CommitmentCandidate, HerUtterance, PriorSessionTrace, StanceTrace, ThinContext
 
 
 class ThinContextStore:
@@ -23,6 +24,7 @@ class ThinContextStore:
         self._context = context if context is not None else ThinContext()
         # 本场已兑现承诺（resolve 弹出时累积；供跨场落盘；new_session 清）
         self._resolved_commitments: list[str] = []
+        self._her_utterances: list[HerUtterance] = []
 
     @property
     def context(self) -> ThinContext:
@@ -97,6 +99,12 @@ class ThinContextStore:
         """
         self._context = ThinContext()
         self._resolved_commitments = []
+        self._her_utterances = []
+
+    def append_her_utterance(self, entry: HerUtterance) -> None:
+        self._her_utterances = _clip_list(
+            [*self._her_utterances, replace(entry)], DEFAULT_MAX_UTTERANCES
+        )
 
     # -- 积累（只加不减，精确重复去重避免自我灌水） ----------------------
 
@@ -380,6 +388,7 @@ class ThinContextStore:
             or self._resolved_commitments
             or ctx.open_questions
             or ctx.stance_traces
+            or self._her_utterances
         )
 
     def export_session_trace(self) -> dict:
@@ -415,6 +424,7 @@ class ThinContextStore:
                 if q in ctx.open_questions and q not in prior_live
             ],
             "stance_traces": list(ctx.stance_traces),
+            "her_utterances": [asdict(entry) for entry in self._her_utterances],
         }
 
 

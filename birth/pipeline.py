@@ -49,7 +49,7 @@ from .input_contract import InputSignal, credible_open_question_answer
 from .input_sense import sense_input
 from .stance_org import (ATTITUDE_MARKS, commitment_point, conflict_point,
                          default_org, default_stance)
-from .types import CommitmentCandidate, ThoughtBrief
+from .types import CommitmentCandidate, HerUtterance, ThoughtBrief
 
 _STORE: ThinContextStore = ThinContextStore()
 
@@ -468,6 +468,15 @@ def turn(
     # 用户话头已记录；确认输出后再将台上这句 clip 进同场事实；
     # 动力层好奇追问入库；台上薄提取承诺/悬问（宁缺毋滥）
     _STORE.append_fact(f"台上说：{_clip(utterance)}")
+    clipped_utterance = _clip(utterance)
+    if clipped_utterance:
+        _STORE.append_her_utterance(HerUtterance(
+            text=clipped_utterance,
+            drive_direction=(brief.drive.direction or "") if brief.drive else "",
+            stance_posture=brief.stance.posture or "",
+            org_grain=brief.org.grain or "",
+            source=result.articulate_source,
+        ))
     if commitment:
         if frame is None:
             _STORE.append_commitment(commitment)

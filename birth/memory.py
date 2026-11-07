@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional, TypeVar
 
-from .types import CommitmentCandidate, PriorSessionTrace, StanceTrace
+from .types import CommitmentCandidate, HerUtterance, PriorSessionTrace, StanceTrace
 
 # 环境变量：覆盖默认路径
 ENV_MEMORY_PATH = "BIRTH_MEMORY_PATH"
@@ -29,6 +29,7 @@ DEFAULT_MAX_COMMITS = 20
 DEFAULT_MAX_PENDING_COMMITS = 1000
 DEFAULT_MAX_OPENQ = 10
 DEFAULT_MAX_TRACES = 20
+DEFAULT_MAX_UTTERANCES = 200
 
 
 def default_memory_path() -> Path:
@@ -52,6 +53,7 @@ class SessionTraceRecord:
     her_questions: List[str] = field(default_factory=list)
 
     commitment_candidates: List[CommitmentCandidate] = field(default_factory=list)
+    her_utterances: List[HerUtterance] = field(default_factory=list)
 
     def is_empty(self) -> bool:
         return not (
@@ -62,6 +64,7 @@ class SessionTraceRecord:
             or self.her_questions
             or self.stance_traces
             or self.commitment_candidates
+            or self.her_utterances
         )
 
     def to_prior(self) -> PriorSessionTrace:
@@ -105,6 +108,7 @@ class BirthMemoryStore:
         max_openq: int = DEFAULT_MAX_OPENQ,
         max_traces: int = DEFAULT_MAX_TRACES,
         max_pending_commits: int = DEFAULT_MAX_PENDING_COMMITS,
+        max_utterances: int = DEFAULT_MAX_UTTERANCES,
     ) -> None:
         self.path = Path(path) if path is not None else default_memory_path()
         self.max_sessions = max(1, int(max_sessions))
@@ -113,6 +117,7 @@ class BirthMemoryStore:
         self.max_pending_commits = max(1, int(max_pending_commits))
         self.max_openq = max(0, int(max_openq))
         self.max_traces = max(0, int(max_traces))
+        self.max_utterances = max(0, int(max_utterances))
 
     def _read_raw(self) -> list[dict]:
         # Import lazily: retrieval uses BirthMemoryStore to load validated records.
@@ -160,6 +165,13 @@ class BirthMemoryStore:
                         traces.append(StanceTrace(item["kind"], item["point"].strip(),
                                                   why.strip() if isinstance(why, str) else ""))
             candidates = []
+            utterances = []
+            raw_utterances = raw.get("her_utterances")
+            if isinstance(raw_utterances, list):
+                fields = ("text", "drive_direction", "stance_posture", "org_grain", "source")
+                for item in raw_utterances:
+                    if isinstance(item, dict) and all(isinstance(item.get(key), str) for key in fields):
+                        utterances.append(HerUtterance(**{key: item[key] for key in fields}))
             raw_candidates = raw.get("commitment_candidates")
             if isinstance(raw_candidates, list):
                 for item in raw_candidates:
@@ -181,6 +193,7 @@ class BirthMemoryStore:
                     her_questions=list(raw.get("her_questions") or []),
                     ended_at=str(raw.get("ended_at") or ""),
                     stance_traces=traces,
+                    her_utterances=utterances,
                 )
             )
         return out
@@ -204,6 +217,7 @@ class BirthMemoryStore:
         ended_at: str | None = None,
         stance_traces: List[StanceTrace] | None = None,
         commitment_candidates: List[CommitmentCandidate] | None = None,
+        her_utterances: List[dict] | None = None,
     ) -> SessionTraceRecord | None:
         """写入一场痕迹；历史有界，未结债超限拒绝写入并保留现场。"""
         unique_traces = []
@@ -233,6 +247,9 @@ class BirthMemoryStore:
             open_questions=_clip_list(list(open_questions or []), self.max_openq),
             her_questions=_clip_list(list(her_questions or []), self.max_openq),
             stance_traces=_clip_list(unique_traces, self.max_traces),
+            her_utterances=_clip_list(
+                [HerUtterance(**entry) for entry in (her_utterances or [])], self.max_utterances
+            ),
             ended_at=ended_at
             or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         )
@@ -268,6 +285,7 @@ def configure_memory(
     max_commits: int = DEFAULT_MAX_COMMITS,
     max_openq: int = DEFAULT_MAX_OPENQ,
     max_pending_commits: int = DEFAULT_MAX_PENDING_COMMITS,
+    max_utterances: int = DEFAULT_MAX_UTTERANCES,
 ) -> BirthMemoryStore | None:
     """开／关跨场薄记忆。enabled=False 时不碰磁盘。"""
     global _ENABLED, _STORE
@@ -282,5 +300,6 @@ def configure_memory(
         max_commits=max_commits,
         max_openq=max_openq,
         max_pending_commits=max_pending_commits,
+        max_utterances=max_utterances,
     )
     return _STORE
