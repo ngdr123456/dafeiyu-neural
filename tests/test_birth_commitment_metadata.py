@@ -42,7 +42,7 @@ def test_pipeline_commitment_persisted(tmp_path, monkeypatch, utterance, expecte
     pipeline.end_session()
     record = json.loads(path.read_text(encoding="utf-8"))["sessions"][0]
     assert record["commitments_pending"] == [expected_commitment]
-    assert record["record_metadata"]["commitments_pending"] == [meta(truncated=expected_truncated)]
+    assert record["record_metadata"]["commitments_pending"] == [{**meta(truncated=expected_truncated), "subject_credible": True}]
 
 
 def test_resolve_and_clear_candidate_metadata():

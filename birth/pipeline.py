@@ -45,7 +45,7 @@ from .drive import (
     should_set_drive_topic_continue_pending,
 )
 from .memory import active_memory, memory_enabled
-from .input_contract import InputSignal, credible_open_question_answer
+from .input_contract import InputSignal, credible_open_question_answer, credible_topic
 from .input_sense import sense_input
 from .stance_org import (ATTITUDE_MARKS, commitment_point, conflict_point,
                          default_org, default_stance)
@@ -384,14 +384,18 @@ def turn(
             result["subject_truncated"] = True
         if topic and input_signal is not None and input_signal.degraded:
             result["subject_degraded"] = True
+        if credible_topic(input_signal):
+            result["subject_credible"] = True
         return result
     _STORE.append_fact(f"用户说：{_clip(user_text)}", metadata=record_meta("user_statement", len(user_text.strip()) > 40))
     if output is not None:
         output(result)
 
     # 以下均依赖这句话已交付；输出异常时 end_session 只能保存此前经历。
+    previous_prior_question = _STORE.prior_her_question_text
     if brief.drive is not None and bool(getattr(brief.drive, "prior_her_question", False)):
         _STORE.set_drive_prior_her_question_used()
+        _STORE.prior_her_question_text = getattr(brief.drive, "prior_her_question_text", "")
 
     stance_now = brief.stance
     if stance_now.posture == "non_negotiable":
@@ -474,7 +478,8 @@ def turn(
             and not credible_open_question_answer(input_signal)):
         live_prior = _STORE.context.prior_session
         if live_prior is not None and live_prior.her_questions:
-            _STORE.remove_prior_her_question(live_prior.her_questions[0])
+            question = previous_prior_question or live_prior.her_questions[0]
+            _STORE.remove_prior_her_question(question)
 
     # 用户话头已记录；确认输出后再将台上这句 clip 进同场事实；
     # 动力层好奇追问入库；台上薄提取承诺/悬问（宁缺毋滥）

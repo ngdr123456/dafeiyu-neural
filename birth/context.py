@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, replace
+from copy import deepcopy
 
 from .memory import DEFAULT_MAX_UTTERANCES, _clip_list
 from .types import CommitmentCandidate, HerUtterance, PriorSessionTrace, StanceTrace, ThinContext
@@ -25,6 +26,7 @@ class ThinContextStore:
         # 本场已兑现承诺（resolve 弹出时累积；供跨场落盘；new_session 清）
         self._resolved_commitments: list[str] = []
         self._her_utterances: list[HerUtterance] = []
+        self.prior_her_question_text = ""
         self._record_metadata = {name: {} for name in ("facts", "stance_traces", "open_questions", "her_questions", "last_commitments", "resolved_commitments", "commitment_candidates")}
 
     @staticmethod
@@ -33,9 +35,8 @@ class ThinContextStore:
             return None
         copied = {}
         for name, entries in metadata.items():
-            if name == "commitment_candidates":
-                # 候选元数据是 {target: {text: meta}} 的字符串嵌套（JSON 安全），要连内层一起拷。
-                copied[name] = {target: dict(inner) for target, inner in entries.items()}
+            if name in ("commitment_candidates", "stance_traces"):
+                copied[name] = deepcopy(entries)
             else:
                 copied[name] = dict(entries)
         return copied
@@ -115,6 +116,7 @@ class ThinContextStore:
         self._context = ThinContext()
         self._resolved_commitments = []
         self._her_utterances = []
+        self.prior_her_question_text = ""
         self._record_metadata = {name: {} for name in self._record_metadata}
 
     def append_her_utterance(self, entry: HerUtterance) -> None:
@@ -382,6 +384,8 @@ class ThinContextStore:
         if prior is None or q not in prior.her_questions:
             return False
         prior.her_questions.remove(q)
+        if self.prior_her_question_text == q:
+            self.prior_her_question_text = ""
         return True
 
     def set_drive_prior_callback_pending(self, pending: bool) -> None:
@@ -439,6 +443,7 @@ class ThinContextStore:
 
     def set_prior_session(self, prior: PriorSessionTrace | None) -> None:
         """新场开局灌入上一场薄痕迹；None 表示无痕迹。"""
+        self.prior_her_question_text = ""
         if prior is None:
             self._context.prior_session = None
             return

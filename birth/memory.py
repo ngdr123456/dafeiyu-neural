@@ -97,6 +97,21 @@ class SessionTraceRecord:
                     result[k] = None
             return {k: dict(v) for k, v in result.items() if isinstance(v, dict)}
 
+        def sourced_by_value(name, items, *, nested=False):
+            values = self.record_metadata.get(name) if isinstance(self.record_metadata, dict) else None
+            if not isinstance(values, list) or len(values) != len(items):
+                return {}
+            if not all(isinstance(meta, dict) for meta in values):
+                return {}
+            if nested:
+                if not all(isinstance(t, StanceTrace) and isinstance(t.kind, str)
+                           and isinstance(t.point, str) for t in items):
+                    return {}
+                return by_value(name, items, lambda t: (t.kind, t.point), nested=True)
+            if not all(isinstance(item, str) for item in items):
+                return {}
+            return by_value(name, items)
+
         return PriorSessionTrace(
             commitment_candidates=[replace(c) for c in self.commitment_candidates],
             facts=list(self.facts),
@@ -107,6 +122,10 @@ class SessionTraceRecord:
             ended_at=self.ended_at,
             stance_traces=[StanceTrace(t.kind, t.point, t.why) for t in self.stance_traces],
             record_metadata={
+                "facts": sourced_by_value("facts", self.facts),
+                "open_questions": sourced_by_value("open_questions", self.open_questions),
+                "her_questions": sourced_by_value("her_questions", self.her_questions),
+                "stance_traces": sourced_by_value("stance_traces", self.stance_traces, nested=True),
                 "commitments_pending": by_value("commitments_pending", self.commitments_pending),
                 "commitments_resolved": by_value("commitments_resolved", self.commitments_resolved),
                 "commitment_candidates": by_value("commitment_candidates", self.commitment_candidates, lambda c: (c.target, c.text), nested=True),

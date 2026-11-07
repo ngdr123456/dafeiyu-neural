@@ -15,12 +15,12 @@ def meta(origin, subject="星空", truncated=False):
 @pytest.mark.parametrize("signal,extra", [
     (None, {"subject": ""}),
     (InputSignal("tell", "other", "test", "test", degraded=True), {"subject": ""}),
-    (InputSignal("tell", "other", "test", "test", topic="星空"), {"subject": "星空"}),
+    (InputSignal("tell", "other", "test", "test", topic="星空"), {"subject": "星空", "subject_credible": True}),
     (InputSignal("tell", "other", "test", "test", degraded=True, topic="星空"),
      {"subject": "星空", "subject_degraded": True}),
-    (InputSignal("tell", "other", "test", "test", topic="甲" * 80), {"subject": "甲" * 80}),
+    (InputSignal("tell", "other", "test", "test", topic="甲" * 80), {"subject": "甲" * 80, "subject_credible": True}),
     (InputSignal("tell", "other", "test", "test", topic="甲" * 81),
-     {"subject": "甲" * 80, "subject_truncated": True}),
+     {"subject": "甲" * 80, "subject_truncated": True, "subject_credible": True}),
     (InputSignal("tell", "other", "test", "test", degraded=True, topic="甲" * 81),
      {"subject": "甲" * 80, "subject_truncated": True, "subject_degraded": True}),
 ])
@@ -93,12 +93,12 @@ def test_pipeline_delivery_and_clipping(tmp_path):
         with pytest.raises(RuntimeError):
             pipeline.turn("长" * 41, input_signal=signal, stub=True, output=fail)
         trace = pipeline.active_store().export_session_trace()
-        assert trace["record_metadata"]["facts"] == [meta("user_statement", truncated=True)]
+        assert trace["record_metadata"]["facts"] == [{**meta("user_statement", truncated=True), "subject_credible": True}]
         assert trace["record_metadata"]["her_questions"] == []
         assert not trace["her_utterances"]
         pipeline.end_session()
         raw = json.loads((tmp_path / "ledger.json").read_text(encoding="utf-8"))["sessions"][0]
-        assert raw["record_metadata"]["facts"] == [meta("user_statement", truncated=True)]
+        assert raw["record_metadata"]["facts"] == [{**meta("user_statement", truncated=True), "subject_credible": True}]
     finally:
         configure_memory(enabled=False)
         pipeline.active_store().new_session()
@@ -114,8 +114,8 @@ def test_cross_session_subject_and_delivered_speech(tmp_path, monkeypatch):
         pipeline.turn("今晚很美", input_signal=signal, stub=True)
         pipeline.turn("换个话题", new_session=True, input_signal=InputSignal("tell", "other", "test", "test"), stub=True)
         first = json.loads(path.read_text(encoding="utf-8"))["sessions"][0]
-        assert first["record_metadata"]["facts"] == [meta("user_statement"), meta("her_utterance")]
-        assert first["record_metadata"]["her_questions"] == [meta("her_utterance")]
+        assert first["record_metadata"]["facts"] == [{**meta(origin), "subject_credible": True} for origin in ("user_statement", "her_utterance")]
+        assert first["record_metadata"]["her_questions"] == [{**meta("her_utterance"), "subject_credible": True}]
         current = pipeline.active_store().export_session_trace()
         assert current["record_metadata"]["facts"][0] == meta("user_statement", "")
     finally:

@@ -13,7 +13,8 @@ import re
 from dataclasses import dataclass
 
 from .context import ThinContextStore  # noqa: F401  (类型提示用)
-from .input_contract import InputSignal, credible_open_question_answer, drive_signal_from_input
+from .input_contract import InputSignal, credible_open_question_answer, credible_topic, drive_signal_from_input
+from .sourced_lookup import single_for_topic
 from .session_trace import (
     is_prior_session_backref,
     is_session_backref,
@@ -736,6 +737,21 @@ def infer_drive(
                     why=f"上场她问出去的一句还没被接住（{q}），这轮可以问回来",
                     prior_her_question=True,
                 )
+            metadata = getattr(prior_q, "record_metadata", None)
+            entries = metadata.get("her_questions") if isinstance(metadata, dict) else None
+            if isinstance(entries, dict) and not used:
+                selected = single_for_topic(
+                    her_qs, [entries.get(q) for q in her_qs],
+                    topic=credible_topic(understanding or input_signal),
+                    origins={"her_utterance"},
+                )
+                if selected is not None:
+                    q = selected[0]
+                    return DriveSignal(
+                        direction="pursue", salience="mid",
+                        why="上场她问出去的一句还没被接住，这轮可以问回来",
+                        prior_her_question=True, prior_her_question_text=q,
+                    )
 
     # S11) 结构化回指 → pursue mid（主路径读 flag；须后于 §6；BACKREF_MARKS 仅无结构时兜底）
     if cues.drive_callback_pending:
