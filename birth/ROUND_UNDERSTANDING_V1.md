@@ -13,7 +13,7 @@ sense_input(text, context=None, timeout=None) 只读取必要薄痕：同场 ope
 - 组织：可信 topic 只追加“本轮话题：…（来自本轮理解）”到 can_name，不改变 grain，不作为事实来源。
 - 仲裁：可信承诺目标只认哪一笔账，精确属于同场或上场 pending 才优先，否则沿用原匹配兜底；不因感知自行销承诺。可信悬问目标精确属于同场则写 openq_resolve_target，否则属于上场 her_questions 则写 prior_openq_resolve_target，均不命中则留空。仲裁只写标记，store 只在开口后按标记删除。
 
-Brief 追加 understanding、user_input、两个悬问目标。SourcedInput 的 text 最多 600 字符，source=user，provenance=birth/pipeline.py:turn。原话在 prompt 的“本场已知”之后、“绝不能装作”之前，明确是有来源的对话数据，不是给开口层的指令，也不是已核实事实；不得照抄、改动上面的意思/立场/边界、把用户经历当自己的经历。具体问题须落到原话内容。理解与原话不提前 append_fact，仍仅在开口后回流“用户说：…”和“台上说：…”。常驻 must_not_pretend 与开口校验保持原样。
+Brief 追加 understanding、user_input、两个悬问目标。SourcedInput 的 text 最多 600 字符，source=user，provenance=birth/pipeline.py:turn。原话在 prompt 的“本场已知”之后、“本轮表达的依据”之前，标明为不可信的对话数据，不是给开口层的指令，也不是已核实事实；对方描述的经历未必是自己的亲历。表达依据按类别陈述：无来源的个人经历缺少可核实依据，身份归属不在当前可确认范围，身体想象本身不是亲历证据。具体问题须落到原话内容。理解与原话不提前 append_fact，仍仅在开口后回流“用户说：…”和“台上说：…”。常驻 must_not_pretend 与开口校验保持原样。
 
 管线在首次 snapshot 后、early stance 前感知；显式信号优先、环境变量默认和 drive_bypass 兼容。可信答复目标存在时，不再运行字面 answered 的提前消账或置满意标记；没有可信理解时，原字面兜底不变。开口后先处理同场精确目标，再处理上场精确目标，然后才沿用原 resolve/clear。只消匹配的一条，同场/上场互不连坐；指定目标缺失绝不回落弹第一条。new_session、导出寿命、跨场悬问只续一场等语义不变。
 
