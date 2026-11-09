@@ -200,7 +200,14 @@ def test_filler_pickup_keeps_open_question_until_answered():
     r1 = turn("嗯")
     assert r1.brief.dominant == "meaning"
     assert active_store().pending_questions()
-    r2 = turn("月亮离我们很远", stub=True)
+    # 字面重叠不再算回答（宁缺）；这里由调用方给出结构化回答信号，
+    # 只证「信号到了就放下」，不证模型自然认出是回答。
+    from birth.input_contract import InputSignal
+    a_text = "月亮离我们很远"
+    a_sig = InputSignal("tell", "other", "test", "test", confidence="high",
+                        target_open_question=active_store().pending_questions()[0],
+                        answer_scope=a_text)
+    r2 = turn(a_text, input_signal=a_sig, stub=True)
     assert not active_store().pending_questions()
     assert r2.brief.dominant != "meaning"
     assert "先把" not in r2.brief.say_intent
