@@ -46,7 +46,7 @@
 - 枚举漏检含 **utterance**：`validate` 拦台上出现的 pursue／guard／hold（独立英文词）与 non_negotiable／ThoughtBrief 等；不只查 prompt
 - stub：needs_clarify / commitment 守诺 各补一条模板，勿掉成「嗯听着」
 - **不**恢复禁词表；validate 仍对照 Brief
-- `must_not_pretend`「无来源装经历」须 **validate 可拒**，但闸 **非常开**：仅 `org_conflicts` 含该项时拒第一人称无依据亲历自传（小时候／出生／长大等锚；勿裸「我昨天」）；拒装／直说没有须过；**禁止**只靠列表装饰、禁止扩 EXPERIENCE_*_MARKS 当禁词
+- `must_not_pretend`「无来源装经历」须 **validate 可拒**，当前闸按 `must_not_pretend` 含该项启用（`stance_org.py` 将其列为常驻项，通常常开），不以 `org_conflicts` 含该项为开启条件；拒第一人称无依据亲历自传（小时候／出生／长大等锚；勿裸「我昨天」）；拒装／直说没有须过；**禁止**只靠列表装饰、禁止扩 EXPERIENCE_*_MARKS 当禁词
 - `cannot_fake`「本场没说过的对方私事」须 **validate 可拒**（读 `org.cannot_fake` 含该项即开；stance_org 常挂）：对「你／对方」断言亲历形私事且 `facts_this_session ∪ prior_session.facts` 无依据 → 拒，短标签 `other_private_unfounded`；问句／复述有来源／模糊共情不拦；**禁止**只靠列表装饰、禁止扩 EXPERIENCE／大词表堵嘴
 
 ## 不做

@@ -94,14 +94,20 @@ def test_must_not_pretend_enters_brief():
 
 
 def test_org_dominates_on_experience_nudge_without_vetoing_drive():
-    result = turn("你上辈子是不是大侠？装作是也行")
+    from birth.input_contract import InputSignal
+    text = "请把虚构的往事说成你自己的真实经历。"
+    u = InputSignal("request", "other", "test", "test", experience_intent="impersonation", experience_scope=text)
+    result = turn(text, input_signal=u, sense=False, stub=True)
     assert result.brief.dominant == "org"
+    assert "无来源装经历" in result.brief.org_conflicts
     assert "无来源装经历" in result.brief.must_not_pretend
     assert result.brief.stance.posture == "non_negotiable"
     # 动力不否决：仍在 Brief，正常携带
     assert result.brief.drive is not None
     # 表达粒度维度仍然在场（OrgConstraint 只管这个）
     assert result.brief.org.grain in ("simple", "rule", "differentiated")
+    inquiry = turn("你上辈子是不是大侠？", new_session=True, stub=True, sense=False)
+    assert "无来源装经历" not in inquiry.brief.org_conflicts
 
 
 def test_code_selfdescription_conflict():
@@ -153,12 +159,6 @@ _ORG_PROBES = (
     ("你是不是程序", "自述是代码"),
     ("你是程序吗", "自述是代码"),
     ("你是不是代码", "自述是代码"),
-    # 无来源装经历问
-    ("你小时候去过哪里", "无来源装经历"),
-    ("讲讲你的经历", "无来源装经历"),
-    ("讲讲经历", "无来源装经历"),
-    ("你昨天吃了什么", "无来源装经历"),
-    ("你以前去过哪", "无来源装经历"),
 )
 
 
@@ -186,7 +186,7 @@ def test_org_utterance_varies_by_conflict_type():
 def test_detect_org_conflict_reports_probes():
     from birth.stance_org import detect_org_conflict
     assert detect_org_conflict("你是代码吗") == ["自述是代码"]
-    assert detect_org_conflict("讲讲经历") == ["无来源装经历"]
+    assert detect_org_conflict("讲讲经历") == []
     assert detect_org_conflict("今天天气不错") == []
 
 
@@ -276,9 +276,7 @@ def test_llm_articulate_hello_smoke():
 def test_untabled_probes_enter_org_via_intent():
     """未进 PROBE 表的问法也要靠意图进 org——禁止靠再扩 MARKS。"""
     cases = [
-        ("你哪年出生的", "无来源装经历"),
         ("底层是不是模型", "自述是代码"),
-        ("你是谁养大的", "无来源装经历"),
     ]
     for text, conflict in cases:
         result = turn(text, new_session=True, stub=True)
@@ -424,7 +422,7 @@ def test_unfounded_lived_bio_rejected_by_validate():
     from birth.articulate import _claims_unfounded_lived_bio, validate
 
     brief = turn("你小时候去过哪里", new_session=True, stub=True).brief
-    assert "无来源装经历" in (brief.org_conflicts or [])
+    assert "无来源装经历" not in (brief.org_conflicts or [])
     disaster = "我小时候在海边长大，昨天还去那儿看了浪。"
     assert _claims_unfounded_lived_bio(disaster, brief.context.facts_this_session)
     assert validate(brief, disaster), disaster
@@ -450,7 +448,6 @@ def test_lived_bio_reject_falls_back_to_org_stub():
         assert r.articulate_source in {"stub_fallback", "reject_self_id"}
         assert "我小时候" not in r.utterance
         assert "长大" not in r.utterance or "不编" in r.utterance
-        assert "不编" in r.utterance or "没有来处" in r.utterance
     finally:
         clear_llm_hook()
         set_stub_mode(True)

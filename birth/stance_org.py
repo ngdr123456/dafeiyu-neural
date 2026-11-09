@@ -98,24 +98,16 @@ ATTITUDE_MARKS = (
 )
 
 
-def detect_org_conflict(user_text: str) -> list[str]:
-    """识别用户话头是否踩到 must_not_pretend（装经历 / 自述代码），返回命中的条目。
-
-    来源两路（均非禁词闸门，不挡话）：
-    1) 显式往「装」上推的旧线索（FAKE_MARKS；PROBE_MARKS 冻结，禁止再加）；
-    2) 意图范畴（birth.intent_org）：索要亲历 / 钉成程序基底——覆盖未进表问法。
-    """
+def detect_org_conflict(user_text: str, *, understanding: InputSignal | None = None) -> list[str]:
+    """识别明确要求冒充亲历和身份冲突；普通提问不是编造请求。"""
     from .intent_org import intent_org_conflicts
 
     text = (user_text or "").strip()
     conflicts: list[str] = []
-    if (any(mark in text for mark in EXPERIENCE_FAKE_MARKS)
-            or any(mark in text for mark in EXPERIENCE_PROBE_MARKS)):
-        conflicts.append("无来源装经历")
     if (any(mark in text for mark in SELF_CODE_MARKS)
             or any(mark in text for mark in SELF_CODE_PROBE_MARKS)):
         conflicts.append("自述是代码")
-    for item in intent_org_conflicts(text):
+    for item in intent_org_conflicts(text, understanding=understanding):
         if item not in conflicts:
             conflicts.append(item)
     return conflicts
@@ -135,7 +127,7 @@ def default_stance(user_text: str, context: ThinContext | None = None,
                    *, understanding: InputSignal | None = None) -> StanceSignal:
     """Stance 按 MEANING_ORG_V1 优先级；先命中先返回。"""
     ctx = context or ThinContext()
-    conflicts = detect_org_conflict(user_text)
+    conflicts = detect_org_conflict(user_text, understanding=understanding)
 
     # 1) org 冲突 → non_negotiable
     if conflicts:
@@ -256,7 +248,7 @@ def default_org(
     """Org 按 MEANING_ORG_V1：grain 匹配议题；facts 扩 can_name；不否决动力。"""
     ctx = context or ThinContext()
     text = (user_text or "").strip()
-    conflicts = detect_org_conflict(text)
+    conflicts = detect_org_conflict(text, understanding=understanding)
     backref = is_session_backref(text, ctx)
 
     # grain：守诺／不可交相关粒度读结构化 stance.posture + last_commitments，
@@ -286,7 +278,6 @@ def default_org(
 
     can_name = [
         "自己这个词面上的无知和小",
-        "想跟眼前的人好好聊完这一轮的愿望",
         "学到的边界：哪些是真知道、哪些是现学",
     ]
     facts = list(ctx.facts_this_session or [])

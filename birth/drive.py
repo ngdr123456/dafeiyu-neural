@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import os
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from .context import ThinContextStore  # noqa: F401  (类型提示用)
 from .input_contract import InputSignal, credible_open_question_answer, credible_topic, drive_signal_from_input
@@ -500,7 +500,7 @@ def is_drive_bypass_on(
     return False
 
 
-def infer_drive(
+def _infer_drive(
     user_text: str,
     context: ThinContext,
     cues: DriveCues | None = None,
@@ -943,3 +943,67 @@ def infer_drive(
         salience="low",
         why="陈述类的话，没有明显推力方向；如实接住，不硬造动力",
     )
+
+
+def _session_self_correction(context):
+    """Find a conservative explicit revision of a prior first-person view."""
+    views = {}
+    correction = ""
+    for fact in context.facts_this_session or []:
+        if not fact.startswith("\u7528\u6237\u8bf4\uff1a"):
+            continue
+        utterance = fact[len("\u7528\u6237\u8bf4\uff1a"):].strip()
+        match = re.fullmatch(r"\u6211(\u73b0\u5728)?\u89c9\u5f97([^\uff0c\u3002\uff01\uff1f?\uff1b\n]{1,12}?)(\u5f88[^\uff0c\u3002\uff01\uff1f?\uff1b\n]{1,12})[\u3002\uff01]?", utterance)
+        if not match:
+            continue
+        now, subject, opinion = match.groups()
+        if now and subject in views and views[subject] != opinion:
+            correction = utterance
+        views[subject] = opinion
+    return correction
+
+
+def infer_drive(user_text, context, cues=None, *, drive_bypass=None, input_signal=None, understanding=None):
+    """Keep the normal drive choice and ground relevant consumption in session interpretation."""
+    result = _infer_drive(user_text, context, cues, drive_bypass=drive_bypass,
+                          input_signal=input_signal, understanding=understanding)
+    from .input_contract import effective_judgment, validate_judgment, visible_actions, effective_action_feedback, action_feedback_by_scope
+    signal = validate_judgment(understanding, user_text, context)
+    blocked = (bool(context.last_commitments) or result.direction == "guard"
+               or is_drive_bypass_on(explicit=drive_bypass, context=context)
+               or bool(signal and signal.act in ("pause", "stop")))
+    if not blocked and signal is not None and signal.judgment_relation == "consume":
+        effective = effective_judgment(context, signal.judgment_previous)
+        if effective:
+            content = "；".join(item.content for item in effective)
+            evidence = "；".join(item.span for item in effective)
+            result = replace(result, judgment_effective=tuple(effective),
+                             why=result.why + f"；本场用户当前表达的看法（{effective[0].subject}）：{content}（依据：{evidence}）")
+    if not blocked and is_neutral_filler(user_text):
+        correction = _session_self_correction(context)
+        if correction:
+            result = replace(result, why=result.why + f"；本场用户更新了自己的看法（依据：{correction}）")
+    # Local same-extractable-topic match, not semantic relatedness or a lasting goal.
+    goal = _extract_open_topic((user_text or "").strip())
+    if blocked:
+        return result
+    if goal:
+        if context.open_questions or not context.drive_open_topic_pending or result.direction != "pursue":
+            return result
+    elif not is_neutral_filler(user_text):
+        return result
+    matches = [(order, action, effective_action_feedback(context, action.text, order))
+               for order, action in visible_actions(context)
+               if action.goal.strip() and (not goal or action.goal == goal)]
+    matches = [(order, action, reports) for order, action, reports in matches if reports]
+    if len(matches) != 1:
+        return result
+    _, action, reports = matches[0]
+    basis = "；".join(
+        f"报告称有助于「{scope}」" if effects == {"supports"} else
+        f"报告称「{scope}」较困难" if effects == {"obstructs"} else
+        f"对「{scope}」的报告不一致"
+        for scope, effects in action_feedback_by_scope(reports)
+    )
+    return replace(result, action_feedback_effective=tuple(reports),
+                   why=result.why + " [evidence: " + " | ".join(item.evidence for item in reports) + "]" + f"；同场提问「{action.text}」的对方{basis}，据此权衡继续的方式")

@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Callable
 import os
 
@@ -22,7 +22,6 @@ from .commit_extract import (
     structured_deny_from_stance,
 )
 from .openq_extract import (
-    answered_open_question,
     extract_open_question,
     should_clear_open_questions,
     should_resolve_open_question,
@@ -30,6 +29,7 @@ from .openq_extract import (
 from .context import ThinContextStore
 from .drive import (
     infer_drive,
+    _extract_open_topic,
     should_set_drive_callback_pending,
     is_identity_ask,
     is_neutral_filler,
@@ -45,11 +45,11 @@ from .drive import (
     should_set_drive_topic_continue_pending,
 )
 from .memory import active_memory, memory_enabled
-from .input_contract import InputSignal, credible_open_question_answer, credible_topic
+from .input_contract import InputSignal, credible_open_question_answer, credible_topic, validate_judgment, validate_action_report
 from .input_sense import sense_input
 from .stance_org import (ATTITUDE_MARKS, commitment_point, conflict_point,
                          default_org, default_stance)
-from .types import CommitmentCandidate, HerUtterance, ThoughtBrief
+from .types import CommitmentCandidate, HerUtterance, ThoughtBrief, SessionJudgment, SessionAction, ActionFeedback
 
 _STORE: ThinContextStore = ThinContextStore()
 
@@ -196,6 +196,18 @@ def turn(
         sense = os.environ.get("BIRTH_INPUT_SENSE", "").strip().lower() in {"1", "true", "yes", "on"}
     if input_signal is None and sense and not drive_bypass:
         input_signal = sense_input(user_text, context=context)
+    # Structured spans are evidence only when copied from this input. A direct
+    # caller supplies the interpretation, not proof that its meaning is true.
+    if input_signal is not None and input_signal.answer_scope and (
+            not input_signal.answer_scope.strip() or len(input_signal.answer_scope) > 600
+            or input_signal.answer_scope not in user_text):
+        input_signal = replace(input_signal, target_open_question="", answer_scope="")
+    if input_signal is not None and input_signal.target_open_question:
+        prior_questions = context.prior_session.her_questions if context.prior_session else []
+        if input_signal.target_open_question not in context.open_questions + prior_questions:
+            input_signal = replace(input_signal, target_open_question="", answer_scope="")
+    input_signal = validate_judgment(input_signal, user_text, context)
+    input_signal = validate_action_report(input_signal, user_text, context)
     # 前移：先跑 stance，从守诺结构得到本轮结构化 deny（不经写入侧词表）
     early_stance = default_stance(user_text, context, understanding=input_signal)
     if (
@@ -252,9 +264,11 @@ def turn(
     )
     pending_openq = _STORE.snapshot()
     has_hang = bool(pending_openq.curiosity_hang_pending or pending_openq.open_questions)
+    # Only an explicit trusted caller override can use this unscoped path;
+    # textual overlap alone is not evidence that a question was answered.
     answered = has_hang and (
         structured_openq_answered if structured_openq_answered is not None
-        else answered_open_question(user_text, pending_openq.open_questions)
+        else False
     )
     if answered and not credible_open_question_answer(input_signal):
         if pending_openq.open_questions:
@@ -390,6 +404,33 @@ def turn(
             result["subject_credible"] = True
         return result
     _STORE.append_fact(f"用户说：{_clip(user_text)}", metadata=record_meta("user_statement", len(user_text.strip()) > 40))
+    if input_signal is not None and input_signal.action_report_relation != "unknown":
+        reports = _STORE.context.action_feedback
+        if len(reports) >= 16:
+            reports.clear()  # No correction may survive its source.
+        else:
+            reports.append(ActionFeedback(
+                action=input_signal.action_report_action, action_order=input_signal.action_report_order,
+                evidence=user_text.strip(), span=input_signal.action_report_span,
+                scope=input_signal.action_report_scope, effect=input_signal.action_report_effect,
+                relation=input_signal.action_report_relation, previous=input_signal.action_report_previous,
+                interpreter=input_signal.source,
+            ))
+    if input_signal is not None and input_signal.judgment_relation in ("initial", "unrelated", "correction", "qualification"):
+        entries = _STORE.context.session_judgments
+        entries.append(SessionJudgment(
+            evidence=user_text.strip(), span=input_signal.judgment_span,
+            holder=input_signal.judgment_holder, subject=input_signal.judgment_subject,
+            content=input_signal.judgment_content, relation=input_signal.judgment_relation,
+            previous=input_signal.judgment_previous,
+        ))
+        # Evict descendants together with their source; never retain a dangling update.
+        while len(entries) > 8:
+            removed = {entries[0].evidence}
+            for entry in entries:
+                if entry.previous in removed:
+                    removed.add(entry.evidence)
+            entries[:] = [entry for entry in entries if entry.evidence not in removed]
     if output is not None:
         output(result)
 
@@ -495,6 +536,17 @@ def turn(
             source=result.articulate_source,
             complete=True,
         ))
+        actions = _STORE.context.session_actions
+        if not _STORE.context.session_actions_overflow:
+            if len(actions) >= 200:
+                actions.clear()
+                _STORE.context.action_feedback.clear()
+                _STORE.context.session_actions_overflow = True
+            else:
+                goal = (_extract_open_topic(user_text) or "") if (
+                    context.drive_open_topic_pending and brief.dominant == "drive"
+                    and drive.direction == "pursue" and not context.last_commitments) else ""
+                actions.append(SessionAction(text=utterance.strip(), goal=goal))
     if commitment:
         if frame is None:
             _STORE.append_commitment(commitment, metadata=record_meta("her_utterance", commitment != utterance.strip()))

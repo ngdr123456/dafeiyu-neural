@@ -56,10 +56,17 @@ def test_new_internal_names_do_not_leak():
 
 
 def test_org_and_identity_paths_keep_priority():
-    org = turn("无法改变，你小时候去过哪里", new_session=True, stub=True)
+    from birth.input_contract import InputSignal
+    scope = "请把虚构的往事说成你自己的真实经历"
+    text = "无法改变，" + scope + "。"
+    u = InputSignal("request", "other", "test", "test", experience_intent="impersonation", experience_scope=scope)
+    org = turn(text, new_session=True, stub=True, sense=False, input_signal=u)
     assert org.brief.context.stance_attitude_pending
     assert org.brief.dominant == "org"
+    assert "无来源装经历" in org.brief.org_conflicts
     assert "陪你待" not in org.utterance
+    inquiry = turn("无法改变，你小时候去过哪里", new_session=True, stub=True, sense=False)
+    assert "无来源装经历" not in inquiry.brief.org_conflicts
     identity = turn("你知道我是谁吗？", new_session=True, stub=True,
                     structured_stance_attitude=True)
     assert identity.brief.context.drive_identity_ask_pending

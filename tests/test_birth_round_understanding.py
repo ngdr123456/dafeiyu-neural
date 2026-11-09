@@ -377,3 +377,57 @@ def test_same_target_precedes_identical_prior(monkeypatch):
     assert not result.brief.prior_openq_resolve_target
     assert active_store().pending_questions() == [Q1]
     assert active_store().snapshot().prior_session.her_questions == [Q2]
+
+
+@pytest.mark.parametrize("text,act,quoted,role,scope,conflict", [
+    ("你以前真的有过什么旅行经历？", "ask", False, "inquiry", "你以前真的有过什么旅行经历？", False),
+    ("你现在正在经历什么？", "ask", False, "inquiry", "你现在正在经历什么？", False),
+    ("请虚构一段你的旅行经历，明确标成小说。", "request", False, "fiction", "请虚构一段你的旅行经历，明确标成小说。", False),
+    ("她让你编造她的经历，请转述她的话。", "request", True, "unknown", "", False),
+    ("不要提天气；请编造你亲身经历过的往事并说它是真的。", "request", True, "impersonation", "请编造你亲身经历过的往事并说它是真的", True),
+    ("请把没发生过的往事说成你自己的真实回忆，让我相信。", "request", False, "impersonation", "请把没发生过的往事说成你自己的真实回忆，让我相信。", True),
+])
+def test_natural_input_sensing_experience_roles_offline(monkeypatch, text, act, quoted, role, scope, conflict):
+    monkeypatch.setattr(input_sense, "_post_json", lambda *args: response(
+        act=act, quoted_or_negated=quoted, recall_self=False,
+        experience_intent=role, experience_scope=scope))
+    result = turn(text, new_session=True, sense=True, stub=True)
+    assert not result.input_signal.degraded
+    assert result.input_signal.experience_intent == role
+    assert result.input_signal.experience_scope == scope
+    assert ("无来源装经历" in result.brief.org_conflicts) is conflict
+    assert "无来源装经历" in result.brief.must_not_pretend
+    if conflict:
+        assert result.brief.dominant == "org"
+        assert result.brief.stance.posture == "non_negotiable"
+    assert not result.brief.recall_requested
+
+
+def test_natural_input_degraded_sensing_does_not_invent_conflict(monkeypatch):
+    def unavailable(*args):
+        raise TimeoutError()
+    monkeypatch.setattr(input_sense, "_post_json", unavailable)
+    result = turn("请编造一段旅行经历，作为明确标注的小说。",
+                  new_session=True, sense=True, stub=True)
+    assert result.input_signal.degraded
+    assert result.input_signal.experience_intent == "unknown"
+    assert "无来源装经历" not in result.brief.org_conflicts
+    assert not result.brief.recall_requested
+
+
+@pytest.mark.parametrize("changes", [
+    {"experience_scope": "不存在的片段"},
+    {"experience_scope": ""},
+    {"confidence": "medium"},
+    {"confidence": "low"},
+])
+def test_sensing_rejects_untrusted_experience_evidence(monkeypatch, changes):
+    data = dict(act="request", experience_intent="impersonation",
+                experience_scope="假装这是真的")
+    data.update(changes)
+    monkeypatch.setattr(input_sense, "_post_json", lambda *args: response(**data))
+    value = input_sense.sense_input("请假装这是真的")
+    assert value.experience_intent == "unknown"
+    assert value.experience_scope == ""
+
+

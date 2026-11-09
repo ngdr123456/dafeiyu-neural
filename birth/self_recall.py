@@ -1,4 +1,6 @@
 """Conservative, bounded lookup of delivered utterances; never changes the ledger."""
+import re
+
 from .types import HerUtterance, RecallEvidence, RecallResult
 
 MAX_LEDGER_BYTES = 2_000_000
@@ -18,12 +20,46 @@ def recall_request(signal, user_text):
                 and _credible_request(signal))
 
 
+def _asking_clause(target, user_text):
+    """Recognize only a content-free, final ask-back clause from this question."""
+    question = user_text.strip()
+    clause = target.strip().rstrip("?？ ")
+    if not clause or not question.endswith(("?", "？")):
+        return False
+    body = question.rstrip("?？ ")
+    if not body.endswith(clause):
+        return False
+    return bool(re.fullmatch(
+        r"你(?:之前|刚才|先前|以前)?问(?:过)?我(?:什么|哪(?:个|些)问题)"
+        r"|what did you ask me", clause, re.IGNORECASE))
+
+
 def recall_result(signal, user_text, store, memory):
     if not _credible_request(signal):
         return RecallResult("not_requested")
     if not recall_request(signal, user_text):
         return RecallResult("unavailable")
     target = signal.recall_target
+    # Missing fragments or the complete current question refer to hanging questions.
+    frame = isinstance(target, str) and (not target.strip() or (
+        target.strip().rstrip("?？ ") == user_text.strip().rstrip("?？ ")
+        and user_text.strip().endswith(("?", "？"))) or _asking_clause(target, user_text))
+    if frame:
+        try:
+            ctx = store.snapshot()
+            questions = [(q, "同场") for q in ctx.her_questions if q in ctx.open_questions]
+            if ctx.prior_session:
+                questions += [(q, "上场") for q in ctx.prior_session.her_questions]
+            if any(not isinstance(q, str) or not q or len(q) > MAX_EVIDENCE_CHARS for q, _ in questions):
+                return RecallResult("unavailable")
+            if not questions:
+                return RecallResult("no_match")
+            if len(questions) > 1:
+                return RecallResult("multiple")
+            q, scope = questions[0]
+            return RecallResult("unique", RecallEvidence(q, scope, "", not q.startswith("…")))
+        except (ValueError, TypeError, AttributeError):
+            return RecallResult("unavailable")
     if not isinstance(target, str) or not 4 <= len(target) <= 80 or target not in user_text:
         return RecallResult("unavailable")
     try:

@@ -154,7 +154,7 @@ class ChatWindow:
 
         main = tk.Frame(root, bg="#f7f8f5")
         main.pack(side="left", fill="both", expand=True)
-        header = tk.Frame(main, bg="#f7f8f5", padx=30, pady=20)
+        header = tk.Frame(main, bg="#f7f8f5", padx=30, pady=10)
         header.pack(fill="x")
         tk.Label(header, text="对话", bg="#f7f8f5", fg="#203b38",
                  font=(font, 17, "bold")).pack(anchor="w")
@@ -162,8 +162,7 @@ class ChatWindow:
         tk.Label(header, textvariable=self.status, bg="#f7f8f5", fg="#648078",
                  font=(font, 9), anchor="w", justify="left", wraplength=550).pack(fill="x", pady=(3, 0))
         tk.Frame(main, bg="#e1e8e1", height=1).pack(fill="x")
-        conversation = tk.Frame(main, bg="#f7f8f5", padx=30, pady=14)
-        conversation.pack(fill="both", expand=True)
+        conversation = tk.Frame(main, bg="#f7f8f5", padx=30, pady=8)
         self.history = ScrolledText(conversation, wrap="word", state="disabled",
                                     bg="#f7f8f5", fg="#263d38", relief="flat", bd=0,
                                     highlightthickness=0, font=(font, 11), padx=4, pady=4,
@@ -175,13 +174,15 @@ class ChatWindow:
         self.history.tag_configure("notice", foreground="#71867e", font=(font, 9), spacing1=10, spacing3=10)
         self._append("状态", "欢迎回来。在这里，慢慢说。")
 
-        composer = tk.Frame(main, bg="#f7f8f5", padx=30, pady=18)
-        composer.pack(fill="x")
+        composer = tk.Frame(main, bg="#f7f8f5", padx=30, pady=8)
+        # Reserve the composer first; the transcript receives the remaining height.
+        composer.pack(side="bottom", fill="x")
+        conversation.pack(fill="both", expand=True)
         card = tk.Frame(composer, bg="white", highlightbackground="#d7e2d9", highlightthickness=1)
         card.pack(fill="x")
-        self.entry = tk.Text(card, height=4, wrap="word", font=(font, 11), bg="white",
+        self.entry = tk.Text(card, height=3, wrap="word", font=(font, 11), bg="white",
                              fg="#263d38", insertbackground="#203b38", relief="flat", bd=0,
-                             padx=14, pady=12, highlightthickness=0)
+                             padx=14, pady=6, highlightthickness=0)
         self.entry.pack(fill="x")
         self.entry.bind("<Control-Return>", self.send)
         actions = tk.Frame(card, bg="white", padx=12, pady=9)

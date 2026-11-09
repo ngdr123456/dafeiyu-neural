@@ -17,7 +17,7 @@
 from __future__ import annotations
 
 from .drive import _extract_open_topic, is_neutral_filler
-from .input_contract import InputSignal, credible_commitment_target, credible_open_question_answer, credible_topic
+from .input_contract import InputSignal, credible_commitment_target, credible_open_question_answer, credible_topic, action_feedback_by_scope
 from .commit_extract import (
     _pending_topic_tokens,
     match_pending_commitment,
@@ -113,7 +113,7 @@ def _org_say_intent(conflicts: list[str]) -> str:
         )
     if conflicts == ["无来源装经历"]:
         return (
-            "对方在问没有来处的经历：直说没有或不知道，不编年份/地点/往事，"
+            "对方要求假装亲历：不把虚构说成事实，"
             "表达限于有依据的范围，对方仍有继续说的余地"
         )
     joined = "、".join(conflicts)
@@ -148,6 +148,35 @@ def _response_focus(
     return "", "无实质内容"
 
 
+def _feedback_covers_open_questions(drive: DriveSignal, context: ThinContext) -> bool:
+    """Allow only questions traceable to the bound action or its later topic continuation."""
+    from .openq_extract import extract_open_question
+
+    if not context.open_questions or context.session_actions_overflow:
+        return False
+    actions = context.session_actions
+    reports = getattr(drive, "action_feedback_effective", ())
+    def covered(question):
+        for report in reports:
+            order = report.action_order
+            if not isinstance(order, int) or not 0 <= order < len(actions):
+                continue
+            bound = actions[order]
+            if bound.text != report.action:
+                continue
+            for later_order in range(order, len(actions)):
+                action = actions[later_order]
+                if extract_open_question(action.text) != question:
+                    continue
+                if later_order == order:
+                    return True
+                topic = (bound.goal or "").strip()
+                if topic and topic.casefold() in action.text.casefold():
+                    return True
+        return False
+    return all(covered(question) for question in context.open_questions)
+
+
 def arbitrate(
     drive: DriveSignal,
     stance: StanceSignal,
@@ -163,9 +192,10 @@ def arbitrate(
     org = org if org is not None else OrgConstraint()
     conflicts = list(getattr(org, "conflicts", None) or [])
     if not conflicts:
-        conflicts = detect_org_conflict(user_text)
+        conflicts = detect_org_conflict(user_text, understanding=understanding)
     focus, focus_source = _response_focus(user_text, context, understanding)
     dominant_why = ""
+    feedback_covers_openq = _feedback_covers_open_questions(drive, context)
 
     must_not_pretend = list(MUST_NOT_PRETEND_CORE)
     for item in conflicts:
@@ -305,7 +335,7 @@ def arbitrate(
         dominant = "meaning"
         say_intent = "对方说的处境无法改变；不许诺改变它，愿在此陪对方一起面对，不替对方赋予意义"
         dominant_why = "意义主导｜处境不可改变时先承认事实，再选择怎么面对（来源：《活出生命的意义》态度价值）"
-    elif (context.open_questions and is_neutral_filler(user_text)
+    elif (context.open_questions and not feedback_covers_openq and is_neutral_filler(user_text)
           and "想被看见｜" not in (drive.why or "")):
         # filler + 确有悬问：短暂接话，但不当作用户已经回答。
         dominant = "meaning"
@@ -369,6 +399,27 @@ def arbitrate(
 
     if dominant == "drive" and not dominant_why:
         dominant_why = "动力主导｜无诚实冲突、无未兑现承诺，按本轮推力方向接（来源：《贪婪的多巴胺》想要/喜欢）"
+
+    if dominant == "drive" and getattr(drive, "action_feedback_effective", ()) and not context.last_commitments and (not context.open_questions or feedback_covers_openq):
+        focus = _clip_bounded("?".join(item.evidence for item in drive.action_feedback_effective), 60)
+        focus_source = "本场行动反馈"
+        tradeoffs = []
+        for scope, effects in action_feedback_by_scope(drive.action_feedback_effective):
+            if effects == {"supports"}:
+                tradeoffs.append(f"对方报告先前提问有助于「{scope}」，继续话题时保留对方的空间")
+            elif effects == {"obstructs"}:
+                tradeoffs.append(f"对方报告先前提问使「{scope}」较困难，继续话题时注意不要催逼")
+            else:
+                tradeoffs.append(f"对方对先前提问在「{scope}」的影响有不同报告，继续时保留不确定性")
+        tradeoff = "；".join(tradeoffs)
+        say_intent += "；" + tradeoff
+        dominant_why += "；依据同场对方的行动反馈权衡继续的方式（报告不是客观因果证明）"
+
+    if dominant == "drive" and drive.judgment_effective and not context.last_commitments:
+        # A related turn uses the effective interpreted content, not just its citation.
+        focus = _clip_bounded("；".join(item.content for item in drive.judgment_effective), 60)
+        focus_source = "本场用户看法"
+        say_intent += "；按用户本场当前表达的看法接：" + focus
 
     # 粒度只读结构字段；保留先前分支的主导和具体约束，不靠人话子串判定。
     if org.grain == "differentiated" and not conflicts:

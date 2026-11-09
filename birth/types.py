@@ -30,6 +30,8 @@ class DriveSignal:
     why: str = ""
     prior_her_question: bool = False
     prior_her_question_text: str = ""
+    judgment_effective: tuple[SessionJudgment, ...] = ()
+    action_feedback_effective: tuple[ActionFeedback, ...] = ()
 
 
 @dataclass
@@ -82,6 +84,37 @@ class RecallEvidence:
 class RecallResult:
     status: Literal["not_requested", "unique", "no_match", "multiple", "unavailable"]
     evidence: Optional[RecallEvidence] = None
+
+
+@dataclass(frozen=True)
+class SessionAction:
+    text: str
+    goal: str
+
+
+@dataclass(frozen=True)
+class ActionFeedback:
+    action: str
+    action_order: int
+    evidence: str
+    span: str
+    scope: str
+    effect: str
+    relation: str
+    previous: str = ""
+    source: str = "user_report"
+    interpreter: str = ""
+
+
+@dataclass(frozen=True)
+class SessionJudgment:
+    evidence: str
+    span: str
+    holder: str
+    subject: str
+    content: str
+    relation: str = "initial"
+    previous: str = ""
 
 
 @dataclass
@@ -146,6 +179,10 @@ class ThinContext:
     last_commitments: List[str] = field(default_factory=list)
     commitment_candidates: List[CommitmentCandidate] = field(default_factory=list)
     facts_this_session: List[str] = field(default_factory=list)
+    session_judgments: List[SessionJudgment] = field(default_factory=list)
+    session_actions: List[SessionAction] = field(default_factory=list)
+    session_actions_overflow: bool = False
+    action_feedback: List[ActionFeedback] = field(default_factory=list)
     stance_traces: List[StanceTrace] = field(default_factory=list)
     # 本场每个结构化点被守住的实际次数；只在本场累计，不落盘。
     stance_kept_counts: Dict[str, int] = field(default_factory=dict)

@@ -282,3 +282,33 @@ def test_deepseek_gui_real_adapters_mock_transport(tmp_path, monkeypatch):
         assert "台上说：" + line in pipeline.active_store().snapshot().prior_session.facts
     finally:
         root.destroy()
+
+@pytest.mark.parametrize("size,scaling", [
+    ((1000, 720), 4 / 3), ((680, 500), 4 / 3),
+    ((1000, 720), 2.0), ((680, 500), 2.0),
+    ((1000, 720), 8 / 3), ((680, 500), 8 / 3),
+])
+def test_layout_and_offline_send_at_window_sizes(tmp_path, size, scaling):
+    root = tk.Tk()
+    root.tk.call("tk", "scaling", scaling)
+    app = ChatWindow(root, memory_path=tmp_path / "layout-memory.json", offline=True)
+    root.geometry(f"{size[0]}x{size[1]}")
+    try:
+        pump(root, lambda: not app.busy)
+        for widget in (app.history, app.entry, app.send_button):
+            assert widget.winfo_viewable()
+            assert widget.winfo_width() > 20 and widget.winfo_height() > 20
+            x, y = widget.winfo_rootx(), widget.winfo_rooty()
+            parent = widget.master
+            while parent is not None:
+                assert x >= parent.winfo_rootx() and y >= parent.winfo_rooty()
+                assert x + widget.winfo_width() <= parent.winfo_rootx() + parent.winfo_width()
+                assert y + widget.winfo_height() <= parent.winfo_rooty() + parent.winfo_height()
+                parent = parent.master
+        app.entry.insert("1.0", "离线布局测试")
+        app.send_button.invoke()
+        pump(root, lambda: not app.busy)
+        assert "离线布局测试" in app.history.get("1.0", "end")
+        assert not app.entry.get("1.0", "end").strip()
+    finally:
+        root.destroy()

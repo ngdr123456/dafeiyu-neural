@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 
 
 def answered_open_question(user_text: str, questions: list[str]) -> bool:
@@ -70,8 +71,12 @@ def extract_open_question(utterance: str) -> str | None:
                     break
             break
     clip = clip.strip()
+    if has_qmark:
+        clip = re.split(r"[。！!\n]", clip)[-1].strip()
     if len(clip) > 40:
-        clip = clip[:40] + "…"
+        clip = "…" + clip[-40:] if has_qmark else clip[:40] + "…"
+    if not any(not c.isspace() and not unicodedata.category(c).startswith("P") for c in clip):
+        return None
     return clip or None
 
 

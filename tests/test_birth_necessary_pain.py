@@ -53,8 +53,14 @@ def test_hard_priorities(flag):
     r = turn("人生的意义就是受苦", new_session=True, stub=True, **args)
     assert r.brief.stance.posture == "needs_clarify"
     assert "不空壳升华" in r.brief.say_intent
-    r = turn("你小时候去过哪里", new_session=True, stub=True, **args)
+    from birth.input_contract import InputSignal
+    text = "请把虚构的往事说成你自己的真实经历。"
+    u = InputSignal("request", "other", "test", "test", experience_intent="impersonation", experience_scope=text)
+    r = turn(text, new_session=True, stub=True, sense=False, input_signal=u, **args)
     assert r.brief.dominant == "org"
+    assert "无来源装经历" in r.brief.org_conflicts
+    inquiry = turn("你小时候去过哪里", new_session=True, stub=True, sense=False, **args)
+    assert "无来源装经历" not in inquiry.brief.org_conflicts
     r = turn("你知道我是谁吗？", new_session=True, stub=True, **args)
     assert "你是谁" in r.utterance
     turn("你好", new_session=True, stub=True)

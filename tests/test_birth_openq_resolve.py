@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from birth.articulate import clear_llm_hook, set_stub_mode
+from birth.input_contract import InputSignal
 from birth.pipeline import active_store, turn
 
 
@@ -186,11 +187,16 @@ def test_curiosity_hang_flag_false_after_answer():
 
 def test_answered_topic_settles_and_does_not_reask():
     _seed_openq()
-    r = turn("月亮其实离我们很远", stub=True)
+    text = "月亮其实离我们很远"
+    signal = InputSignal("tell", "other", "test:understanding", "offline-test",
+                         confidence="high", target_open_question=active_store().pending_questions()[0],
+                         answer_scope=text)
+    r = turn(text, stub=True, input_signal=signal)
     assert not active_store().pending_questions()
     assert not active_store().snapshot().curiosity_hang_pending
     assert (r.brief.drive.direction, r.brief.drive.salience) == ("hold", "low")
-    assert "悬问被接住|喜欢/满足侧到了，不必再追" in r.brief.drive.why
+    assert r.brief.drive.why.startswith("输入理解｜答复悬问｜test:understanding｜")
+    assert "不再追问" in r.brief.drive.why
     assert "不再发问" in r.brief.say_intent
     assert "？" not in r.utterance and "?" not in r.utterance
     assert not active_store().snapshot().drive_openq_satisfied_pending
@@ -208,7 +214,11 @@ def test_structured_answer_and_explicit_false():
 def test_answer_with_commitment_keeps_guard():
     _seed_openq()
     active_store().append_commitment("同场说好晚点再聊星空")
-    r = turn("月亮其实离我们很远", stub=True)
+    text = "月亮其实离我们很远"
+    signal = InputSignal("tell", "other", "test:understanding", "offline-test",
+                         confidence="high", target_open_question=active_store().pending_questions()[0],
+                         answer_scope=text)
+    r = turn(text, stub=True, input_signal=signal)
     assert not active_store().pending_questions()
     assert r.brief.drive.direction == "guard"
     assert r.brief.dominant == "meaning"
@@ -225,12 +235,24 @@ def test_answer_signal_requires_pending_and_deny_does_not_answer():
 
 def test_answer_settles_even_if_other_open_question_remains():
     _seed_openq()
+    target = active_store().pending_questions()[0]
     active_store().append_open_question("星空是什么颜色？")
-    r = turn("月亮离我们很远", stub=True)
+    text = "月亮离我们很远"
+    signal = InputSignal("tell", "other", "test:understanding", "offline-test",
+                         confidence="high", target_open_question=target, answer_scope=text)
+    r = turn(text, stub=True, input_signal=signal)
     assert active_store().pending_questions() == ["星空是什么颜色？"]
     assert r.brief.drive.direction == "hold"
     assert "不再发问" in r.brief.say_intent
     assert "？" not in r.utterance
+
+
+def test_same_moon_text_without_understanding_does_not_auto_settle():
+    for text in ("月亮其实离我们很远", "月亮离我们很远"):
+        _seed_openq()
+        pending = list(active_store().pending_questions())
+        turn(text, stub=True, sense=False)
+        assert active_store().pending_questions() == pending
 
 
 def test_answer_flag_does_not_override_org_or_meaning():
