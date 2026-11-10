@@ -68,11 +68,38 @@ def end_session() -> bool:
     return True
 
 
+def checkpoint_open_session() -> bool:
+    """Write the full same-session snapshot; no thin-memory append."""
+    from .session_resume import save_open_session
+    if not memory_enabled():
+        return False
+    return save_open_session(_STORE)
+
+
+def pause_session() -> bool:
+    """Process is leaving, but this session is not over."""
+    return checkpoint_open_session()
+
+
+def resume_open_session() -> bool:
+    """Restore the unfinished session if a snapshot exists."""
+    from .session_resume import load_open_session
+    if not memory_enabled():
+        return False
+    return load_open_session(_STORE)
+
+
+def clear_open_session() -> None:
+    from .session_resume import clear_open_session as _clear_open
+    _clear_open()
+
+
 def _persist_and_reset_session() -> None:
-    """场结束：可选落盘 → 清场 → 读入上一场为 prior_session 结构。"""
+    """场结束：可选落盘 → 清场 → 丢掉未结束快照 → 读入上一场为 prior_session 结构。"""
     mem = active_memory() if memory_enabled() else None
     end_session()
     _STORE.new_session()
+    clear_open_session()
     if mem is not None:
         prior = mem.latest_prior()
         if prior is not None and prior.has_trace():
@@ -377,11 +404,17 @@ def turn(
                       understanding=input_signal)
     brief = arbitrate(drive=drive, stance=stance, org=org, context=context,
                       user_text=user_text, understanding=input_signal)
-    from .self_recall import recall_result, recall_request
-    brief.recall_requested = recall_request(input_signal, user_text)
-    recalled = recall_result(input_signal, user_text, _STORE, active_memory() if memory_enabled() else None)
-    brief.recall_status = recalled.status
-    brief.recall_evidence = recalled.evidence
+    from .self_recall import recall_result, recall_request, apply_recall_to_brief
+    from .session_trace import is_pre_redirect_recall_ask, apply_pre_redirect_to_brief
+    if is_pre_redirect_recall_ask(user_text):
+        # 用户问「改话题前说什么」→ 用户痕迹回指，不走 recall_self/her_questions
+        apply_pre_redirect_to_brief(brief, _STORE)
+    else:
+        brief.recall_requested = recall_request(input_signal, user_text)
+        recalled = recall_result(input_signal, user_text, _STORE, active_memory() if memory_enabled() else None)
+        brief.recall_status = recalled.status
+        brief.recall_evidence = recalled.evidence
+        apply_recall_to_brief(brief, recalled)
     utterance = articulate(brief, stub=stub)
     result = TurnResult(
         utterance=utterance,
@@ -403,6 +436,9 @@ def turn(
         if credible_topic(input_signal):
             result["subject_credible"] = True
         return result
+    from .session_trace import is_topic_redirect_utterance
+    if is_topic_redirect_utterance(user_text) and getattr(_STORE.context, "topic_redirect_at", None) is None:
+        _STORE.mark_topic_redirect(len(_STORE.context.facts_this_session))
     _STORE.append_fact(f"用户说：{_clip(user_text)}", metadata=record_meta("user_statement", len(user_text.strip()) > 40))
     if input_signal is not None and input_signal.action_report_relation != "unknown":
         reports = _STORE.context.action_feedback
@@ -599,4 +635,6 @@ def turn(
     _STORE.set_drive_prior_her_question_pending(False)
     _STORE.set_drive_bypass(False)
 
+    _STORE.append_session_turn(user_text, utterance)
+    checkpoint_open_session()
     return result

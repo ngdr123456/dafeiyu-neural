@@ -55,7 +55,11 @@ def recall_result(signal, user_text, store, memory):
             if not questions:
                 return RecallResult("no_match")
             if len(questions) > 1:
-                return RecallResult("multiple")
+                texts = tuple(q for q, _ in questions)
+                return RecallResult(
+                    "multiple",
+                    RecallEvidence("\n".join(texts), "同场", "", True, texts),
+                )
             q, scope = questions[0]
             return RecallResult("unique", RecallEvidence(q, scope, "", not q.startswith("…")))
         except (ValueError, TypeError, AttributeError):
@@ -110,3 +114,43 @@ def recall_result(signal, user_text, store, memory):
 def recall(signal, user_text, store, memory):
     """Compatibility API: only the single retained piece of evidence, or None."""
     return recall_result(signal, user_text, store, memory).evidence
+
+
+def apply_recall_to_brief(brief, recalled) -> None:
+    """把回忆结果压进意图/焦点，供仲裁后开口消费；压过守诺焦点。"""
+    if not getattr(brief, "recall_requested", False):
+        return
+    brief.focus_source = "self_recall"
+    status = recalled.status
+    evidence = recalled.evidence
+    if status == "unique" and evidence is not None:
+        brief.focus = evidence.text
+        brief.say_intent = (
+            f"只依据检索到的系统侧提问作答，如实复述：「{evidence.text}」；"
+            "绝不要把用户说过的话当成我问过的。"
+        )
+        return
+    if status == "multiple" and evidence is not None:
+        qs = list(evidence.questions) if evidence.questions else [
+            line for line in evidence.text.splitlines() if line
+        ]
+        brief.focus = "\n".join(qs) if qs else evidence.text
+        listed = "；".join(qs) if qs else evidence.text
+        brief.say_intent = (
+            f"检索到多条系统侧提问，不确定对方指哪一条，如实列出：{listed}；"
+            "绝不要把用户说过的话当成我问过的。"
+        )
+        return
+    if status == "no_match":
+        brief.focus = "没有可检索的提问"
+        brief.say_intent = (
+            "诚实说明：可检索范围内我没有问过可核对的提问；"
+            "绝不要把用户说过的话当成我问过的。"
+        )
+        return
+    brief.focus = "回忆不可用"
+    brief.say_intent = (
+        "说明本次回忆无法可靠完成，不要编造我问过的内容，"
+        "也不要把用户说过的话当成我问过的。"
+    )
+

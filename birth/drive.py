@@ -963,6 +963,13 @@ def _session_self_correction(context):
     return correction
 
 
+
+def prior_delivered_kind(text: str) -> str:
+    """Name a delivered session action; do not call a statement a question."""
+    from .openq_extract import extract_open_question
+    return "提问" if extract_open_question(text) else "那句"
+
+
 def infer_drive(user_text, context, cues=None, *, drive_bypass=None, input_signal=None, understanding=None):
     """Keep the normal drive choice and ground relevant consumption in session interpretation."""
     result = _infer_drive(user_text, context, cues, drive_bypass=drive_bypass,
@@ -983,19 +990,20 @@ def infer_drive(user_text, context, cues=None, *, drive_bypass=None, input_signa
         correction = _session_self_correction(context)
         if correction:
             result = replace(result, why=result.why + f"；本场用户更新了自己的看法（依据：{correction}）")
-    # Local same-extractable-topic match, not semantic relatedness or a lasting goal.
+    # Consume already-stored action feedback on a later turn.
+    # Empty goal must not void stored reports; a filler utterance is not required.
+    # Topic match only filters when both sides have a goal; unique-match is unchanged.
     goal = _extract_open_topic((user_text or "").strip())
     if blocked:
         return result
-    if goal:
-        if context.open_questions or not context.drive_open_topic_pending or result.direction != "pursue":
-            return result
-    elif not is_neutral_filler(user_text):
-        return result
-    matches = [(order, action, effective_action_feedback(context, action.text, order))
-               for order, action in visible_actions(context)
-               if action.goal.strip() and (not goal or action.goal == goal)]
-    matches = [(order, action, reports) for order, action, reports in matches if reports]
+    matches = []
+    for order, action in visible_actions(context):
+        reports = effective_action_feedback(context, action.text, order)
+        if not reports:
+            continue
+        if goal and action.goal.strip() and action.goal != goal:
+            continue
+        matches.append((order, action, reports))
     if len(matches) != 1:
         return result
     _, action, reports = matches[0]
@@ -1005,5 +1013,6 @@ def infer_drive(user_text, context, cues=None, *, drive_bypass=None, input_signa
         f"对「{scope}」的报告不一致"
         for scope, effects in action_feedback_by_scope(reports)
     )
+    kind = prior_delivered_kind(action.text)
     return replace(result, action_feedback_effective=tuple(reports),
-                   why=result.why + " [evidence: " + " | ".join(item.evidence for item in reports) + "]" + f"；同场提问「{action.text}」的对方{basis}，据此权衡继续的方式")
+                   why=result.why + " [evidence: " + " | ".join(item.evidence for item in reports) + "]" + f"；同场{kind}「{action.text}」的对方{basis}，据此权衡继续的方式")

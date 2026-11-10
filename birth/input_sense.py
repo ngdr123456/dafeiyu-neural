@@ -43,6 +43,97 @@ def af_bypass_raw(signal) -> dict | None:
     return dict(raw) if raw else None
 
 
+
+_EN_DEICTIC_REPORT = re.compile(
+    r"(?:the )?(?:prior|earlier|previous) (?:attempt|try|question|reply|answer) "
+    r"(?:made the next step (?P<difficulty>easier|harder)|"
+    r"(?P<help>helped|hindered) (?:with )?the next step)[.!]?",
+    re.IGNORECASE)
+_ZH_DEICTIC_REPORT = re.compile(
+    r"(?:上次|先前|刚才)(?:的)?(?:尝试|回复|回答|提问)?"
+    r"(?P<effect>对下一步有帮助|妨碍了下一步|让下一步更难了|没成|没有成功|成功了)[。！]?")
+
+
+def parse_recency_deictic_report(text: str):
+    """Bare recency-deictic report only; returns (effect, scope, span) or None."""
+    sentence = text.strip()
+    match = _EN_DEICTIC_REPORT.fullmatch(sentence)
+    if match:
+        effect_word = match.group("difficulty") or match.group("help")
+        effect = "obstructs" if effect_word.lower() in ("harder", "hindered") else "supports"
+        return effect, "the next step", sentence
+    zh_match = _ZH_DEICTIC_REPORT.fullmatch(sentence)
+    if zh_match:
+        effect = ("supports" if zh_match.group("effect") in ("对下一步有帮助", "成功了")
+                  else "obstructs")
+        return effect, "下一步", sentence
+    return None
+
+
+def _latest_delivered_visible(actions, context):
+    if not actions or getattr(context, "session_actions_overflow", False) or not context.session_actions:
+        return None
+    last = len(context.session_actions) - 1
+    for order, action in actions:
+        if order == last:
+            return order, action
+    return None
+
+
+def complement_recency_action_report(signal, user_text, actions, context, *, originally_unknown: bool):
+    """Bind a recency deictic report to the latest delivered visible action.
+
+    "上次/previous" is a time index, not "the only item in the window".
+    Does not overwrite an explicit bind. Unique-window is not required.
+    A successful bind to the latest delivered action is high-confidence
+    for the contract, including when the model already named the report
+    but left confidence at medium.
+    """
+    if (signal is None or signal.quoted_or_negated or signal.act != "tell"
+            or signal.addressee == "self"):
+        return signal, None
+    parsed = parse_recency_deictic_report(user_text)
+    if parsed is None:
+        return signal, None
+    latest = _latest_delivered_visible(actions, context)
+    if latest is None:
+        return signal, None
+    order, action = latest
+    effect, scope, sentence = parsed
+    already_bound = any(
+        item_order == signal.action_report_order and item.text == signal.action_report_action
+        for item_order, item in actions)
+    if already_bound:
+        if (signal.action_report_order == order and signal.action_report_action == action.text
+                and signal.action_report_relation in ("report", "supplement")
+                and signal.action_report_asserted):
+            signal = _promote_deictic_confidence(signal)
+        return signal, None
+    if signal.action_report_action or signal.action_report_order != -1:
+        return signal, None
+    if originally_unknown and signal.action_report_relation == "unknown":
+        bypass_raw = _raw_sense_snapshot(signal)
+        signal = replace(signal, addressee="other", confidence="high",
+                         degraded=False, reason="",
+                         action_report_relation="report",
+                         action_report_holder="user", action_report_asserted=True,
+                         action_report_action=action.text, action_report_order=order,
+                         action_report_span=sentence, action_report_scope=scope,
+                         action_report_effect=effect, action_report_previous="")
+        return signal, bypass_raw
+    if signal.action_report_relation in ("report", "supplement") and signal.action_report_asserted:
+        signal = replace(signal, action_report_action=action.text, action_report_order=order)
+        signal = _promote_deictic_confidence(signal)
+        return signal, None
+    return signal, None
+
+
+def _promote_deictic_confidence(signal):
+    reason = "" if signal.reason in ("", "low_confidence") else signal.reason
+    return replace(signal, addressee="other", confidence="high", degraded=False, reason=reason)
+
+
+
 def sense_input(user_text: str, *, context: ThinContext | None = None,
                 timeout: float | None = None) -> InputSignal | None:
     if not user_text.strip():
@@ -276,46 +367,10 @@ def sense_input(user_text: str, *, context: ThinContext | None = None,
                        action_report_effect=ar_effect, action_report_previous=ar_previous)
     from .input_contract import validate_judgment, validate_action_report
     signal = validate_judgment(signal, user_text, ctx)
-    bypass_raw = None
-    # Only complement an originally unknown report, never repair an explicit report.
-    if (value.get("action_report_relation", "unknown") == "unknown"
-            and ar_relation == "unknown" and len(actions) == 1 and not quoted
-            and value["act"] == "tell" and value["addressee"] != "self"):
-        sentence = user_text.strip()
-        match = re.fullmatch(
-            r"(?:the )?(?:prior|earlier|previous) (?:attempt|try|question|reply|answer) "
-            r"(?:made the next step (?P<difficulty>easier|harder)|"
-            r"(?P<help>helped|hindered) (?:with )?the next step)[.!]?",
-            sentence, re.IGNORECASE)
-        if match:
-            effect_word = match.group("difficulty") or match.group("help")
-            effect = "obstructs" if effect_word.lower() in ("harder", "hindered") else "supports"
-            order, action = actions[0]
-            bypass_raw = _raw_sense_snapshot(signal)
-            signal = replace(signal, addressee="other", confidence="high",
-                             degraded=False, reason="",
-                             action_report_relation="report",
-                             action_report_holder="user", action_report_asserted=True,
-                             action_report_action=action.text, action_report_order=order,
-                             action_report_span=sentence, action_report_scope="the next step",
-                             action_report_effect=effect, action_report_previous="")
-        else:
-            zh_match = re.fullmatch(
-                r"(?:上次|先前|刚才)(?:的)?(?:尝试|回复|回答|提问)?"
-                r"(?P<effect>对下一步有帮助|妨碍了下一步|让下一步更难了|没成|没有成功|成功了)[。！]?",
-                sentence)
-            if zh_match:
-                effect = ("supports" if zh_match.group("effect") in ("对下一步有帮助", "成功了")
-                          else "obstructs")
-                order, action = actions[0]
-                bypass_raw = _raw_sense_snapshot(signal)
-                signal = replace(signal, addressee="other", confidence="high",
-                                 degraded=False, reason="",
-                                 action_report_relation="report",
-                                 action_report_holder="user", action_report_asserted=True,
-                                 action_report_action=action.text, action_report_order=order,
-                                 action_report_span=sentence, action_report_scope="下一步",
-                                 action_report_effect=effect, action_report_previous="")
+    originally_unknown = (value.get("action_report_relation", "unknown") == "unknown"
+                          and ar_relation == "unknown")
+    signal, bypass_raw = complement_recency_action_report(
+        signal, user_text, actions, ctx, originally_unknown=originally_unknown)
     result = validate_action_report(signal, user_text, ctx)
     if bypass_raw is not None and result is not None and result.action_report_relation == "report":
         # Frozen contract type has no field for this; attach as non-field side evidence.

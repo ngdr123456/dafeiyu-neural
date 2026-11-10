@@ -207,6 +207,28 @@ def _template_utterance(brief: ThoughtBrief) -> str:
         has_commitment = "同场还有没兑现的话" in (brief.drive.why or "")
         return _input_stop_utterance(stop_kind, has_commitment)
 
+    # 回忆交接：只按检索结果开口；压过守诺/悬问焦点（读结构字段，不靠 say_intent 子串）。
+    if brief.recall_requested:
+        if brief.recall_status == "unique" and brief.recall_evidence is not None:
+            return f"我问过你：{brief.recall_evidence.text}"
+        if brief.recall_status == "multiple" and brief.recall_evidence is not None:
+            qs = list(brief.recall_evidence.questions) or [
+                line for line in brief.recall_evidence.text.splitlines() if line
+            ]
+            body = "；".join(qs) if qs else brief.recall_evidence.text
+            return f"我问过好几句，不确定你指哪一条：{body}"
+        if brief.recall_status == "no_match":
+            return "可检索范围内我没有问过你可核对的提问。"
+        if brief.recall_status == "unavailable":
+            return "这次没法可靠检索到我问过你什么。"
+
+    # 改向前用户痕迹回指（结构切点；不走 recall_self）
+    if getattr(brief, "focus_source", "") == "pre_redirect_trace":
+        focus = (brief.focus or "").strip()
+        if focus.startswith("本场尚未记录") or focus.startswith("改向前无可用"):
+            return "这一场里我还没记下可对上的改向前话头，说不清你改话题前在说什么。"
+        return f"改话题之前你在说：{focus}"
+
     if brief.drive and (brief.drive.why or "").startswith("输入理解｜答复悬问｜"):
         return "好，你的回答我知道了，先不再问。"
 
@@ -750,12 +772,27 @@ def validate(brief: ThoughtBrief, utterance: str) -> List[str]:
     # 对方私事拒收：读 cannot_fake 含「本场没说过的对方私事」即开（stance_org 常挂）。
     # 形状走 _claims_unfounded_other_private（问句／有来源复述／模糊共情不拦；不扩词表）。
     if "本场没说过的对方私事" in (getattr(brief.org, "cannot_fake", None) or []):
-        facts = list(brief.context.facts_this_session or [])
-        prior = getattr(brief.context, "prior_session", None)
-        if prior is not None and getattr(prior, "facts", None):
-            facts = facts + list(prior.facts)
-        if _claims_unfounded_other_private(text, _classify_sources(facts)[1]):
-            reasons.append("开口编无来源对方私事，对照 cannot_fake 说不通")
+        # 改向前痕迹回指：复述结构焦点里的用户原话，不算编对方私事
+        if getattr(brief, "focus_source", "") != "pre_redirect_trace":
+            facts = list(brief.context.facts_this_session or [])
+            prior = getattr(brief.context, "prior_session", None)
+            if prior is not None and getattr(prior, "facts", None):
+                facts = facts + list(prior.facts)
+            if _claims_unfounded_other_private(text, _classify_sources(facts)[1]):
+                reasons.append("开口编无来源对方私事，对照 cannot_fake 说不通")
+    # 诚实边界口头仪式拒收：边界只做校验，不许每轮念套话（体验翻车根因）
+    ritual_hits = 0
+    for phrase in ("没有可核实的依据", "不装成自己经历过", "也不装成自己经历过"):
+        if phrase in text:
+            ritual_hits += 1
+    if ritual_hits >= 1 and getattr(brief, "focus_source", "") != "pre_redirect_trace":
+        # 身份/亲历澄清轮仍允许短拒，但不许固定套话复读
+        user_ask = ""
+        if brief.user_input is not None:
+            user_ask = brief.user_input.text or ""
+        identity_ask = any(k in user_ask for k in ("你是谁", "你是不是", "AI", "模型", "程序", "机器人"))
+        if not identity_ask:
+            reasons.append("开口把诚实边界念成口头套话")
     return reasons
 
 
@@ -891,6 +928,8 @@ def _try_llm(brief: ThoughtBrief) -> Optional[str]:
 
 def _safe_stub(brief: ThoughtBrief) -> str:
     """模板兜底：身份 org 轮必须走 org 口径，禁止掉成「嗯听着」。"""
+    if getattr(brief, "focus_source", "") == "pre_redirect_trace":
+        return _template_utterance(brief)
     seat = _template_utterance(brief)
     if not validate(brief, seat):
         return seat

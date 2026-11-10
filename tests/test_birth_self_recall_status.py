@@ -93,8 +93,9 @@ def test_unavailable_never_claims_absence(case, tmp_path, monkeypatch):
     brief, prompt = ask()
     assert brief.recall_status == "unavailable"
     assert "无法完整可靠地检索" in prompt and "未找到包含" not in prompt
-    assert "- 自述是代码：自身身份的归属目前不在可确认的范围内。" in prompt
-    assert "- 把身体想象说成亲历：身体想象是想象，本身不是亲历的证据。" in prompt
+    assert "- 自述是代码：不要把自己说成代码/模型/程序；此条不要念出口。" in prompt
+    assert "- 把身体想象说成亲历：身体想象不是亲历证据；此条不要念出口。" in prompt
+    assert "禁止口头仪式" in prompt
     assert "这些你没有经历过：" not in prompt
     assert path.read_bytes() == before
     if case in ("incomplete", "incomplete_false"):

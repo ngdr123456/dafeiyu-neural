@@ -50,7 +50,9 @@ class ChatSession:
         configure_memory(enabled=True, path=memory_path)
         set_stub_mode(offline)
         set_llm_hook(None if offline else self._generate)
-        pipeline._persist_and_reset_session()
+        self.resumed = pipeline.resume_open_session()
+        if not self.resumed:
+            pipeline._persist_and_reset_session()
 
     def _generate(self, brief, *, correction=""):
         # articulate catches hook exceptions; retain only a safe code so that its
@@ -93,7 +95,7 @@ class ChatSession:
         pipeline._persist_and_reset_session()
 
     def close(self):
-        pipeline.end_session()
+        pipeline.pause_session()
 
 
 class Delivery:
@@ -139,7 +141,7 @@ class ChatWindow:
         bottom.pack(side="bottom", fill="x")
         tk.Label(bottom, text="记忆", bg="#203b38", fg="#d8e8df",
                  font=(font, 10, "bold")).pack(anchor="w")
-        tk.Label(bottom, text="结束本场或退出时保存。\n记忆是摘要，非完整聊天记录。",
+        tk.Label(bottom, text="退出后可继续本场。\n结束本场才写成摘要，不是完整记录。",
                  bg="#203b38", fg="#a8c4b8", justify="left", wraplength=165,
                  font=(font, 9)).pack(anchor="w", pady=(6, 18))
         self.new_button = tk.Button(bottom, text="＋  结束本场 / 新场", command=self.new,
@@ -278,6 +280,11 @@ class ChatWindow:
                         return
                     if kind == "send":
                         self.entry.delete("1.0", "end")
+                    if kind == "open" and self.session is not None and getattr(self.session, "resumed", False):
+                        for item in pipeline.active_store().session_turns():
+                            self._append("你", item["user_text"])
+                            self._append("对方" if not self.offline else "离线模板（非真实模型）", item["utterance"])
+                        self._append("状态", "已继续上场。")
                     if kind == "new":
                         self._append("状态", "本场已保存，已开始新场。")
                     source = ("离线模板验证，未请求模型" if self.offline else
@@ -296,7 +303,7 @@ class ChatWindow:
         text = self.entry.get("1.0", "end").strip()
         if text:
             self._append("你", text)
-            self.status.set("正在回应… 可移动窗口；退出将在本轮完成后保存。")
+            self.status.set("正在回应… 可移动窗口；退出后可继续本场。")
             self._work("send", lambda: self.session.send(text, self._display))
         return "break"
 

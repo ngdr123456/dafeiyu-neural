@@ -33,6 +33,16 @@ def sense_response():
     return response(json.dumps({"act": "tell", "addressee": "other", "confidence": "high"}))
 
 
+
+def open_snapshot(memory_path):
+    from pathlib import Path as _Path
+    import json
+    path = _Path(memory_path).with_name("birth_session_open.json")
+    if not path.is_file():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def test_real_adapters_delivery_new_and_restart(tmp_path, monkeypatch):
     path = tmp_path / "memory.json"
     session = ChatSession(memory_path=path)
@@ -116,7 +126,11 @@ def test_real_backend_display_failure_not_saved(tmp_path, monkeypatch):
         session.send("你好", broken)
     session.close()
     assert not pipeline.active_store().pending_commitments()
-    assert not any(f.startswith("台上说：") for f in BirthMemoryStore(path).latest_prior().facts)
+    prior = BirthMemoryStore(path).latest_prior()
+    assert prior is None or not any(f.startswith("台上说：") for f in prior.facts)
+    snap = open_snapshot(path) or {}
+    facts = (snap.get("context") or {}).get("facts_this_session") or []
+    assert not any(f.startswith("台上说：") for f in facts)
 
 
 def test_acceptance_restart_read_is_offline(tmp_path, capsys):
@@ -124,7 +138,7 @@ def test_acceptance_restart_read_is_offline(tmp_path, capsys):
     path = tmp_path / "memory.json"
     session = ChatSession(memory_path=path, offline=True)
     session.send("我叫离线验收", lambda result: None)
-    session.close()
+    session.new()  # 结束本场才写入薄摘要；关窗只是暂停。
     pipeline.active_store().new_session()
     assert main(["--memory-path", str(path), "--expect-prior-fact", "离线验收"]) == 0
     assert "PRIOR_FACT_MATCH=True" in capsys.readouterr().out

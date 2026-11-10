@@ -1,7 +1,7 @@
 """CLI demo：一期旁路闭环在命令行上跑。
 
 用法：
-    python -m birth                 # REPL 多轮（首轮清场；/new 新场；默认开跨场薄记忆）
+    python -m birth                 # REPL 多轮（有未结束快照则续场，否则开新场；/new 新场；默认开跨场薄记忆）
     python -m birth --no-memory     # REPL 但关掉跨场持久
     python -m birth "你好"          # 单句；默认 DeepSeek，失败再 OpenCode；默认关记忆
     python -m birth --stub          # REPL + 强制模板 stub
@@ -9,7 +9,7 @@
     python -m birth --debug         # REPL + 工程师通道（开口来源＋Brief）
     python -m birth --no-sense      # 关闭默认开启的输入感知；--stub 自动关闭
 
-REPL 内：空行 / exit / quit / q / EOF 退出；/new 开新场（先落盘本场再清）。
+REPL 内：空行跳过、不退出；exit / quit / q / EOF / Ctrl-C 暂停本场，下次接着同一场；/new 结束本场并开新场（先落盘薄痕迹再清）。
 环境变量 BIRTH_MEMORY_PATH 可改持久文件路径（默认 ~/.dafeiyu/birth_memory.json）。
 """
 
@@ -21,10 +21,22 @@ from dataclasses import asdict
 
 from .articulate import set_stub_mode
 from .memory import PendingCommitmentCapacityError, configure_memory
-from .pipeline import end_session, turn
+from .pipeline import pause_session, resume_open_session, turn
 
 
 _EXIT_WORDS = frozenset({"exit", "quit", "q"})
+
+
+def repl_line_action(raw: str) -> str:
+    """Classify a stripped REPL line. An empty line is skipped, never an exit."""
+    text = raw.strip()
+    if not text:
+        return "skip"
+    if text in _EXIT_WORDS:
+        return "exit"
+    if text == "/new":
+        return "new"
+    return "turn"
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -88,15 +100,15 @@ def _print_debug(result, *, debug: bool) -> None:
 
 
 def _run_repl(args: argparse.Namespace) -> int:
-    """多轮 REPL：首轮清场，之后同场；/new 再清。"""
-    first = True
+    """多轮 REPL：有未结束快照则续场，否则首轮开新场；/new 再结束并开新场。"""
+    resumed = resume_open_session()
+    if resumed:
+        print("[续上场]")
+    first = not resumed
     force_new = False
 
     def finish() -> int:
-        try:
-            end_session()
-        except PendingCommitmentCapacityError:
-            print("[记忆容量不足] 未结承诺超限，未写盘、未清场；仍在原场，可核对销账后再 /new。")
+        pause_session()
         return 0
 
     while True:
@@ -109,13 +121,16 @@ def _run_repl(args: argparse.Namespace) -> int:
             print()
             return finish()
 
-        text = line.strip()
-        if not text or text in _EXIT_WORDS:
+        action = repl_line_action(line)
+        if action == "skip":
+            continue
+        if action == "exit":
             return finish()
-        if text == "/new":
+        if action == "new":
             force_new = True
             print("[新场]")
             continue
+        text = line.strip()
 
         new_session = first or force_new
         first = False

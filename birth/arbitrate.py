@@ -16,7 +16,7 @@
 
 from __future__ import annotations
 
-from .drive import _extract_open_topic, is_neutral_filler
+from .drive import _extract_open_topic, is_neutral_filler, prior_delivered_kind
 from .input_contract import InputSignal, credible_commitment_target, credible_open_question_answer, credible_topic, action_feedback_by_scope
 from .commit_extract import (
     _pending_topic_tokens,
@@ -401,16 +401,29 @@ def arbitrate(
         dominant_why = "动力主导｜无诚实冲突、无未兑现承诺，按本轮推力方向接（来源：《贪婪的多巴胺》想要/喜欢）"
 
     if dominant == "drive" and getattr(drive, "action_feedback_effective", ()) and not context.last_commitments and (not context.open_questions or feedback_covers_openq):
-        focus = _clip_bounded("?".join(item.evidence for item in drive.action_feedback_effective), 60)
-        focus_source = "本场行动反馈"
+        # 取舍始终附加；关注只在当前句是中性填料时改到本场行动反馈，避免抢走更正、换题或提问。
+        if is_neutral_filler(user_text):
+            focus = _clip_bounded("?".join(item.evidence for item in drive.action_feedback_effective), 60)
+            focus_source = "本场行动反馈"
+        referred_actions = []
+        seen_actions = set()
+        for item in drive.action_feedback_effective:
+            action_text = (item.action or "").strip()
+            if action_text and action_text not in seen_actions:
+                seen_actions.add(action_text)
+                referred_actions.append(action_text)
+        if len(referred_actions) == 1:
+            referred = f"先前{prior_delivered_kind(referred_actions[0])}「{_clip_bounded(referred_actions[0], 40)}」"
+        else:
+            referred = "先前那句"
         tradeoffs = []
         for scope, effects in action_feedback_by_scope(drive.action_feedback_effective):
             if effects == {"supports"}:
-                tradeoffs.append(f"对方报告先前提问有助于「{scope}」，继续话题时保留对方的空间")
+                tradeoffs.append(f"对方报告{referred}有助于「{scope}」，继续话题时保留对方的空间")
             elif effects == {"obstructs"}:
-                tradeoffs.append(f"对方报告先前提问使「{scope}」较困难，继续话题时注意不要催逼")
+                tradeoffs.append(f"对方报告{referred}使「{scope}」较困难，继续话题时注意不要催逼")
             else:
-                tradeoffs.append(f"对方对先前提问在「{scope}」的影响有不同报告，继续时保留不确定性")
+                tradeoffs.append(f"对方对{referred}在「{scope}」的影响有不同报告，继续时保留不确定性")
         tradeoff = "；".join(tradeoffs)
         say_intent += "；" + tradeoff
         dominant_why += "；依据同场对方的行动反馈权衡继续的方式（报告不是客观因果证明）"

@@ -45,6 +45,16 @@ def window(tmp_path, offline=True):
     return root, app
 
 
+
+def open_snapshot(memory_path):
+    from pathlib import Path as _Path
+    import json
+    path = _Path(memory_path).with_name("birth_session_open.json")
+    if not path.is_file():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def test_actual_main_entry_and_normal_exit(tmp_path, monkeypatch):
     """Actual main event loop, controls, pipeline output, shutdown persistence."""
     real_window = ChatWindow
@@ -73,7 +83,10 @@ def test_actual_main_entry_and_normal_exit(tmp_path, monkeypatch):
     monkeypatch.setattr("birth.windows_chat.ChatWindow", launch)
     assert main(["--offline", "--memory-path", str(tmp_path / "main.json")]) == 0
     assert "离线模板（非真实模型）" in evidence[0]
-    assert BirthMemoryStore(tmp_path / "main.json").latest_prior().facts
+    # Normal exit pauses; thin prior is written only when ending the session.
+    assert BirthMemoryStore(tmp_path / "main.json").latest_prior() is None
+    snap = open_snapshot(tmp_path / "main.json")
+    assert snap and snap.get("session_turns")
 
 
 def test_real_pipeline_render_precedes_feedback_and_new_saves(tmp_path):
@@ -122,7 +135,11 @@ def test_render_failure_does_not_confirm_and_preserves_input(tmp_path):
         assert not pipeline.active_store().pending_commitments()
         assert app.entry.get("1.0", "end").strip() == "你好"
         app.session.close()
-        assert "台上说：" + line not in BirthMemoryStore(tmp_path / "memory.json").latest_prior().facts
+        prior = BirthMemoryStore(tmp_path / "memory.json").latest_prior()
+        assert prior is None or "台上说：" + line not in prior.facts
+        snap = open_snapshot(tmp_path / "memory.json") or {}
+        facts = (snap.get("context") or {}).get("facts_this_session") or []
+        assert "台上说：" + line not in facts
     finally:
         root.destroy()
 
@@ -135,7 +152,8 @@ def test_save_failure_keeps_window_and_session(tmp_path, action):
         app.send()
         pump(root, lambda: not app.busy)
         facts = list(pipeline.active_store().context.facts_this_session)
-        with patch("birth.pipeline.end_session", side_effect=OSError("OFFLINE disk failure")):
+        target = "birth.pipeline.end_session" if action == "new" else "birth.pipeline.pause_session"
+        with patch(target, side_effect=OSError("OFFLINE disk failure")):
             getattr(app, action)()
             pump(root, lambda: not app.busy)
         assert root.winfo_exists()
@@ -193,7 +211,10 @@ def test_slow_mock_backend_keeps_ui_alive_and_queued_close_saves(tmp_path):
             root.destroy()
         except tk.TclError:
             pass
-    assert BirthMemoryStore(tmp_path / "memory.json").latest_prior().facts
+    # Queued close pauses the same session; it does not append a thin prior.
+    snap = open_snapshot(tmp_path / "memory.json")
+    assert snap and snap.get("session_turns")
+    assert BirthMemoryStore(tmp_path / "memory.json").latest_prior() is None
 
 
 def test_corrupt_memory_is_not_overwritten(tmp_path):

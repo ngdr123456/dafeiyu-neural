@@ -78,6 +78,8 @@ class RecallEvidence:
     session: str
     ended_at: str
     complete: bool
+    # multiple 时携带问句列表；unique/no_match 保持空元组。
+    questions: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -179,6 +181,8 @@ class ThinContext:
     last_commitments: List[str] = field(default_factory=list)
     commitment_candidates: List[CommitmentCandidate] = field(default_factory=list)
     facts_this_session: List[str] = field(default_factory=list)
+    # 本场首次「换话题」切点：facts_this_session 下标；切点前=改向前段；None=尚未改向
+    topic_redirect_at: Optional[int] = None
     session_judgments: List[SessionJudgment] = field(default_factory=list)
     session_actions: List[SessionAction] = field(default_factory=list)
     session_actions_overflow: bool = False

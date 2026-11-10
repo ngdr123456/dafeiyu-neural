@@ -28,6 +28,8 @@ class ThinContextStore:
         self._her_utterances: list[HerUtterance] = []
         self.prior_her_question_text = ""
         self._record_metadata = {name: {} for name in ("facts", "stance_traces", "open_questions", "her_questions", "last_commitments", "resolved_commitments", "commitment_candidates")}
+        # 本场可见轮次（用户原文 + 已交付开口），只进同场快照，不进薄记忆。
+        self._session_turns: list[dict] = []
 
     @staticmethod
     def _copy_prior_metadata(metadata):
@@ -70,6 +72,7 @@ class ThinContextStore:
             last_commitments=list(ctx.last_commitments),
             commitment_candidates=[replace(c) for c in ctx.commitment_candidates],
             facts_this_session=list(ctx.facts_this_session),
+            topic_redirect_at=ctx.topic_redirect_at,
             session_judgments=list(ctx.session_judgments),
             session_actions=list(ctx.session_actions),
             session_actions_overflow=ctx.session_actions_overflow,
@@ -122,6 +125,47 @@ class ThinContextStore:
         self._her_utterances = []
         self.prior_her_question_text = ""
         self._record_metadata = {name: {} for name in self._record_metadata}
+        self._session_turns = []
+
+    def append_session_turn(self, user_text: str, utterance: str) -> None:
+        """Record a delivered turn for the open-session snapshot and window replay."""
+        self._session_turns.append({
+            "user_text": user_text,
+            "utterance": utterance,
+        })
+
+    def session_turns(self) -> list[dict]:
+        return [{"user_text": t["user_text"], "utterance": t["utterance"]} for t in self._session_turns]
+
+    def export_open_state(self) -> dict:
+        """Native same-session state for the open snapshot (not thin memory)."""
+        return {
+            "context": self.snapshot(),
+            "resolved_commitments": list(self._resolved_commitments),
+            "her_utterances": [replace(u) for u in self._her_utterances],
+            "prior_her_question_text": self.prior_her_question_text,
+            "record_metadata": deepcopy(self._record_metadata),
+            "session_turns": self.session_turns(),
+        }
+
+    def import_open_state(self, state: dict) -> None:
+        """Replace this store with a previously exported open-session state."""
+        self._context = state["context"]
+        self._resolved_commitments = list(state.get("resolved_commitments") or [])
+        self._her_utterances = list(state.get("her_utterances") or [])
+        self.prior_her_question_text = state.get("prior_her_question_text") or ""
+        names = ("facts", "stance_traces", "open_questions", "her_questions", "last_commitments", "resolved_commitments", "commitment_candidates")
+        meta = state.get("record_metadata") or {}
+        self._record_metadata = {name: dict(meta.get(name) or {}) for name in names}
+        for name, entries in meta.items():
+            if name not in self._record_metadata:
+                self._record_metadata[name] = dict(entries)
+        self._session_turns = []
+        for item in state.get("session_turns") or []:
+            self._session_turns.append({
+                "user_text": item.get("user_text", ""),
+                "utterance": item.get("utterance", ""),
+            })
 
     def append_her_utterance(self, entry: HerUtterance) -> None:
         self._her_utterances = _clip_list(
@@ -150,6 +194,14 @@ class ThinContextStore:
         if key:
             self._record_origin("facts", key, key in self._context.facts_this_session, metadata)
         self._append_unique(self._context.facts_this_session, fact)
+
+    def mark_topic_redirect(self, at: int) -> None:
+        """记录本场首次话题改向切点（facts 下标）；已有切点不覆盖。"""
+        if self._context.topic_redirect_at is not None:
+            return
+        if not isinstance(at, int) or at < 0:
+            return
+        self._context.topic_redirect_at = at
 
     def append_stance_trace(self, kind: str, point: str, why: str = "", *, metadata=None) -> None:
         point = point.strip()
