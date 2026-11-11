@@ -1,6 +1,7 @@
 """上场她问出去的问题：管线记录、跨场参考和消账。"""
 
 import pytest
+from birth.types import InjectedCues
 
 from birth.articulate import clear_llm_hook, set_stub_mode
 from birth.memory import configure_memory
@@ -76,7 +77,7 @@ def test_c_structured_answer_clears_prior(tmp_path):
     # flag 先归本场；本场没有悬问时才落到 prior，所以先清本场悬问。
     active_store().clear_open_questions()
     assert active_store().snapshot().open_questions == []
-    turn("我告诉你一件事", stub=True, structured_openq_answered=True)
+    turn("我告诉你一件事", stub=True, injected=InjectedCues(openq_answered=True))
     assert q1 not in active_store().context.prior_session.her_questions
 
 
@@ -106,7 +107,7 @@ def test_f_structured_answer_only_clears_current_question(tmp_path):
     turn("我想聊聊星空", stub=True)
     q2 = active_store().snapshot().open_questions[0]
     assert q2 != q1
-    turn("月亮是卫星", stub=True, structured_openq_answered=True)
+    turn("月亮是卫星", stub=True, injected=InjectedCues(openq_answered=True))
     assert q2 not in active_store().snapshot().open_questions
     assert q1 in active_store().context.prior_session.her_questions
 

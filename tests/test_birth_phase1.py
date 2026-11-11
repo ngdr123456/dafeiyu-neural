@@ -965,6 +965,7 @@ def test_commit_hold_with_drive_reads_drive_marks_not_say_intent():
     b_curio = _tampered_brief(
         drive=DriveSignal(
             direction="pursue", salience="high",
+            reason="curiosity",
             why="用户问出了『为什么』类问题，好奇本身就是够格的推力，顺着看清楚",
         ),
         stance=StanceSignal(posture="yieldable"),
@@ -980,6 +981,7 @@ def test_commit_hold_with_drive_reads_drive_marks_not_say_intent():
     b_hold = _tampered_brief(
         drive=DriveSignal(
             direction="hold", salience="low",
+            reason="satisfied",
             why="喜欢/满足侧已接住，不必再追；对方示意够了或先收束",
         ),
         stance=StanceSignal(posture="yieldable"),
@@ -1025,6 +1027,7 @@ def test_tampered_say_intent_open_topic_via_drive_why():
         drive=DriveSignal(
             direction="pursue",
             salience="mid",
+            reason="open_topic", topic="星空",
             why="缺口在外、想要打开这一话头（星空）",
         ),
     )
@@ -1056,6 +1059,7 @@ def test_tampered_say_intent_hold_via_drive_why():
         drive=DriveSignal(
             direction="hold",
             salience="low",
+            reason="satisfied",
             why="喜欢/满足侧已接住，不必再追；对方示意够了或先收束",
         ),
     )
@@ -1076,6 +1080,7 @@ def test_open_topic_say_intent_fallback_without_marker():
         stance=StanceSignal(),
         context=ThinContext(),
         say_intent="接住对方新打开的话头「月亮」，可以顺着问一句，不抢着下结论",
+        say_quote="月亮",
     )
     out = _template_utterance(brief)
     assert "月亮" in out and "哪头起" in out, out
@@ -1112,6 +1117,7 @@ def test_tampered_say_intent_empty_chase_via_drive_why():
         drive=DriveSignal(
             direction="hold",
             salience="low",
+            reason="empty_stage",
             why="重复空追，想要还在但满足没到；先停硬追、改接住",
         ),
     )
@@ -1147,6 +1153,7 @@ def test_tampered_say_intent_backref_via_drive_why():
         drive=DriveSignal(
             direction="pursue",
             salience="mid",
+            reason="session_callback",
             why="用户在回指同场刚才的话头，动力要用本场已有痕迹接，不装没发生过",
         ),
         context=ThinContext(facts_this_session=["用户说：我想聊星空"]),

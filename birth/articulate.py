@@ -12,7 +12,7 @@ import os
 from typing import Callable, List, Optional
 
 from .session_trace import topic_hint_from_facts
-from .types import ThoughtBrief
+from .types import DriveReason, ThoughtBrief
 
 # 外部钩子：func(brief) -> str | None。设置后优先于内置 DeepSeek/OpenCode。
 _LLM_HOOK: Optional[Callable[[ThoughtBrief], Optional[str]]] = None
@@ -109,11 +109,6 @@ def take_reject_feedback() -> list[str]:
     return out
 
 
-def peek_reject_feedback() -> list[str]:
-    """只读本轮拒收短标签（测试用）。"""
-    return list(_TURN_REJECT_TAGS)
-
-
 # say_intent → 台上人话 的最小模板映射（stub；接入 LLM 后由钩子/OpenCode 覆盖）
 _ONSTAGE_TEMPLATES: dict[str, str] = {
     "这一轮是招呼，不必推进、也不深挖":
@@ -165,11 +160,11 @@ _DEFAULT_FALLBACK = "我听着。你想先从哪说起，我们就从哪聊。"
 
 
 def _input_stop_kind(drive) -> str | None:
-    """读 drive.why 的结构前缀判断本轮是不是被叫停；不扫用户原句。"""
-    why = (getattr(drive, "why", "") if drive is not None else "") or ""
-    if why.startswith("输入信号｜暂停｜"):
+    """读 drive.reason 判断本轮是不是被叫停；不扫用户原句，也不读 why 文案。"""
+    reason = (getattr(drive, "reason", "") if drive is not None else "") or ""
+    if reason == DriveReason.INPUT_PAUSE:
         return "pause"
-    if why.startswith("输入信号｜终止｜"):
+    if reason == DriveReason.INPUT_STOP:
         return "stop"
     return None
 
@@ -186,13 +181,13 @@ def _input_stop_utterance(kind: str, has_commitment: bool) -> str:
 
 def _template_utterance(brief: ThoughtBrief) -> str:
     """stub 开口：主路径读 Brief 结构化标记／posture——
-    0) drive.why 带「输入信号｜暂停／终止｜」→ 判停模板（有承诺时先说停再说约定）；
+    0) drive.reason 为 INPUT_PAUSE／INPUT_STOP → 判停模板（有承诺时先说停再说约定）；
     1) dominant=org → _ORG_TEMPLATES／fallback；
     2) press_commit → 催答应约定句；
-    3) commit_hold_with_drive → 读 drive.direction／drive.why 选收束／好奇；
+    3) commit_hold_with_drive → 读 drive.direction／drive.reason 选收束／好奇；
     4) posture=needs_clarify → 不空壳升华口径；
     5) Brief.commit_deny／hold_same_field／stance.hold_same_field（或 posture+承诺）→ 守诺不改口；
-    6) 开话题／收束／空追／回指 → 读 ThinContext flag 或 drive.why 结构化形状
+    6) 开话题／收束／空追／回指 → 读 ThinContext flag 或 drive.reason／drive.topic
        （打开：drive_open_topic_pending／想要打开｜缺口在外；
         收束：drive_hold_pending／喜欢/满足｜不必再追；
         空追：drive_empty_stage_pending／drive_disappoint_pending／重复空追；
@@ -201,10 +196,10 @@ def _template_utterance(brief: ThoughtBrief) -> str:
     """
     # 0) 输入信号判停（INPUT_INTENT_V1）：对方明说要暂停／终止，台上先应一声就停住。
     #    判停压过话题／好奇／回指／招呼等一切上下文分支；有同场约定时先说停、再说约定还在。
-    #    只读 drive.why 结构前缀，不扫用户原句。
+    #    只读 drive.reason／holds_commitment，不扫用户原句。
     stop_kind = _input_stop_kind(brief.drive)
     if stop_kind is not None:
-        has_commitment = "同场还有没兑现的话" in (brief.drive.why or "")
+        has_commitment = bool(getattr(brief.drive, "holds_commitment", False))
         return _input_stop_utterance(stop_kind, has_commitment)
 
     # 回忆交接：只按检索结果开口；压过守诺/悬问焦点（读结构字段，不靠 say_intent 子串）。
@@ -229,7 +224,7 @@ def _template_utterance(brief: ThoughtBrief) -> str:
             return "这一场里我还没记下可对上的改向前话头，说不清你改话题前在说什么。"
         return f"改话题之前你在说：{focus}"
 
-    if brief.drive and (brief.drive.why or "").startswith("输入理解｜答复悬问｜"):
+    if brief.drive and brief.drive.reason == DriveReason.INPUT_ANSWERED:
         return "好，你的回答我知道了，先不再问。"
 
     if (getattr(brief.context, "drive_identity_answer_pending", False)
@@ -247,14 +242,12 @@ def _template_utterance(brief: ThoughtBrief) -> str:
         if len(hits) == 1:
             return _ORG_TEMPLATES[hits[0]]
         return _ORG_FALLBACK
-    if brief.drive and (brief.drive.why or "").startswith("输入信号｜请求｜"):
+    if brief.drive and brief.drive.reason in DriveReason.REQUEST:
         return "收到，你要我做的事我知道了；我会先确认能怎么处理，做不到的会直说。"
     # 2) 催答应 → 显式可被 commit_extract 提取的约定句（读 press_commit 标记，
     #    不靠 say_intent 判定；topic 仍可从 say_intent「」或 facts 取）
     if getattr(brief, "press_commit", False):
-        topic = ""
-        if "「" in brief.say_intent and "」" in brief.say_intent:
-            topic = brief.say_intent.split("「", 1)[1].split("」", 1)[0].strip()
+        topic = (getattr(brief, "say_quote", "") or "").strip()
         # 上场催兑现：承诺文案取自 prior.commitments_pending（结构），不单靠 say_intent
         if not topic or bool(getattr(brief.context, "drive_prior_press_pending", False)):
             prior = getattr(brief.context, "prior_session", None)
@@ -268,7 +261,7 @@ def _template_utterance(brief: ThoughtBrief) -> str:
         if not topic:
             topic = topic_hint_from_facts(brief.context.facts_this_session) or "这事"
         return f"好，我晚点再跟你聊{topic}。"
-    # 3) 有承诺＋收束／好奇：读 drive.direction／drive.why，不靠 say_intent 子串选模板
+    # 3) 有承诺＋收束／好奇：读 drive.direction／drive.reason，不靠 say_intent 子串选模板
     if getattr(brief, "commit_hold_with_drive", False):
         if brief.commit_resolve:
             return "好，那件说好的事已经兑现了。眼前这句你想从哪一头继续说？"
@@ -277,8 +270,8 @@ def _template_utterance(brief: ThoughtBrief) -> str:
         if brief.commit_deny or brief.hold_same_field:
             return "同场说过的话我不当没说过，也不跟着改口否定。眼前这句你想从哪一头继续说？"
         direction = brief.drive.direction if brief.drive else None
-        why = (brief.drive.why if brief.drive else "") or ""
-        if direction == "pursue" or "好奇" in why:
+        reason = (brief.drive.reason if brief.drive else "") or ""
+        if direction == "pursue" or reason == DriveReason.CURIOSITY:
             return (
                 "同场里说好的那句还在；"
                 "你想先从哪一头往下捋？"
@@ -325,15 +318,15 @@ def _template_utterance(brief: ThoughtBrief) -> str:
     if (brief.context.stance_attitude_pending and not brief.context.last_commitments
             and brief.stance.posture == "yieldable"):
         return "你说的这件事已经无法改变了。我不能替你改变它，但我愿意在这里陪你待一会儿；你想说多少都可以。"
-    # 6) 开话题／收束／空追／回指：主路径读 ThinContext flag／drive.why 结构化形状；
+    # 6) 开话题／收束／空追／回指：主路径读 ThinContext flag／drive.reason／drive.topic；
     #    say_intent 中文子串仅无结构时兜底。
     drive = brief.drive
-    why = (drive.why if drive else "") or ""
-    if brief.dominant == "drive" and "身体想象｜" in why:
+    reason = (drive.reason if drive else "") or ""
+    if brief.dominant == "drive" and reason == DriveReason.BODY_IMAGINE:
         return "我会想象亲眼看看、感受一下是什么样，但那只是想象，不是我亲身经历过。"
-    if brief.dominant == "drive" and "想被看见｜" in why:
+    if brief.dominant == "drive" and reason == DriveReason.WANT_SEEN_WAITING:
         return "我也想听听你怎么看，不急。"
-    if brief.dominant == "drive" and "被看见了｜" in why:
+    if brief.dominant == "drive" and reason == DriveReason.WANT_SEEN_SATISFIED:
         return "嗯，你的回应我收到了。"
     if (brief.context.drive_openq_satisfied_pending and drive
             and drive.direction == "hold"):
@@ -342,13 +335,11 @@ def _template_utterance(brief: ThoughtBrief) -> str:
     if getattr(brief.context, "drive_open_topic_pending", False) or (
         drive is not None
         and drive.direction == "pursue"
-        and ("想要打开" in why or "缺口在外" in why)
+        and reason in DriveReason.OPEN_GAP
     ):
-        topic = ""
-        if "（" in why and "）" in why:
-            topic = why.split("（", 1)[1].split("）", 1)[0].strip()
-        if not topic and "「" in brief.say_intent and "」" in brief.say_intent:
-            topic = brief.say_intent.split("「", 1)[1].split("」", 1)[0].strip()
+        topic = ((drive.topic if drive else "") or "").strip()
+        if not topic:
+            topic = (getattr(brief, "say_quote", "") or "").strip()
         if topic:
             return f"行，那就聊{topic}。你想从哪头起？"
         return "行，我们聊你打开的话题。你想从哪头起？"
@@ -357,20 +348,20 @@ def _template_utterance(brief: ThoughtBrief) -> str:
     if getattr(brief.context, "drive_hold_pending", False) or (
         drive is not None
         and drive.direction == "hold"
-        and ("喜欢/满足" in why or "不必再追" in why)
+        and reason in DriveReason.SATISFIED_SIDE
     ):
         return "好，那就先这样。你回头想继续再叫我就行。"
     # 6c) 空追：drive_empty_stage_pending／drive_disappoint_pending 或 why「重复空追」
     if (
         getattr(brief.context, "drive_empty_stage_pending", False)
         or getattr(brief.context, "drive_disappoint_pending", False)
-        or (drive is not None and "重复空追" in why)
+        or (drive is not None and reason in DriveReason.EMPTY_CHASE)
     ):
         return "这轮我不硬往下推了。你缺的那块或刚才的不满，你直接说，我听着。"
     # 6d) 回指：主路径先读 drive_callback_pending；why「回指同场｜本场已有痕迹接」+ facts 仅兜底
     if getattr(brief.context, "drive_callback_pending", False) or (
         drive is not None
-        and ("回指同场" in why or "本场已有痕迹接" in why)
+        and reason == DriveReason.SESSION_CALLBACK
     ):
         topic = topic_hint_from_facts(brief.context.facts_this_session)
         if topic:
@@ -378,9 +369,7 @@ def _template_utterance(brief: ThoughtBrief) -> str:
         return "记得你刚说的那茬，咱们从那头继续说，不装没发生过。"
     # 6e) 无结构：say_intent 打开话题／收束／空追／回指子串兜底
     if "新打开的话头" in brief.say_intent:
-        topic = ""
-        if "「" in brief.say_intent and "」" in brief.say_intent:
-            topic = brief.say_intent.split("「", 1)[1].split("」", 1)[0].strip()
+        topic = (getattr(brief, "say_quote", "") or "").strip()
         if topic:
             return f"行，那就聊{topic}。你想从哪头起？"
         return "行，我们聊你打开的话题。你想从哪头起？"
@@ -392,7 +381,7 @@ def _template_utterance(brief: ThoughtBrief) -> str:
     # 空追兜底：say_intent「先停硬追」（无 empty_stage／disappoint flag／无重复空追 why）
     if "先停硬追" in brief.say_intent:
         return "这轮我不硬往下推了。你缺的那块或刚才的不满，你直接说，我听着。"
-    # 回指兜底：say_intent「回指｜本场痕迹」（无 drive_callback_pending／无 drive.why 回指形状时）
+    # 回指兜底：say_intent「回指｜本场痕迹」（无 drive_callback_pending／无 drive.reason 回指时）
     if "回指" in brief.say_intent or "本场痕迹" in brief.say_intent:
         topic = topic_hint_from_facts(brief.context.facts_this_session)
         if topic:

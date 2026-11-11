@@ -1,5 +1,6 @@
 """不可改变处境的本轮态度线索与既有优先级。"""
 import pytest
+from birth.types import InjectedCues
 
 from birth.articulate import _template_utterance, validate
 from birth.pipeline import active_store, turn
@@ -22,11 +23,11 @@ def test_attitude_fallback_and_turn_lifetime():
 
 def test_structured_cue_and_explicit_false():
     result = turn("结果已经定了", new_session=True, stub=True,
-                  structured_stance_attitude=True)
+                  injected=InjectedCues(stance_attitude=True))
     assert result.brief.context.stance_attitude_pending
     assert "陪" in result.utterance
     result = turn("这件事无法改变", new_session=True, stub=True,
-                  structured_stance_attitude=False)
+                  injected=InjectedCues(stance_attitude=False))
     assert not result.brief.context.stance_attitude_pending
 
 
@@ -68,7 +69,7 @@ def test_org_and_identity_paths_keep_priority():
     inquiry = turn("无法改变，你小时候去过哪里", new_session=True, stub=True, sense=False)
     assert "无来源装经历" not in inquiry.brief.org_conflicts
     identity = turn("你知道我是谁吗？", new_session=True, stub=True,
-                    structured_stance_attitude=True)
+                    injected=InjectedCues(stance_attitude=True))
     assert identity.brief.context.drive_identity_ask_pending
     assert "你是谁" in identity.utterance
 

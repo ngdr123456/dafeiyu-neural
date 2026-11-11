@@ -129,6 +129,7 @@ def apply_recall_to_brief(brief, recalled) -> None:
             f"只依据检索到的系统侧提问作答，如实复述：「{evidence.text}」；"
             "绝不要把用户说过的话当成我问过的。"
         )
+        brief.say_quote = (evidence.text or "").strip()
         return
     if status == "multiple" and evidence is not None:
         qs = list(evidence.questions) if evidence.questions else [
@@ -140,15 +141,18 @@ def apply_recall_to_brief(brief, recalled) -> None:
             f"检索到多条系统侧提问，不确定对方指哪一条，如实列出：{listed}；"
             "绝不要把用户说过的话当成我问过的。"
         )
+        brief.say_quote = ""
         return
     if status == "no_match":
         brief.focus = "没有可检索的提问"
+        brief.say_quote = ""
         brief.say_intent = (
             "诚实说明：可检索范围内我没有问过可核对的提问；"
             "绝不要把用户说过的话当成我问过的。"
         )
         return
     brief.focus = "回忆不可用"
+    brief.say_quote = ""
     brief.say_intent = (
         "说明本次回忆无法可靠完成，不要编造我问过的内容，"
         "也不要把用户说过的话当成我问过的。"

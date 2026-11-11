@@ -6,26 +6,6 @@ import re
 import unicodedata
 
 
-def answered_open_question(user_text: str, questions: list[str]) -> bool:
-    """Conservative topic overlap, not a semantic answer classifier."""
-    from .drive import is_neutral_filler, _extract_open_topic
-    from .stance_org import _denies_commitment
-
-    text = (user_text or "").strip()
-    if (is_neutral_filler(text) or _denies_commitment(text) or len(text) < 4
-            or _extract_open_topic(text) or user_marks_open_question_putdown(text)):
-        return False
-    if any(mark in text for mark in ("?", "？")):
-        return False
-    # Only contiguous CJK pairs or whole Latin words; skip question scaffolding.
-    noise = {"为什么", "什么", "怎么", "如何", "你想", "哪头", "是否", "这个", "那个"}
-    def tokens(s: str) -> set[str]:
-        result = set(re.findall(r"[A-Za-z0-9]{3,}", s.lower()))
-        for run in re.findall(r"[\u4e00-\u9fff]+", s):
-            result.update(run[i:i+2] for i in range(len(run)-1) if run[i:i+2] not in noise)
-        return result
-    return bool(questions and tokens(questions[0]) & tokens(text))
-
 # 问对方的轻量形状
 _ASK_MARKS = ("吗", "呢", "要不要", "要不要先", "哪头", "哪边", "怎么看", "你想")
 
@@ -81,16 +61,7 @@ def extract_open_question(utterance: str) -> str | None:
 
 
 # 放下／换题：可检验线索（宁缺毋滥；不是禁词堵嘴）
-_PUTDOWN_MARKS = (
-    "先放下",
-    "先不说这个",
-    "换个话题",
-    "别提那个了",
-    "不问了",
-    "这个先搁下",
-    "悬着的先放",
-    "刚才那个先别问",
-)
+from .lexicon import TOPIC_DROP_MARKS as _PUTDOWN_MARKS  # noqa: E402  V2.1 3b：与话题改向同一定义
 
 
 def user_marks_open_question_putdown(user_text: str) -> bool:

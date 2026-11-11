@@ -3,6 +3,7 @@ import ast
 import json
 from dataclasses import replace
 from pathlib import Path
+from birth.types import InjectedCues
 
 import pytest
 
@@ -189,7 +190,7 @@ def test_understanding_precedes_literal_and_feedback(monkeypatch):
         return "好，这条我接住了。"
     set_llm_hook(opening)
     set_stub_mode(False)
-    result = turn("那一项选蓝色", sense=True, stub=False, structured_openq_answered=True)
+    result = turn("那一项选蓝色", sense=True, stub=False, injected=InjectedCues(openq_answered=True))
     assert result.articulate_source == "hook"
     assert result.brief.openq_resolve_target == Q2
     assert active_store().pending_questions() == [Q1]
@@ -362,7 +363,7 @@ def test_static_semantics():
 def test_prior_target_prevents_structured_fallback_double_delete(monkeypatch):
     active_store().set_prior_session(PriorSessionTrace(her_questions=[P1, P2]))
     monkeypatch.setattr(input_sense, "_post_json", lambda *args: response(answers_open_question=P2))
-    result = turn("那一项选蓝色", sense=True, stub=True, structured_openq_answered=True)
+    result = turn("那一项选蓝色", sense=True, stub=True, injected=InjectedCues(openq_answered=True))
     assert result.brief.prior_openq_resolve_target == P2
     assert active_store().snapshot().prior_session.her_questions == [P1]
 

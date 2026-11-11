@@ -16,22 +16,21 @@ BASE = {"act": "tell", "action_report_relation": "unknown"}
 
 
 def test_en_bypass_keeps_raw_unclear_low(monkeypatch):
+    # V2.1 3e：整句旁路已砍；感知判 unknown/unclear/low 就保持原样，不改写、无 raw 旁证。
     s = _sense(monkeypatch, "The earlier attempt made the next step easier.",
                dict(BASE, addressee="unclear", confidence="low"))
-    assert s.action_report_relation == "report" and s.action_report_effect == "supports"
-    assert (s.addressee, s.confidence, s.degraded, s.reason) == ("other", "high", False, "")
-    raw = input_sense.af_bypass_raw(s)
-    assert raw["addressee"] == "unclear" and raw["confidence"] == "low"
-    assert raw["degraded"] is True and raw["reason"] == "low_confidence"
+    assert s.action_report_relation == "unknown" and s.action_report_action == ""
+    assert (s.addressee, s.confidence, s.degraded, s.reason) == ("unclear", "low", True, "low_confidence")
+    assert input_sense.af_bypass_raw(s) is None
 
 
 def test_zh_bypass_keeps_raw_unclear_medium(monkeypatch):
+    # V2.1 3e：整句旁路已砍；感知判 unknown 就保持 unknown，不自造报告。
     s = _sense(monkeypatch, "\u4e0a\u6b21\u6ca1\u6210\u3002",
                dict(BASE, addressee="unclear", confidence="medium"))
-    assert s.action_report_relation == "report" and s.action_report_effect == "obstructs"
-    raw = input_sense.af_bypass_raw(s)
-    assert raw == {"addressee": "unclear", "confidence": "medium", "degraded": False,
-                   "reason": "", "action_report_relation": "unknown"}
+    assert s.action_report_relation == "unknown" and s.action_report_action == ""
+    assert (s.addressee, s.confidence) == ("unclear", "medium")
+    assert input_sense.af_bypass_raw(s) is None
 
 
 def test_raw_absent_when_bypass_not_hit(monkeypatch):

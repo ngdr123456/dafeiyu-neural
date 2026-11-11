@@ -333,9 +333,10 @@ def utterance_is_commit_delivery(*, brief, utterance: str, commitment: str) -> b
 def pressed_frame(brief) -> tuple[str, str] | None:
     context = brief.context
     prior = context.prior_session
-    why = getattr(getattr(brief, "drive", None), "why", "") or ""
+    from .types import DriveReason
+    reason = getattr(getattr(brief, "drive", None), "reason", "") or ""
     if (getattr(brief, "press_commit", False) and prior and prior.commitments_pending
-            and (getattr(context, "drive_prior_press_pending", False) or "上场承诺｜" in why)):
+            and (getattr(context, "drive_prior_press_pending", False) or reason == DriveReason.PRIOR_PRESS)):
         # 债有身份：认出的那笔优先；认不出才回落最老一笔（同改前）。
         target = getattr(brief, "pressed_commitment", "") or prior.commitments_pending[0]
         return ("prior_press", target)

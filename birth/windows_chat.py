@@ -118,7 +118,7 @@ class ChatWindow:
         self.busy = True
         self.closing = False
         self.session = None
-        root.title("第一期 · 聊天" + (" [离线模板验证]" if offline else ""))
+        root.title("聊天" + (" [离线模板验证]" if offline else ""))
         root.geometry("1000x720")
         root.minsize(680, 500)
         root.configure(bg="#edf0ee")
@@ -325,7 +325,7 @@ class ChatWindow:
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="第一期 Windows 灰测聊天")
+    parser = argparse.ArgumentParser(description="Windows 灰测聊天")
     parser.add_argument("--offline", action="store_true", help="明确的离线模板验证，不请求模型")
     parser.add_argument("--memory-path", default=None)
     args = parser.parse_args(argv)

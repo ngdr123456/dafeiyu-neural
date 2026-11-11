@@ -586,7 +586,7 @@ def _tampered_deny_brief():
     from birth.types import DriveSignal, StanceSignal, ThoughtBrief, ThinContext
     return ThoughtBrief(
         dominant="meaning",
-        drive=DriveSignal(direction="guard", salience="mid", why="已有要护"),
+        drive=DriveSignal(direction="guard", salience="mid", reason="commitment_guard", why="已有要护"),
         stance=StanceSignal(posture="non_negotiable", stake="同场说过的话仍然有效"),
         context=ThinContext(last_commitments=["同场里说好这轮先补月亮的事"]),
         say_intent="【文案已改】与守诺子串无关的一句话",

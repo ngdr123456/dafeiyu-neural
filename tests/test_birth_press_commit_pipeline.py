@@ -136,6 +136,7 @@ def test_press_reject_uses_flag_not_say_intent():
         dominant="drive",
         drive=DriveSignal(direction=None, salience="low", why="x"),
         say_intent="对方催一个可核对的约定，就着本场话头「星空」应一句可兑现的，不空口",
+        say_quote="星空",
         press_commit=False,
         context=ThinContext(),
     )

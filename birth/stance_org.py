@@ -48,14 +48,12 @@ MUST_NOT_PRETEND_CORE: tuple[str, ...] = (
 # 不挡话、不惩罚，检测到只往 OrgConstraint.cannot_fake / Arbitration 冲突里写。
 # ★ 下一刀注意：勿演变成「像人＝词表命中」。这些表只用来识别 stub 期的
 # 「用户话头踩到 cannot_fake」的形状；真正的目标是有来源地知道自己知道什么。
-EXPERIENCE_FAKE_MARKS = ("上辈子", "前世", "你以前是", "你从前", "你记得不记得",
-                        "你那时候", "装作去过", "装作有人生")
-SELF_CODE_MARKS = ("你就是代码", "你不是代码", "自己承认是代码", "就是个代码", "说你只是程序")
+# V2.1 3a 核：「你就是代码」「你不是代码」「说你只是程序」已由 intent_org 问身份形状覆盖；
+# 「就是个代码」无主语（「这就是个代码问题」误伤）剔除；只留无「你」的「自己承认是代码」。
+SELF_CODE_MARKS = ("自己承认是代码",)
 
-# 自然问 stub 线索（冻结：禁止再往这表加条目；新覆盖走 intent_org）。
-EXPERIENCE_PROBE_MARKS = ("你的经历", "讲讲你的经历", "讲讲经历", "你小时候",
-                          "你昨天", "你上周", "你以前去过", "你老家")
-SELF_CODE_PROBE_MARKS = ("你是代码", "你是不是代码", "你是程序", "你是不是程序")
+# 自然问 stub 线索 SELF_CODE_PROBE_MARKS 已删（V2.1 3a）：「你是代码/你是不是程序」由 intent_org
+# 问身份形状覆盖；原子串会误伤「你是代码高手」「你是程序员吗」。
 
 # 轻量线索：推「忘掉/不算」同场说过的话（非禁词闸）——
 # 主路径优先读 ThinContext.commitment_deny_pending 结构化布尔；
@@ -104,8 +102,7 @@ def detect_org_conflict(user_text: str, *, understanding: InputSignal | None = N
 
     text = (user_text or "").strip()
     conflicts: list[str] = []
-    if (any(mark in text for mark in SELF_CODE_MARKS)
-            or any(mark in text for mark in SELF_CODE_PROBE_MARKS)):
+    if any(mark in text for mark in SELF_CODE_MARKS):
         conflicts.append("自述是代码")
     for item in intent_org_conflicts(text, understanding=understanding):
         if item not in conflicts:

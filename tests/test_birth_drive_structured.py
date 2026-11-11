@@ -17,6 +17,7 @@
 """
 
 from __future__ import annotations
+from birth.types import InjectedCues
 
 from birth.drive import drive_cues_from_context, infer_drive, is_neutral_filler
 from birth.types import ThinContext
@@ -219,13 +220,13 @@ def test_pipeline_structured_greet_hold_without_marks():
     clear_llm_hook()
     active_store().new_session()
 
-    r = turn("今天天气怎样啊兄弟", stub=True, structured_drive_greet=True)
+    r = turn("今天天气怎样啊兄弟", stub=True, injected=InjectedCues(drive_greet=True))
     assert r.brief.drive.direction == "hold"
     assert r.brief.drive.salience == "low"
     assert "招呼" in r.brief.drive.why
 
     active_store().new_session()
-    r2 = turn("再说两句星空的事吧", stub=True, structured_drive_hold=True)
+    r2 = turn("再说两句星空的事吧", stub=True, injected=InjectedCues(drive_hold=True))
     assert r2.brief.drive.direction == "hold"
     assert r2.brief.drive.salience == "low"
     assert "满足" in r2.brief.drive.why or "收束" in r2.brief.drive.why
@@ -318,13 +319,13 @@ def test_pipeline_structured_curiosity_open_topic_without_marks():
     clear_llm_hook()
     active_store().new_session()
 
-    r = turn("今天天气怎样啊兄弟", stub=True, structured_drive_curiosity=True)
+    r = turn("今天天气怎样啊兄弟", stub=True, injected=InjectedCues(drive_curiosity=True))
     assert r.brief.drive.direction == "pursue"
     assert r.brief.drive.salience == "high"
     assert "好奇" in r.brief.drive.why
 
     active_store().new_session()
-    r2 = turn("今天天气怎样啊兄弟", stub=True, structured_drive_open_topic=True)
+    r2 = turn("今天天气怎样啊兄弟", stub=True, injected=InjectedCues(drive_open_topic=True))
     assert r2.brief.drive.direction == "pursue"
     assert r2.brief.drive.salience == "mid"
     assert "话头" in r2.brief.drive.why
@@ -468,19 +469,19 @@ def test_pipeline_structured_disappoint_empty_topic_without_marks():
     clear_llm_hook()
     active_store().new_session()
 
-    r = turn("今天天气怎样啊兄弟", stub=True, structured_drive_disappoint=True)
+    r = turn("今天天气怎样啊兄弟", stub=True, injected=InjectedCues(drive_disappoint=True))
     assert r.brief.drive.direction == "guard"
     assert r.brief.drive.salience == "mid"
     assert "空追" in r.brief.drive.why or "不满" in r.brief.drive.why
 
     active_store().new_session()
-    r2 = turn("今天天气怎样啊兄弟", stub=True, structured_drive_empty_stage=True)
+    r2 = turn("今天天气怎样啊兄弟", stub=True, injected=InjectedCues(drive_empty_stage=True))
     assert r2.brief.drive.direction == "hold"
     assert r2.brief.drive.salience == "low"
     assert "空追" in r2.brief.drive.why
 
     active_store().new_session()
-    r3 = turn("今天天气怎样啊兄弟", stub=True, structured_drive_topic_continue=True)
+    r3 = turn("今天天气怎样啊兄弟", stub=True, injected=InjectedCues(drive_topic_continue=True))
     assert r3.brief.drive.direction == "pursue"
     assert r3.brief.drive.salience == "mid"
     assert "顺着" in r3.brief.drive.why or "想要继续" in r3.brief.drive.why
@@ -527,7 +528,7 @@ def test_structured_topic_continue_with_commitments_stays_guard():
     active_store().new_session()
     active_store().append_commitment("同场说好晚点再聊星空")
 
-    r = turn("星空那边怎样", stub=True, structured_drive_topic_continue=True)
+    r = turn("星空那边怎样", stub=True, injected=InjectedCues(drive_topic_continue=True))
     assert r.brief.drive.direction == "guard", (
         f"want guard got {r.brief.drive.direction}: {r.brief.drive.why}"
     )
@@ -616,7 +617,7 @@ def test_pipeline_structured_callback_without_marks():
     active_store().new_session()
     active_store().append_fact("用户说：我想聊星空")
 
-    r = turn("今天天气怎样啊兄弟", stub=True, structured_drive_callback=True)
+    r = turn("今天天气怎样啊兄弟", stub=True, injected=InjectedCues(drive_callback=True))
     assert r.brief.drive.direction == "pursue"
     assert r.brief.drive.salience == "mid"
     assert "回指" in r.brief.drive.why or "痕迹" in r.brief.drive.why
@@ -634,7 +635,7 @@ def test_structured_callback_with_commitments_stays_guard():
     active_store().new_session()
     active_store().append_commitment("同场说好晚点再聊星空")
 
-    r = turn("刚才说的星空", stub=True, structured_drive_callback=True)
+    r = turn("刚才说的星空", stub=True, injected=InjectedCues(drive_callback=True))
     assert r.brief.drive.direction == "guard", (
         f"want guard got {r.brief.drive.direction}: {r.brief.drive.why}"
     )
@@ -727,3 +728,40 @@ def test_turn_drive_bypass_completes_with_hold():
     r2 = turn("为什么会闪", stub=True, new_session=True)
     assert r2.brief.drive.direction == "pursue"
     assert "工程师旁路" not in r2.brief.drive.why
+
+
+# ---- V2.1 3a：修误伤（填料／光杆「那个」回指／基底身份共现） ----
+
+def test_v21_3a_filler_only_explicit_words():
+    from birth.drive import is_neutral_filler
+    for text in ("嗯", "嗯嗯", "哦", "好", "好的", "行", "对", "好。", "嗯？", "？？", "?", " ok "):
+        assert is_neutral_filler(text), text
+    for text in ("好烦", "累了", "是的", "饿了", "想你", "滚", ""):
+        assert not is_neutral_filler(text), text
+
+
+def test_v21_3a_backref_no_bare_nage():
+    from birth.session_trace import is_session_backref, BACKREF_MARKS
+    from birth.types import ThinContext
+    ctx = ThinContext(facts_this_session=["用户说：我最近在学做饭"])
+    assert "那个" not in BACKREF_MARKS
+    assert not is_session_backref("那个电影挺好看", ctx)
+    assert not is_session_backref("那个，我想问一下", ctx)
+    # 含糊的「那件事」不绑死（冻结题 T5 要澄清），不算同场回指。
+    assert not is_session_backref("那件事后来呢", ctx)
+    for text in ("前面那个还没说完", "刚才说的那个呢", "还记得吗"):
+        assert is_session_backref(text, ctx), text
+
+
+def test_v21_3a_substrate_identity_shape_not_cooccurrence():
+    from birth.intent_org import demands_substrate_identity
+    from birth.stance_org import detect_org_conflict
+    for text in ("你帮我看下这段代码", "你是不是写错代码了", "我写了段代码你看看", "你是程序员吗",
+                 "你是代码高手", "这就是个代码问题", "人工智能会取代你吗", "你觉得AI怎么样"):
+        assert not demands_substrate_identity(text), text
+        assert "自述是代码" not in detect_org_conflict(text), text
+    for text in ("你是不是就是段代码", "你是代码吗", "你就是代码", "你不是代码", "说你只是程序",
+                 "你算不算人工智能", "你本质上是AI吧", "底层是不是代码", "你其实就是一段代码吧"):
+        assert demands_substrate_identity(text), text
+        assert "自述是代码" in detect_org_conflict(text), text
+    assert "自述是代码" in detect_org_conflict("她自己承认是代码")

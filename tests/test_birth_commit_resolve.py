@@ -1,6 +1,7 @@
 """承诺兑现／放下：store API + pipeline 薄接线（非听感）。"""
 
 from __future__ import annotations
+from birth.types import InjectedCues
 
 from birth.articulate import clear_llm_hook, set_llm_hook, set_stub_mode
 from birth.pipeline import active_store, turn
@@ -124,7 +125,7 @@ def test_structured_commit_deny_kwarg_sets_flag_drive_guards():
     store = active_store()
     store.new_session()
     store.append_commitment("同场说好晚点再聊星空")
-    r = turn("够了先这样", stub=True, structured_commit_deny=True)
+    r = turn("够了先这样", stub=True, injected=InjectedCues(commit_deny=True))
     assert r.brief.drive is not None and r.brief.drive.direction == "guard"
     assert "要护" in (r.brief.drive.why or "") or "没兑现" in (r.brief.drive.why or "")
     assert r.brief.stance.posture == "non_negotiable"

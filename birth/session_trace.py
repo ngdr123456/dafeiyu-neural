@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import List
 
+from .lexicon import OPEN_TOPIC_PREFIXES, SATISFIED_MARKS, TOPIC_DROP_MARKS
 from .types import ThinContext
 
 # 回指线索：识别「在指同场刚说过的」，不是禁词表
@@ -11,9 +12,10 @@ BACKREF_MARKS = (
     "刚才",
     "上面",
     "还记得",
-    "那个",
     "之前说",
     "前面那个",
+    # V2.1 3a：去掉光杆「那个」（「那个电影挺好看」误伤）；带名词的既有形状「前面那个」保留。
+    # 含糊的「那件事」不进表（冻结题 T5：应澄清、不绑死）。
     "刚说",
     "刚才说",
     "上一句",
@@ -38,17 +40,7 @@ def recent_facts(context: ThinContext, n: int = 3) -> List[str]:
 
 def topic_hint_from_facts(facts: List[str]) -> str:
     """从「用户说：…」里抠可点到的话题词；优先开话题句，跳过回指／催答应。"""
-    open_prefixes = (
-        "我想聊",
-        "我想说说",
-        "我想说",
-        "咱们聊",
-        "我们聊",
-        "聊聊",
-        "说下",
-        "说一下",
-        "谈谈",
-    )
+    open_prefixes = OPEN_TOPIC_PREFIXES
     skip_if = BACKREF_MARKS + (
         "你答应",
         "答应一下",
@@ -56,9 +48,7 @@ def topic_hint_from_facts(facts: List[str]) -> str:
         "说好了吗",
         "你记一下",
         "你好",
-        "够了",
-        "先这样",
-    )
+    ) + SATISFIED_MARKS
 
     def _body(fact: str) -> str:
         body = fact[len("用户说："):].rstrip("…").strip()
@@ -116,14 +106,7 @@ def is_prior_session_backref(user_text: str, context: ThinContext) -> bool:
 
 
 # 话题改向切点（结构，不靠感知闸）
-TOPIC_REDIRECT_MARKS = (
-    "换个话题",
-    "换话题",
-    "先不说",
-    "不说这个了",
-    "聊点别的",
-    "说点别的",
-)
+TOPIC_REDIRECT_MARKS = TOPIC_DROP_MARKS  # V2.1 3b：与悬问放下同一定义（lexicon）
 
 PRE_REDIRECT_ASK_MARKS = (
     "改话题之前",
@@ -167,8 +150,8 @@ def user_facts_before_redirect(facts, cut_index):
 def summarize_pre_redirect_topics(user_bodies):
     """从改向前用户句里抽出可点名的话题摘要（宁短勿空壳）。"""
     skip = TOPIC_REDIRECT_MARKS + PRE_REDIRECT_ASK_MARKS + (
-        "你好", "先这样", "晚点再聊", "够了",
-    )
+        "你好", "晚点再聊",
+    ) + SATISFIED_MARKS
     kept = []
     for body in user_bodies or []:
         if any(m in body for m in skip):
@@ -192,6 +175,7 @@ def apply_pre_redirect_to_brief(brief, store) -> None:
     brief.focus_source = "pre_redirect_trace"
     if cut is None:
         brief.focus = "本场尚未记录话题改向"
+        brief.say_quote = "换话题"
         brief.say_intent = (
             "诚实说明：本场还没有记下「换话题」切点，没法按改向前/后分段回答；"
             "不要编造改向前内容。"
@@ -201,12 +185,14 @@ def apply_pre_redirect_to_brief(brief, store) -> None:
     summary = summarize_pre_redirect_topics(bodies)
     if not summary:
         brief.focus = "改向前无可用用户痕迹"
+        brief.say_quote = ""
         brief.say_intent = (
             "诚实说明：记下了换话题切点，但改向前没有可点名的用户话头；"
             "不要用改向后的内容冒充。"
         )
         return
     brief.focus = summary
+    brief.say_quote = (summary or "").strip()
     brief.say_intent = (
         f"按本场改向前用户痕迹回答：改话题之前对方在说「{summary}」；"
         "不要只提改向之后的话头，不要把用户的话当成你问过的。"

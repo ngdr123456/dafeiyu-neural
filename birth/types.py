@@ -1,4 +1,4 @@
-"""第一期旁路模块的工程师通道类型（字段对齐 PHASE1_BRIEF.md）。
+"""旁路模块的工程师通道类型（字段对齐 PHASE1_BRIEF.md）。
 
 原则：
 - 这些 dataclass 只是「仲裁 → 开口」链条的台下信号载体，不是性格、不是分数。
@@ -21,13 +21,93 @@ Grain = Literal["simple", "rule", "differentiated"]
 Dominant = Literal["drive", "meaning", "org"]
 
 
+class DriveReason:
+    """动力判定的结构化理由（V2.1）：层间读 reason，why 只留给记录／调试。"""
+
+    BYPASS = "bypass"                          # 工程师旁路
+    SESSION_NOT_OK = "session_not_ok"          # 新场未接上
+    INPUT_PAUSE = "input_pause"                # 输入信号｜暂停｜
+    INPUT_STOP = "input_stop"                  # 输入信号｜终止｜
+    INPUT_ANSWERED = "input_answered"          # 输入理解｜答复悬问｜
+    INPUT_ASK = "input_ask"                    # 输入信号｜问句｜…缺口在外
+    INPUT_REQUEST = "input_request"            # 输入信号｜请求｜…缺口在外
+    INPUT_TASK = "input_task"                  # 输入信号｜请求｜…接住具体任务
+    IDENTITY_ASK_CLUE = "identity_ask_clue"    # 身份询问｜已有对方线索
+    IDENTITY_ASK_NO_CLUE = "identity_ask_no_clue"
+    IDENTITY_ANSWER = "identity_answer"        # 身份回应｜
+    COMMITMENT_GUARD = "commitment_guard"      # 同场有没兑现的话…（已有要护）
+    WANT_SEEN_WAITING = "want_seen_waiting"    # 想被看见｜
+    WANT_SEEN_SATISFIED = "want_seen_satisfied"  # 被看见了｜
+    OPENQ_SATISFIED = "openq_satisfied"        # 悬问被接住|喜欢/满足…不必再追
+    BODY_IMAGINE = "body_imagine"              # 身体想象｜
+    OPEN_QUESTION_PICKUP = "open_question_pickup"  # 同场还有悬而未决的问题（…）
+    GREET = "greet"                            # 招呼类开场
+    SATISFIED = "satisfied"                    # 喜欢/满足侧已接住，不必再追
+    OPEN_TOPIC = "open_topic"                  # 缺口在外、想要打开这一话头（…）
+    CURIOSITY = "curiosity"                    # 好奇
+    DISAPPOINT = "disappoint"                  # 重复空追（guard）
+    EMPTY_STAGE = "empty_stage"                # 重复空追（hold）
+    TOPIC_CONTINUE = "topic_continue"          # 顺着本场已打开的想要继续（…）
+    PRIOR_HER_QUESTION = "prior_her_question"  # 上场她问出去的一句…
+    SESSION_CALLBACK = "session_callback"      # 回指同场／本场已有痕迹接
+    PRIOR_PRESS = "prior_press"                # 上场承诺｜用户催兑现
+    PRIOR_CALLBACK = "prior_callback"          # 回指上一场
+    PRIOR_COMMIT_HOLD = "prior_commit_hold"    # 上场还有未兑现的话
+    REJECT_HOLD = "reject_hold"                # 开口拒收回流｜同场多次
+    FILLER_NONE = "filler_none"                # 这一句没有推力
+    STATEMENT_NONE = "statement_none"          # 陈述类的话，没有明显推力方向
+
+    STOP = frozenset({INPUT_PAUSE, INPUT_STOP})
+    REQUEST = frozenset({INPUT_REQUEST, INPUT_TASK})
+    SATISFIED_SIDE = frozenset({SATISFIED, OPENQ_SATISFIED})
+    EMPTY_CHASE = frozenset({DISAPPOINT, EMPTY_STAGE})
+    OPEN_GAP = frozenset({OPEN_TOPIC, INPUT_ASK, INPUT_REQUEST})
+
+
+@dataclass(frozen=True)
+class InjectedCues:
+    """本轮注入线索（V2.1）：上游/测试显式给 pipeline.turn 的结构化覆盖，一个对象传入。
+
+    语义逐字沿用旧 structured_* kwarg：
+    - 标 ``bool | None`` 的是三态：None=走词表/固定线索兜底；True/False=显式覆盖（False 可否决误命中）。
+    - 标 ``bool`` 的是两态（旧签名即如此）：True=显式置；False=无结构，走词表兜底
+      （marks_fallback=not bool(cue)）。不是否决——为保持行为不变，未升级为三态。
+    """
+
+    commit_deny: bool = False
+    drive_greet: bool = False
+    drive_hold: bool = False
+    openq_answered: bool | None = None
+    want_seen: bool | None = None
+    want_seen_answered: bool | None = None
+    want_seen_hang: bool | None = None
+    drive_curiosity: bool = False
+    drive_open_topic: bool = False
+    drive_disappoint: bool = False
+    drive_empty_stage: bool = False
+    drive_topic_continue: bool = False
+    drive_callback: bool = False
+    drive_identity_ask: bool = False
+    stance_attitude: bool | None = None
+    body_imagine: bool | None = None
+    stance_necessary_pain: bool | None = None
+    stance_self_torture: bool | None = None
+
+
 @dataclass
 class DriveSignal:
-    """动力层最小信号：direction 可留空；why 允许好奇类理由；禁止装饰分数。"""
+    """动力层最小信号：direction 可留空；why 允许好奇类理由；禁止装饰分数。
+
+    V2.1：reason（DriveReason）、topic（判定所指对象）、holds_commitment（判停／答复时同场承诺仍在）
+    是层间协议；why 只留给记录／调试，下游不得做子串判断或切片。
+    """
 
     direction: Direction = None
     salience: Salience = "low"
     why: str = ""
+    reason: str = ""
+    topic: str = ""
+    holds_commitment: bool = False
     prior_her_question: bool = False
     prior_her_question_text: str = ""
     judgment_effective: tuple[SessionJudgment, ...] = ()
@@ -262,6 +342,8 @@ class ThoughtBrief:
     org: OrgConstraint = field(default_factory=OrgConstraint)
     context: ThinContext = field(default_factory=ThinContext)
     say_intent: str = ""
+    # V2.1：say_intent 中「」引语的结构字段（arbitrate／回忆旁路写；开口层读，不再切 say_intent）
+    say_quote: str = ""
     must_not_pretend: List[str] = field(default_factory=list)
     # 本轮实际命中的 cannot_fake 条目（常驻底线之外额外踩到的；
     # 开口层按它略分 org 口径，不做禁词）

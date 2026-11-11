@@ -1,5 +1,6 @@
 """必要痛苦与自虐加戏：结构、薄兜底和既有优先级。"""
 import pytest
+from birth.types import InjectedCues
 
 from birth.articulate import _template_utterance, validate
 from birth.pipeline import active_store, turn
@@ -32,24 +33,24 @@ def test_self_torture_fallback(text):
 
 def test_structured_override_coexistence_and_new_session():
     r = turn("无法改变", new_session=True, stub=True,
-             structured_stance_necessary_pain=True, structured_stance_self_torture=True)
+             injected=InjectedCues(stance_necessary_pain=True, stance_self_torture=True))
     assert r.brief.context.stance_attitude_pending
     assert r.brief.context.stance_necessary_pain_pending
     assert r.brief.context.stance_self_torture_pending
     assert "不跟加戏" in r.brief.stance.why
     assert "不再加" in r.utterance
     r = turn("只能面对，我就是要难受", new_session=True, stub=True,
-             structured_stance_necessary_pain=False, structured_stance_self_torture=False)
+             injected=InjectedCues(stance_necessary_pain=False, stance_self_torture=False))
     assert not r.brief.context.stance_necessary_pain_pending
     assert not r.brief.context.stance_self_torture_pending
-    r = turn("无法改变", new_session=True, stub=True, structured_stance_necessary_pain=True)
+    r = turn("无法改变", new_session=True, stub=True, injected=InjectedCues(stance_necessary_pain=True))
     assert r.brief.context.stance_attitude_pending
     assert "必要痛苦" in r.brief.stance.stake
 
 
 @pytest.mark.parametrize("flag", ["structured_stance_necessary_pain", "structured_stance_self_torture"])
 def test_hard_priorities(flag):
-    args = {flag: True}
+    args = {"injected": InjectedCues(**{flag.removeprefix("structured_"): True})}
     r = turn("人生的意义就是受苦", new_session=True, stub=True, **args)
     assert r.brief.stance.posture == "needs_clarify"
     assert "不空壳升华" in r.brief.say_intent

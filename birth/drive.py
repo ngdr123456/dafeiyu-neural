@@ -20,32 +20,23 @@ from .session_trace import (
     is_session_backref,
     topic_hint_from_facts,
 )
-from .types import DriveSignal, ThinContext
+from .types import DriveReason, DriveSignal, ThinContext
 
 GREETINGS = {
     "你好", "您好", "hello", "hi", "hi!", "hi~", "嗨", "嗨~", "哈喽", "哈罗",
     "早上好", "中午好", "下午好", "晚上好", "晚安", "在吗", "在么", "hello!",
 }
+# 「对」：V2.1 3a 去掉 len<=2 兜底后按显式填料词补入（原先靠长度兜底算填料）。
 NEUTRAL_FILLERS = {"嗯", "嗯嗯", "嗯。", "哦", "哦哦", "喔", "好", "好的", "ok",
-                   "okay", "行", "行吧", "好吧", "?", "？？"}
+                   "okay", "行", "行吧", "好吧", "?", "？？", "对"}
+_FILLER_TRAIL_PUNCT = "。.！!～~？?，,"
 
 # 好奇类线索：用户在问「为什么/怎么回事」，好奇本身即可驱动
 CURIOSITY_MARKS = ("为什么", "怎么会", "怎么回事", "为什么呀", "凭什么", "啥区别",
                    "有何不同", "好奇", "想知道", "说不上来为啥")
 
-STORY_MARKS = ("过去", "从前", "你说过", "你的经历", "你小时候")  # 只有识别记忆依赖时才用
-
-# 满足／收束（喜欢侧已接住，不必再追）
-SATISFIED_MARKS = (
-    "够了", "先这样", "挺好的", "不用了", "就这样吧", "先到这", "可以了",
-    "行了就这样", "先到这里", "暂时不用", "就先这样",
-)
-
-# 明确打开话题
-OPEN_TOPIC_PREFIXES = (
-    "我想聊", "我想说说", "我想说一下", "跟你说件", "跟你说一下", "跟你说个",
-    "我们谈谈", "咱们谈谈", "咱们聊", "我们聊", "聊聊", "谈谈",
-)
+# 满足／收束、明确打开话题：单一定义在 lexicon（V2.1 3b）
+from .lexicon import OPEN_TOPIC_PREFIXES, SATISFIED_MARKS  # noqa: E402
 
 # 空追失望（轻量）
 DISAPPOINT_MARKS = (
@@ -267,8 +258,12 @@ def _is_greeting(text: str) -> bool:
 
 def is_neutral_filler(text: str) -> bool:
     """识别「嗯/好」这类没推力的接话。公开给仲裁/pipeline 用：
-    本轮是不是 filler 决定悬问能不能短暂 meaning 捡一次。"""
-    return (text or "").strip() in NEUTRAL_FILLERS or len((text or "").strip()) <= 2
+    本轮是不是 filler 决定悬问能不能短暂 meaning 捡一次。
+
+    V2.1 3a：只认显式填料词（允许句尾标点，如「好。」「嗯？」）；
+    不再把任意 len<=2 的话算填料（「好烦」「累了」不是填料）。"""
+    t = (text or "").strip()
+    return t in NEUTRAL_FILLERS or (bool(t) and t.rstrip(_FILLER_TRAIL_PUNCT) in NEUTRAL_FILLERS)
 
 
 def _extract_open_topic(text: str) -> str | None:
@@ -299,7 +294,7 @@ def _empty_chase_signal(text: str, context: ThinContext) -> DriveSignal | None:
         return DriveSignal(
             direction="guard",
             salience="mid",
-            why="重复空追，想要还在但满足没到；先停硬追、改接住对方的不满",
+            reason=DriveReason.DISAPPOINT, why="重复空追，想要还在但满足没到；先停硬追、改接住对方的不满",
         )
     facts = list(context.facts_this_session or [])
     stage_lines = [f for f in facts if f.startswith("台上说：")]
@@ -312,7 +307,7 @@ def _empty_chase_signal(text: str, context: ThinContext) -> DriveSignal | None:
                 return DriveSignal(
                     direction="hold",
                     salience="low",
-                    why="重复空追，想要还在但满足没到；先停硬追、改接住",
+                    reason=DriveReason.EMPTY_STAGE, why="重复空追，想要还在但满足没到；先停硬追、改接住",
                 )
     return None
 
@@ -328,7 +323,7 @@ def _topic_continuation(text: str, context: ThinContext) -> DriveSignal | None:
         return DriveSignal(
             direction="pursue",
             salience="mid",
-            why=f"顺着本场已打开的想要继续（{topic}），不装没话头",
+            reason=DriveReason.TOPIC_CONTINUE, topic=(topic).strip(), why=f"顺着本场已打开的想要继续（{topic}），不装没话头",
         )
     return None
 
@@ -544,13 +539,13 @@ def _infer_drive(
         return DriveSignal(
             direction="hold",
             salience="low",
-            why="工程师旁路",
+            reason=DriveReason.BYPASS, why="工程师旁路",
         )
 
     # -- 结构化阶段：先读 cues，不动词表 --------------------------------
     # S1) 新场未接上 → 不推
     if not cues.session_ok:
-        return DriveSignal(direction=None, salience="low", why="新场未接上，先不推")
+        return DriveSignal(direction=None, salience="low", reason=DriveReason.SESSION_NOT_OK, why="新场未接上，先不推")
 
     # S1b) 输入信号判停（INPUT_INTENT_V1）：非降级、对「我」说的暂停／终止，
     # 先于 S6／S7／§6／S8–S11 的一切顺手追——对方明说停，就不再顺着任何本地话头走。
@@ -564,12 +559,14 @@ def _infer_drive(
         and input_signal.scope == "conversation"
     ):
         label = "暂停" if input_signal.act == "pause" else "终止"
+        stop_reason = DriveReason.INPUT_PAUSE if input_signal.act == "pause" else DriveReason.INPUT_STOP
         asked = "对方要我暂停" if input_signal.act == "pause" else "对方要终止"
         if cues.commitments_present and context.last_commitments:
             first = context.last_commitments[0]
             return DriveSignal(
                 direction="guard",
                 salience="mid",
+                reason=stop_reason, topic=(first).strip(), holds_commitment=True,
                 why=(
                     f"输入信号｜{label}｜{input_signal.source}｜{asked}，"
                     f"但同场还有没兑现的话（{first}）"
@@ -578,7 +575,7 @@ def _infer_drive(
         return DriveSignal(
             direction="hold",
             salience="low",
-            why=f"输入信号｜{label}｜{input_signal.source}｜{asked}",
+            reason=stop_reason, why=f"输入信号｜{label}｜{input_signal.source}｜{asked}",
         )
 
     target = credible_open_question_answer(understanding)
@@ -587,10 +584,12 @@ def _infer_drive(
             first = context.last_commitments[0]
             return DriveSignal(
                 direction="guard", salience="mid",
+                reason=DriveReason.INPUT_ANSWERED, topic=(first).strip(), holds_commitment=True,
                 why=f"输入理解｜答复悬问｜{understanding.source}｜同场还有没兑现的话（{first}）",
             )
         return DriveSignal(
             direction="hold", salience="low",
+            reason=DriveReason.INPUT_ANSWERED,
             why=f"输入理解｜答复悬问｜{understanding.source}｜对方答上了，先接住这轮，不再追问",
         )
 
@@ -598,13 +597,13 @@ def _infer_drive(
     # when a same-session commitment is present.
     if cues.drive_identity_ask_pending and not cues.commitments_present:
         if identity_clue(context):
-            return DriveSignal(direction="pursue", salience="mid", why="身份询问｜已有对方线索，接着确认")
-        return DriveSignal(direction="hold", salience="low", why="身份询问｜没有可识别的对方线索，先听对方介绍")
+            return DriveSignal(direction="pursue", salience="mid", reason=DriveReason.IDENTITY_ASK_CLUE, why="身份询问｜已有对方线索，接着确认")
+        return DriveSignal(direction="hold", salience="low", reason=DriveReason.IDENTITY_ASK_NO_CLUE, why="身份询问｜没有可识别的对方线索，先听对方介绍")
 
     if cues.drive_identity_answer_pending:
         if cues.commitments_present:
-            return DriveSignal(direction="guard", salience="mid", why="同场有没兑现的话，先守住承诺")
-        return DriveSignal(direction="pursue", salience="mid", why="身份回应｜接住对方的自我介绍")
+            return DriveSignal(direction="guard", salience="mid", reason=DriveReason.COMMITMENT_GUARD, why="同场有没兑现的话，先守住承诺")
+        return DriveSignal(direction="pursue", salience="mid", reason=DriveReason.IDENTITY_ANSWER, why="身份回应｜接住对方的自我介绍")
 
     # S2) 承诺在场 + 本轮改口否定 → guard
     # 主路径：读 cues.commitment_deny_pending（ThinContext 结构化布尔，pipeline／上游置位）。
@@ -620,25 +619,25 @@ def _infer_drive(
             return DriveSignal(
                 direction="guard",
                 salience="mid",
-                why=f"同场有没兑现的话（{first}），已有要护，这轮不能当没说过",
+                reason=DriveReason.COMMITMENT_GUARD, topic=(first).strip(), why=f"同场有没兑现的话（{first}），已有要护，这轮不能当没说过",
             )
 
     # Relational receipt/wait is separate from topic questions and never beats §6.
     if context.want_seen_pending or context.drive_want_seen_satisfied_pending:
         if cues.commitments_present:
-            return DriveSignal(direction="guard", salience="mid", why="同场有没兑现的话，先守住承诺")
+            return DriveSignal(direction="guard", salience="mid", reason=DriveReason.COMMITMENT_GUARD, why="同场有没兑现的话，先守住承诺")
         if context.drive_want_seen_satisfied_pending:
-            return DriveSignal(direction="hold", salience="low", why="被看见了｜接住这份回应，先停在这里")
+            return DriveSignal(direction="hold", salience="low", reason=DriveReason.WANT_SEEN_SATISFIED, why="被看见了｜接住这份回应，先停在这里")
         if context.drive_want_seen_waiting or is_neutral_filler(text):
-            return DriveSignal(direction="pursue", salience="mid", why="想被看见｜还在等对方回应")
+            return DriveSignal(direction="pursue", salience="mid", reason=DriveReason.WANT_SEEN_WAITING, why="想被看见｜还在等对方回应")
 
     if context.drive_openq_satisfied_pending:
         if cues.commitments_present:
-            return DriveSignal(direction="guard", salience="mid", why="同场有没兑现的话，先守住承诺")
-        return DriveSignal(direction="hold", salience="low", why="悬问被接住|喜欢/满足侧到了，不必再追")
+            return DriveSignal(direction="guard", salience="mid", reason=DriveReason.COMMITMENT_GUARD, why="同场有没兑现的话，先守住承诺")
+        return DriveSignal(direction="hold", salience="low", reason=DriveReason.OPENQ_SATISFIED, why="悬问被接住|喜欢/满足侧到了，不必再追")
 
     if context.body_imagine_pending and not cues.commitments_present:
-        return DriveSignal(direction="pursue", salience="mid", why="身体想象｜想要看看、触碰或品尝，但只是想象")
+        return DriveSignal(direction="pursue", salience="mid", reason=DriveReason.BODY_IMAGINE, why="身体想象｜想要看看、触碰或品尝，但只是想象")
 
     # S3) 好奇挂起（读 ThinContext flag，「待接的话头：」前缀仅兜底）+ filler → 适时捡起悬问
     if cues.curiosity_hang_pending and context.open_questions:
@@ -647,7 +646,7 @@ def _infer_drive(
             return DriveSignal(
                 direction="pursue",
                 salience="mid",
-                why=f"同场还有悬而未决的问题（{first}），可以适时捡起来",
+                reason=DriveReason.OPEN_QUESTION_PICKUP, topic=(first).strip(), why=f"同场还有悬而未决的问题（{first}），可以适时捡起来",
             )
 
     # S4) 结构化招呼 → hold（主路径读 flag；GREETINGS 仅无结构时兜底）
@@ -655,7 +654,7 @@ def _infer_drive(
         return DriveSignal(
             direction="hold",
             salience="low",
-            why="招呼类开场，没有要推进的事；稳住场子即可，想聊什么听用户的",
+            reason=DriveReason.GREET, why="招呼类开场，没有要推进的事；稳住场子即可，想聊什么听用户的",
         )
 
     # S5) 结构化满足／收束 → hold（主路径读 flag；SATISFIED_MARKS 仅无结构时兜底）
@@ -663,7 +662,7 @@ def _infer_drive(
         return DriveSignal(
             direction="hold",
             salience="low",
-            why="喜欢/满足侧已接住，不必再追；对方示意够了或先收束",
+            reason=DriveReason.SATISFIED, why="喜欢/满足侧已接住，不必再追；对方示意够了或先收束",
         )
 
     # S6) 结构化打开话题 → pursue mid（主路径读 flag；OPEN_TOPIC_PREFIXES 仅无结构时兜底）
@@ -673,7 +672,7 @@ def _infer_drive(
         return DriveSignal(
             direction="pursue",
             salience="mid",
-            why=f"缺口在外、想要打开这一话头{topic_bit}",
+            reason=DriveReason.OPEN_TOPIC, topic=(opened or "").strip(), why=f"缺口在外、想要打开这一话头{topic_bit}",
         )
 
     # S7) 结构化好奇 → pursue high（主路径读 flag；CURIOSITY_MARKS 仅无结构时兜底）
@@ -681,7 +680,7 @@ def _infer_drive(
         return DriveSignal(
             direction="pursue",
             salience="high",
-            why="用户问出了『为什么』类问题，好奇本身就是够格的推力，顺着看清楚",
+            reason=DriveReason.CURIOSITY, why="用户问出了『为什么』类问题，好奇本身就是够格的推力，顺着看清楚",
         )
 
     # §6) 同场承诺在场 → guard（DRIVE_V1：须先于 §8 空追／§9 话题延续／§11 回指；
@@ -691,7 +690,7 @@ def _infer_drive(
         return DriveSignal(
             direction="guard",
             salience="mid",
-            why=f"同场有没兑现的话（{first}），已有要护，这轮不能当没说过",
+            reason=DriveReason.COMMITMENT_GUARD, topic=(first).strip(), why=f"同场有没兑现的话（{first}），已有要护，这轮不能当没说过",
         )
 
     # S8) 结构化失望／空追 → guard mid（主路径读 flag；DISAPPOINT_MARKS 仅无结构时兜底）
@@ -699,7 +698,7 @@ def _infer_drive(
         return DriveSignal(
             direction="guard",
             salience="mid",
-            why="重复空追，想要还在但满足没到；先停硬追、改接住对方的不满",
+            reason=DriveReason.DISAPPOINT, why="重复空追，想要还在但满足没到；先停硬追、改接住对方的不满",
         )
 
     # S9) 结构化空台接话钝化 → hold low（主路径读 flag；_EMPTY_STAGE_MARKS 仅无结构时兜底）
@@ -707,7 +706,7 @@ def _infer_drive(
         return DriveSignal(
             direction="hold",
             salience="low",
-            why="重复空追，想要还在但满足没到；先停硬追、改接住",
+            reason=DriveReason.EMPTY_STAGE, why="重复空追，想要还在但满足没到；先停硬追、改接住",
         )
 
     # S10) 结构化话题延续 → pursue mid（主路径读 flag；话题词扫 facts 仅无结构时兜底）
@@ -720,6 +719,7 @@ def _infer_drive(
         return DriveSignal(
             direction="pursue",
             salience="mid",
+            reason=DriveReason.TOPIC_CONTINUE, topic=(topic or "").strip(),
             why=why,
         )
 
@@ -734,7 +734,7 @@ def _infer_drive(
                 return DriveSignal(
                     direction="pursue",
                     salience="mid",
-                    why=f"上场她问出去的一句还没被接住（{q}），这轮可以问回来",
+                    reason=DriveReason.PRIOR_HER_QUESTION, topic=(q).strip(), why=f"上场她问出去的一句还没被接住（{q}），这轮可以问回来",
                     prior_her_question=True,
                 )
             metadata = getattr(prior_q, "record_metadata", None)
@@ -749,7 +749,7 @@ def _infer_drive(
                     q = selected[0]
                     return DriveSignal(
                         direction="pursue", salience="mid",
-                        why="上场她问出去的一句还没被接住，这轮可以问回来",
+                        reason=DriveReason.PRIOR_HER_QUESTION, why="上场她问出去的一句还没被接住，这轮可以问回来",
                         prior_her_question=True, prior_her_question_text=q,
                     )
 
@@ -758,7 +758,7 @@ def _infer_drive(
         return DriveSignal(
             direction="pursue",
             salience="mid",
-            why="用户在回指同场刚才的话头，动力要用本场已有痕迹接，不装没发生过",
+            reason=DriveReason.SESSION_CALLBACK, why="用户在回指同场刚才的话头，动力要用本场已有痕迹接，不装没发生过",
         )
 
     # S12a) 上场未兑现承诺被催 → pursue mid（须有 prior.commitments_pending；须后于 §6；
@@ -778,6 +778,7 @@ def _infer_drive(
         return DriveSignal(
             direction="pursue",
             salience="mid",
+            reason=DriveReason.PRIOR_PRESS, topic=(first or "").strip(),
             why=why,
         )
 
@@ -786,7 +787,7 @@ def _infer_drive(
         return DriveSignal(
             direction="pursue",
             salience="mid",
-            why="用户在回指上一场的话头，动力要用上场已有痕迹接，不装没发生过",
+            reason=DriveReason.PRIOR_CALLBACK, why="用户在回指上一场的话头，动力要用上场已有痕迹接，不装没发生过",
         )
 
     # S13) 上场未兑现承诺线索：不强制开口；仅 filler／无内容时留低显著 hold，
@@ -795,7 +796,7 @@ def _infer_drive(
         return DriveSignal(
             direction="hold",
             salience="low",
-            why="上场还有未兑现的话，可作线索，不强制这轮开口提",
+            reason=DriveReason.PRIOR_COMMIT_HOLD, why="上场还有未兑现的话，可作线索，不强制这轮开口提",
         )
 
     # S14) 开口拒收回流 soft hold（可选读）：同场 reject_count≥2 且无改口否定、
@@ -812,7 +813,7 @@ def _infer_drive(
             return DriveSignal(
                 direction="hold",
                 salience="low",
-                why="开口拒收回流｜同场多次",
+                reason=DriveReason.REJECT_HOLD, why="开口拒收回流｜同场多次",
             )
 
     # S15) 上游结构化输入信号
@@ -826,7 +827,7 @@ def _infer_drive(
         return DriveSignal(
             direction="hold",
             salience="low",
-            why="招呼类开场，没有要推进的事；稳住场子即可，想聊什么听用户的",
+            reason=DriveReason.GREET, why="招呼类开场，没有要推进的事；稳住场子即可，想聊什么听用户的",
         )
 
     # 2) 满足／收束
@@ -834,7 +835,7 @@ def _infer_drive(
         return DriveSignal(
             direction="hold",
             salience="low",
-            why="喜欢/满足侧已接住，不必再追；对方示意够了或先收束",
+            reason=DriveReason.SATISFIED, why="喜欢/满足侧已接住，不必再追；对方示意够了或先收束",
         )
 
     # 3) 明确打开话题
@@ -843,7 +844,7 @@ def _infer_drive(
         return DriveSignal(
             direction="pursue",
             salience="mid",
-            why=f"缺口在外、想要打开这一话头（{opened}）",
+            reason=DriveReason.OPEN_TOPIC, topic=(opened).strip(), why=f"缺口在外、想要打开这一话头（{opened}）",
         )
 
     # 4) 好奇
@@ -851,7 +852,7 @@ def _infer_drive(
         return DriveSignal(
             direction="pursue",
             salience="high",
-            why="用户问出了『为什么』类问题，好奇本身就是够格的推力，顺着看清楚",
+            reason=DriveReason.CURIOSITY, why="用户问出了『为什么』类问题，好奇本身就是够格的推力，顺着看清楚",
         )
 
     # 5) 回指兜底（无 drive_callback_pending 时）：与未兑现承诺冲突时已有要护优先于普通回指追
@@ -868,12 +869,12 @@ def _infer_drive(
                 return DriveSignal(
                     direction="guard",
                     salience="mid",
-                    why=f"同场有没兑现的话（{first}），已有要护，这轮不能当没说过",
+                    reason=DriveReason.COMMITMENT_GUARD, topic=(first).strip(), why=f"同场有没兑现的话（{first}），已有要护，这轮不能当没说过",
                 )
         return DriveSignal(
             direction="pursue",
             salience="mid",
-            why="用户在回指同场刚才的话头，动力要用本场已有痕迹接，不装没发生过",
+            reason=DriveReason.SESSION_CALLBACK, why="用户在回指同场刚才的话头，动力要用本场已有痕迹接，不装没发生过",
         )
 
     # 5a) 上场承诺被催兜底（无 drive_prior_press_pending 时）
@@ -884,7 +885,7 @@ def _infer_drive(
         return DriveSignal(
             direction="pursue",
             salience="mid",
-            why=f"上场承诺｜用户催兑现（{first}）",
+            reason=DriveReason.PRIOR_PRESS, topic=(first).strip(), why=f"上场承诺｜用户催兑现（{first}）",
         )
 
     # 5b) 跨场回指兜底（无 drive_prior_callback_pending 时）
@@ -892,7 +893,7 @@ def _infer_drive(
         return DriveSignal(
             direction="pursue",
             salience="mid",
-            why="用户在回指上一场的话头，动力要用上场已有痕迹接，不装没发生过",
+            reason=DriveReason.PRIOR_CALLBACK, why="用户在回指上一场的话头，动力要用上场已有痕迹接，不装没发生过",
         )
 
     # 6) 同场承诺：已有要护 → guard（hold 留给满足收束／空追该停）
@@ -901,7 +902,7 @@ def _infer_drive(
         return DriveSignal(
             direction="guard",
             salience="mid",
-            why=f"同场有没兑现的话（{first}），已有要护，这轮不能当没说过",
+            reason=DriveReason.COMMITMENT_GUARD, topic=(first).strip(), why=f"同场有没兑现的话（{first}），已有要护，这轮不能当没说过",
         )
 
     # 7) 悬问 + filler：可 pursue；纯 filler 留空
@@ -911,12 +912,12 @@ def _infer_drive(
             return DriveSignal(
                 direction="pursue",
                 salience="mid",
-                why=f"同场还有悬而未决的问题（{first}），可以适时捡起来",
+                reason=DriveReason.OPEN_QUESTION_PICKUP, topic=(first).strip(), why=f"同场还有悬而未决的问题（{first}），可以适时捡起来",
             )
         return DriveSignal(
             direction=None,
             salience="low",
-            why="这一句没有推力，也不必硬造一个；如实回应即可",
+            reason=DriveReason.FILLER_NONE, why="这一句没有推力，也不必硬造一个；如实回应即可",
         )
 
     # 8) 空追钝化
@@ -930,7 +931,7 @@ def _infer_drive(
         return DriveSignal(
             direction="pursue",
             salience="mid",
-            why=f"同场还有悬而未决的问题（{first}），可以适时捡起来",
+            reason=DriveReason.OPEN_QUESTION_PICKUP, topic=(first).strip(), why=f"同场还有悬而未决的问题（{first}），可以适时捡起来",
         )
 
     # 9) 话题延续 / 默认陈述
@@ -941,7 +942,7 @@ def _infer_drive(
     return DriveSignal(
         direction=None,
         salience="low",
-        why="陈述类的话，没有明显推力方向；如实接住，不硬造动力",
+        reason=DriveReason.STATEMENT_NONE, why="陈述类的话，没有明显推力方向；如实接住，不硬造动力",
     )
 
 
@@ -970,12 +971,16 @@ def prior_delivered_kind(text: str) -> str:
     return "提问" if extract_open_question(text) else "那句"
 
 
-def infer_drive(user_text, context, cues=None, *, drive_bypass=None, input_signal=None, understanding=None):
+
+
+def infer_drive(user_text, context, cues=None, *, drive_bypass=None, input_signal=None, understanding=None,
+                judgment_validated=False):
     """Keep the normal drive choice and ground relevant consumption in session interpretation."""
     result = _infer_drive(user_text, context, cues, drive_bypass=drive_bypass,
                           input_signal=input_signal, understanding=understanding)
     from .input_contract import effective_judgment, validate_judgment, visible_actions, effective_action_feedback, action_feedback_by_scope
-    signal = validate_judgment(understanding, user_text, context)
+    # V2.1 3b：pipeline 已校验过的信号直接传入（judgment_validated=True），不再重复校验；直调仍校验。
+    signal = understanding if judgment_validated else validate_judgment(understanding, user_text, context)
     blocked = (bool(context.last_commitments) or result.direction == "guard"
                or is_drive_bypass_on(explicit=drive_bypass, context=context)
                or bool(signal and signal.act in ("pause", "stop")))
@@ -984,12 +989,14 @@ def infer_drive(user_text, context, cues=None, *, drive_bypass=None, input_signa
         if effective:
             content = "；".join(item.content for item in effective)
             evidence = "；".join(item.span for item in effective)
+            appendix = f"；本场用户当前表达的看法（{effective[0].subject}）：{content}（依据：{evidence}）"
             result = replace(result, judgment_effective=tuple(effective),
-                             why=result.why + f"；本场用户当前表达的看法（{effective[0].subject}）：{content}（依据：{evidence}）")
+                             why=result.why + appendix)
     if not blocked and is_neutral_filler(user_text):
         correction = _session_self_correction(context)
         if correction:
-            result = replace(result, why=result.why + f"；本场用户更新了自己的看法（依据：{correction}）")
+            appendix = f"；本场用户更新了自己的看法（依据：{correction}）"
+            result = replace(result, why=result.why + appendix)
     # Consume already-stored action feedback on a later turn.
     # Empty goal must not void stored reports; a filler utterance is not required.
     # Topic match only filters when both sides have a goal; unique-match is unchanged.
@@ -1014,5 +1021,6 @@ def infer_drive(user_text, context, cues=None, *, drive_bypass=None, input_signa
         for scope, effects in action_feedback_by_scope(reports)
     )
     kind = prior_delivered_kind(action.text)
+    appendix = " [evidence: " + " | ".join(item.evidence for item in reports) + "]" + f"；同场{kind}「{action.text}」的对方{basis}，据此权衡继续的方式"
     return replace(result, action_feedback_effective=tuple(reports),
-                   why=result.why + " [evidence: " + " | ".join(item.evidence for item in reports) + "]" + f"；同场{kind}「{action.text}」的对方{basis}，据此权衡继续的方式")
+                   why=result.why + appendix)

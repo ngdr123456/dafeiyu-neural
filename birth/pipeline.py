@@ -49,7 +49,8 @@ from .input_contract import InputSignal, credible_open_question_answer, credible
 from .input_sense import sense_input
 from .stance_org import (ATTITUDE_MARKS, commitment_point, conflict_point,
                          default_org, default_stance)
-from .types import CommitmentCandidate, HerUtterance, ThoughtBrief, SessionJudgment, SessionAction, ActionFeedback
+from .lexicon import BODY_IMAGINE_MARKS, NECESSARY_PAIN_MARKS, SELF_TORTURE_MARKS
+from .types import CommitmentCandidate, DriveReason, HerUtterance, InjectedCues, ThoughtBrief, SessionJudgment, SessionAction, ActionFeedback
 
 _STORE: ThinContextStore = ThinContextStore()
 
@@ -127,24 +128,7 @@ def turn(
     new_session: bool = False,
     debug: bool = False,
     stub: bool | None = None,
-    structured_commit_deny: bool = False,
-    structured_drive_greet: bool = False,
-    structured_drive_hold: bool = False,
-    structured_openq_answered: bool | None = None,
-    structured_want_seen: bool | None = None,
-    structured_want_seen_answered: bool | None = None,
-    structured_want_seen_hang: bool | None = None,
-    structured_drive_curiosity: bool = False,
-    structured_drive_open_topic: bool = False,
-    structured_drive_disappoint: bool = False,
-    structured_drive_empty_stage: bool = False,
-    structured_drive_topic_continue: bool = False,
-    structured_drive_callback: bool = False,
-    structured_drive_identity_ask: bool = False,
-    structured_stance_attitude: bool | None = None,
-    structured_body_imagine: bool | None = None,
-    structured_stance_necessary_pain: bool | None = None,
-    structured_stance_self_torture: bool | None = None,
+    injected: InjectedCues | None = None,
     drive_bypass: bool = False,
     input_signal: InputSignal | None = None,
     sense: bool | None = None,
@@ -158,51 +142,53 @@ def turn(
     非 CLI 调用不传 output 时，沿用旧接口：调用 turn 即隐式确认消费返回台词，立即回流；
     需要实际交付确认的调用方必须传 output，不能先 turn 再自行打印。
     用户输入及其已触发的状态更新不依赖输出确认，不回滚。
-    structured_want_seen=True 表示对方已接住，False 表示仍未接住；None 才用极薄口语兜底。
-    structured_want_seen_answered 如有值则覆盖上述判断；structured_want_seen_hang=True
+    injected：本轮注入线索（InjectedCues，见 types.py）；None=全部缺省。字段语义逐字同旧 structured_* kwarg。
+    injected.want_seen=True 表示对方已接住，False 表示仍未接住；None 才用极薄口语兜底。
+    injected.want_seen_answered 如有值则覆盖上述判断；injected.want_seen_hang=True
     标记本轮开口在等对方的看法，False 禁止开口指纹兜底。
     debug 只是让工程师通道外显得更方便（CLI 用它打印 Brief）；管线行为不受影响。
     stub=True 强制模板开口；None 跟随 articulate 全局/环境（默认可走 LLM）。
     sense=None 读取 BIRTH_INPUT_SENSE（默认关闭）；显式信号优先，绕过动力时不感知。
-    structured_commit_deny: 上游结构化 deny Brief-family 标记（如 ThoughtBrief.commit_deny）；
+    injected.commit_deny: 上游结构化 deny Brief-family 标记（如 ThoughtBrief.commit_deny）；
     为 True 时优先使用结构化信号。live 本轮无 kwarg 时，写入前先跑 early stance，
     从其守诺结构（与 Brief.commit_deny 同条件）前移置 flag；COMMIT_DENY_MARKS
     仅真无结构时兜底——兼容旧路径但不扩词表，不改台上话术；勿误伤
     PRESS_COMMIT／交付／放下。
-    structured_drive_greet／structured_drive_hold: 上游结构化招呼／收束 hold cue；
+    injected.drive_greet／injected.drive_hold: 上游结构化招呼／收束 hold cue；
     有结构时 drive 非 S3 主路径读 ThinContext flag，不扫 GREETINGS／SATISFIED_MARKS；
     真无结构时词表兜底（不扩词表）。
-    structured_drive_curiosity／structured_drive_open_topic: 上游结构化好奇／打开话题
+    injected.drive_curiosity／injected.drive_open_topic: 上游结构化好奇／打开话题
     pursue cue；有结构时读 ThinContext flag，不扫 CURIOSITY_MARKS／OPEN_TOPIC_PREFIXES；
     真无结构时词表兜底（不扩词表）。
-    structured_drive_disappoint／structured_drive_empty_stage／structured_drive_topic_continue:
+    injected.drive_disappoint／injected.drive_empty_stage／injected.drive_topic_continue:
     上游结构化失望 guard／空台 hold／话题延续 pursue cue；有结构时读 ThinContext flag，
     不扫 DISAPPOINT_MARKS／_EMPTY_STAGE_MARKS／话题词；真无结构时兜底（不扩词表）。
-    structured_drive_callback: 上游结构化回指 pursue cue；有结构时读 ThinContext.drive_callback_pending，
+    injected.drive_callback: 上游结构化回指 pursue cue；有结构时读 ThinContext.drive_callback_pending，
     不扫 BACKREF_MARKS；真无结构时 is_session_backref 兜底（不扩词表）。有承诺时写入侧不置（§6）。
     drive_bypass: 工程师通道——强制动力层中性 hold（亦可 BIRTH_DRIVE_BYPASS／NEUTRAL 环境变量
     或 ThinContext.drive_bypass）；默认 False，出生路径零行为变化；非听感验收。
     """
+    cues_in = injected if injected is not None else InjectedCues()
     if new_session:
         # 跨场：先把本场薄痕迹落盘（若开启），再清场，再灌入上一场痕迹
         _persist_and_reset_session()
 
     # None 才使用固定线索；显式 False 可由上游否决误命中。
     _STORE.context.stance_attitude_pending = (
-        structured_stance_attitude if structured_stance_attitude is not None
+        cues_in.stance_attitude if cues_in.stance_attitude is not None
         else any(mark in (user_text or "") for mark in ATTITUDE_MARKS)
     )
     _STORE.context.body_imagine_pending = (
-        structured_body_imagine if structured_body_imagine is not None
-        else "想象一下亲眼看看" in (user_text or "")
+        cues_in.body_imagine if cues_in.body_imagine is not None
+        else any(mark in (user_text or "") for mark in BODY_IMAGINE_MARKS)
     )
     _STORE.context.stance_necessary_pain_pending = (
-        structured_stance_necessary_pain if structured_stance_necessary_pain is not None
-        else any(mark in (user_text or "") for mark in ("只能面对", "躲不掉", "必须承受"))
+        cues_in.stance_necessary_pain if cues_in.stance_necessary_pain is not None
+        else any(mark in (user_text or "") for mark in NECESSARY_PAIN_MARKS)
     )
     _STORE.context.stance_self_torture_pending = (
-        structured_stance_self_torture if structured_stance_self_torture is not None
-        else any(mark in (user_text or "") for mark in ("我就是要难受", "偏要跟自己过不去", "不痛苦就没意义"))
+        cues_in.stance_self_torture if cues_in.stance_self_torture is not None
+        else any(mark in (user_text or "") for mark in SELF_TORTURE_MARKS)
     )
 
     # 改口否定写入（前移结构化检测；有结构时本轮不必再扫 COMMIT_DENY_MARKS）：
@@ -211,7 +197,7 @@ def turn(
     has_pending = bool(_STORE.pending_commitments())
     _STORE.set_commitment_deny_pending(False)
     if should_set_commitment_deny_pending(
-        commit_deny=structured_commit_deny,
+        commit_deny=cues_in.commit_deny,
         user_text=user_text,
         has_pending=has_pending,
         marks_fallback=False,
@@ -221,8 +207,10 @@ def turn(
     context = _STORE.snapshot()
     if sense is None:
         sense = os.environ.get("BIRTH_INPUT_SENSE", "").strip().lower() in {"1", "true", "yes", "on"}
+    sensed_here = False
     if input_signal is None and sense and not drive_bypass:
         input_signal = sense_input(user_text, context=context)
+        sensed_here = True  # sense_input 已对同一 context 做过 validate_judgment/validate_action_report
     # Structured spans are evidence only when copied from this input. A direct
     # caller supplies the interpretation, not proof that its meaning is true.
     if input_signal is not None and input_signal.answer_scope and (
@@ -233,8 +221,10 @@ def turn(
         prior_questions = context.prior_session.her_questions if context.prior_session else []
         if input_signal.target_open_question not in context.open_questions + prior_questions:
             input_signal = replace(input_signal, target_open_question="", answer_scope="")
-    input_signal = validate_judgment(input_signal, user_text, context)
-    input_signal = validate_action_report(input_signal, user_text, context)
+    if not sensed_here:
+        # V2.1 3b：校验只跑一次——本轮感知已校验则直接沿用，外部注入的信号在此校验。
+        input_signal = validate_judgment(input_signal, user_text, context)
+        input_signal = validate_action_report(input_signal, user_text, context)
     # 前移：先跑 stance，从守诺结构得到本轮结构化 deny（不经写入侧词表）
     early_stance = default_stance(user_text, context, understanding=input_signal)
     if (
@@ -269,12 +259,12 @@ def turn(
     answer = identity_self_introduction(user_text) if _STORE.context.identity_ask_awaiting_answer else ""
     _STORE.context.identity_answer_text = answer
     _STORE.context.drive_identity_answer_pending = bool(answer)
-    _STORE.set_drive_identity_ask_pending(structured_drive_identity_ask or is_identity_ask(user_text))
+    _STORE.set_drive_identity_ask_pending(cues_in.drive_identity_ask or is_identity_ask(user_text))
     _STORE.set_drive_hold_pending(False)
     _STORE.context.drive_openq_satisfied_pending = False
     _STORE.context.drive_want_seen_satisfied_pending = False
-    seen_signal = (structured_want_seen_answered if structured_want_seen_answered is not None
-                   else structured_want_seen)
+    seen_signal = (cues_in.want_seen_answered if cues_in.want_seen_answered is not None
+                   else cues_in.want_seen)
     text = (user_text or "").strip()
     if seen_signal is None:
         # A deliberately narrow response shape, not generic topic overlap.
@@ -286,7 +276,7 @@ def turn(
         _STORE.context.drive_want_seen_satisfied_pending = True
     _STORE.context.drive_want_seen_waiting = bool(
         _STORE.context.want_seen_pending and
-        (seen_signal is False and (structured_want_seen is not None or structured_want_seen_answered is not None)
+        (seen_signal is False and (cues_in.want_seen is not None or cues_in.want_seen_answered is not None)
          or is_neutral_filler(user_text))
     )
     pending_openq = _STORE.snapshot()
@@ -294,7 +284,7 @@ def turn(
     # Only an explicit trusted caller override can use this unscoped path;
     # textual overlap alone is not evidence that a question was answered.
     answered = has_hang and (
-        structured_openq_answered if structured_openq_answered is not None
+        cues_in.openq_answered if cues_in.openq_answered is not None
         else False
     )
     if answered and not credible_open_question_answer(input_signal):
@@ -323,27 +313,27 @@ def turn(
     if drive_bypass:
         _STORE.set_drive_bypass(True)
     if should_set_drive_greet_pending(
-        greet_cue=structured_drive_greet,
+        greet_cue=cues_in.drive_greet,
         user_text=user_text,
-        marks_fallback=not bool(structured_drive_greet),
+        marks_fallback=not bool(cues_in.drive_greet),
     ):
         _STORE.set_drive_greet_pending(True)
     if should_set_drive_hold_pending(
-        hold_cue=structured_drive_hold,
+        hold_cue=cues_in.drive_hold,
         user_text=user_text,
-        marks_fallback=not bool(structured_drive_hold),
+        marks_fallback=not bool(cues_in.drive_hold),
     ):
         _STORE.set_drive_hold_pending(True)
     if should_set_drive_open_topic_pending(
-        open_topic_cue=structured_drive_open_topic,
+        open_topic_cue=cues_in.drive_open_topic,
         user_text=user_text,
-        marks_fallback=not bool(structured_drive_open_topic),
+        marks_fallback=not bool(cues_in.drive_open_topic),
     ):
         _STORE.set_drive_open_topic_pending(True)
     if should_set_drive_curiosity_pending(
-        curiosity_cue=structured_drive_curiosity,
+        curiosity_cue=cues_in.drive_curiosity,
         user_text=user_text,
-        marks_fallback=not bool(structured_drive_curiosity),
+        marks_fallback=not bool(cues_in.drive_curiosity),
     ):
         _STORE.set_drive_curiosity_pending(True)
     # empty_stage／topic_continue 兜底需同场 facts；先用当前 snapshot 作 context
@@ -352,30 +342,30 @@ def turn(
     # （drive 内亦有 §6 先于 S8–S11；此处双保险，使 turn 路径与直调 infer_drive 对齐）。
     _commitments_block_s8_s10 = bool(ctx_for_drive_write.last_commitments)
     if not _commitments_block_s8_s10 and should_set_drive_disappoint_pending(
-        disappoint_cue=structured_drive_disappoint,
+        disappoint_cue=cues_in.drive_disappoint,
         user_text=user_text,
-        marks_fallback=not bool(structured_drive_disappoint),
+        marks_fallback=not bool(cues_in.drive_disappoint),
     ):
         _STORE.set_drive_disappoint_pending(True)
     if not _commitments_block_s8_s10 and should_set_drive_empty_stage_pending(
-        empty_stage_cue=structured_drive_empty_stage,
+        empty_stage_cue=cues_in.drive_empty_stage,
         user_text=user_text,
         context=ctx_for_drive_write,
-        marks_fallback=not bool(structured_drive_empty_stage),
+        marks_fallback=not bool(cues_in.drive_empty_stage),
     ):
         _STORE.set_drive_empty_stage_pending(True)
     if not _commitments_block_s8_s10 and should_set_drive_topic_continue_pending(
-        topic_continue_cue=structured_drive_topic_continue,
+        topic_continue_cue=cues_in.drive_topic_continue,
         user_text=user_text,
         context=ctx_for_drive_write,
-        marks_fallback=not bool(structured_drive_topic_continue),
+        marks_fallback=not bool(cues_in.drive_topic_continue),
     ):
         _STORE.set_drive_topic_continue_pending(True)
     if not _commitments_block_s8_s10 and should_set_drive_callback_pending(
-        callback_cue=structured_drive_callback,
+        callback_cue=cues_in.drive_callback,
         user_text=user_text,
         context=ctx_for_drive_write,
-        marks_fallback=not bool(structured_drive_callback),
+        marks_fallback=not bool(cues_in.drive_callback),
     ):
         _STORE.set_drive_callback_pending(True)
     # 跨场回指：须有 prior_session 结构；同场承诺在场时不置（对齐 §6）
@@ -397,7 +387,7 @@ def turn(
     context = _STORE.snapshot()
 
     drive = infer_drive(user_text, context, drive_bypass=drive_bypass or None, input_signal=input_signal,
-                        understanding=input_signal)
+                        understanding=input_signal, judgment_validated=True)
     # 旗标可能刚被 early 守诺结构置位：重算 stance，使主路径读 flag（结构路径）
     stance = default_stance(user_text, context, understanding=input_signal)
     org = default_org(context, drive=drive, stance=stance, user_text=user_text,
@@ -493,7 +483,7 @@ def turn(
             _STORE.record_stance_kept(kept_point)
 
     # Only a concrete opening asking for the other's side creates a wait.
-    opening_hang = structured_want_seen_hang
+    opening_hang = cues_in.want_seen_hang
     if opening_hang is None:
         opening_hang = any(mark in (brief.say_intent + utterance)
                            for mark in ("想听听你的看法", "想听听你怎么看"))
@@ -553,7 +543,7 @@ def turn(
             if done:
                 resolved_targets.add(done)
 
-    if (structured_openq_answered is True and not answered
+    if (cues_in.openq_answered is True and not answered
             and not credible_open_question_answer(input_signal)):
         live_prior = _STORE.context.prior_session
         if live_prior is not None and live_prior.her_questions:
@@ -601,7 +591,7 @@ def turn(
         _STORE.set_curiosity_hang_pending(True)
         _STORE.append_open_question(_clip(user_text), metadata=record_meta("user_statement", len(user_text.strip()) > 40))
     elif (not (opening_hang and not context.drive_want_seen_satisfied_pending)
-          and "想被看见｜" not in (drive.why or "")
+          and drive.reason != DriveReason.WANT_SEEN_WAITING
           and not (context.open_questions and is_neutral_filler(user_text))):
         open_q = extract_open_question(utterance)
         if open_q:

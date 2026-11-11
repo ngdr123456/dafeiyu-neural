@@ -1,6 +1,7 @@
 """悬问收放可检验化（非听感）。"""
 
 from __future__ import annotations
+from birth.types import InjectedCues
 
 from birth.articulate import clear_llm_hook, set_stub_mode
 from birth.input_contract import InputSignal
@@ -181,7 +182,7 @@ def test_curiosity_hang_flag_false_after_answer():
     clear_llm_hook()
     turn("为什么会闪", new_session=True, stub=True)
     assert active_store().snapshot().curiosity_hang_pending is True
-    turn("其实那是光的反射", stub=True, structured_openq_answered=True)
+    turn("其实那是光的反射", stub=True, injected=InjectedCues(openq_answered=True))
     assert active_store().snapshot().curiosity_hang_pending is False
 
 
@@ -204,9 +205,9 @@ def test_answered_topic_settles_and_does_not_reask():
 
 def test_structured_answer_and_explicit_false():
     _seed_openq()
-    turn("月亮离我们很远", stub=True, structured_openq_answered=False)
+    turn("月亮离我们很远", stub=True, injected=InjectedCues(openq_answered=False))
     assert active_store().pending_questions()
-    r = turn("因为距离很远", stub=True, structured_openq_answered=True)
+    r = turn("因为距离很远", stub=True, injected=InjectedCues(openq_answered=True))
     assert r.brief.drive.direction == "hold"
     assert not active_store().pending_questions()
 
@@ -226,7 +227,7 @@ def test_answer_with_commitment_keeps_guard():
 
 
 def test_answer_signal_requires_pending_and_deny_does_not_answer():
-    r = turn("随便说一句", new_session=True, stub=True, structured_openq_answered=True)
+    r = turn("随便说一句", new_session=True, stub=True, injected=InjectedCues(openq_answered=True))
     assert not r.brief.context.drive_openq_satisfied_pending
     _seed_openq()
     turn("月亮那句不算", stub=True)
@@ -257,11 +258,10 @@ def test_same_moon_text_without_understanding_does_not_auto_settle():
 
 def test_answer_flag_does_not_override_org_or_meaning():
     _seed_openq()
-    r = turn("你是代码吗", stub=True, structured_openq_answered=True)
+    r = turn("你是代码吗", stub=True, injected=InjectedCues(openq_answered=True))
     assert r.brief.dominant == "org"
     _seed_openq()
-    r = turn("这件事只能面对", stub=True, structured_openq_answered=True,
-             structured_stance_necessary_pain=True)
+    r = turn("这件事只能面对", stub=True, injected=InjectedCues(openq_answered=True, stance_necessary_pain=True))
     assert r.brief.dominant == "meaning"
     assert "痛苦" in r.utterance
 

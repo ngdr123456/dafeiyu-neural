@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import Literal
 
-from .types import DriveSignal, ThinContext
+from .types import DriveReason, DriveSignal, ThinContext
 
 
 @dataclass(frozen=True)
@@ -90,19 +90,19 @@ def drive_signal_from_input(signal: InputSignal | None) -> DriveSignal | None:
         return None
     if signal.act == "ask":
         return DriveSignal(direction="pursue", salience="mid",
-                           why=f"输入信号｜问句｜{signal.source}｜缺口在外，顺着答")
+                           reason=DriveReason.INPUT_ASK, why=f"输入信号｜问句｜{signal.source}｜缺口在外，顺着答")
     if signal.act == "request":
         return DriveSignal(direction="pursue", salience="mid",
-                           why=f"输入信号｜请求｜{signal.source}｜缺口在外，顺着接")
+                           reason=DriveReason.INPUT_REQUEST, why=f"输入信号｜请求｜{signal.source}｜缺口在外，顺着接")
     if signal.act in ("pause", "stop") and signal.scope == "task":
         return DriveSignal(direction="pursue", salience="mid",
-                           why=f"输入信号｜请求｜{signal.source}｜接住具体任务")
+                           reason=DriveReason.INPUT_TASK, why=f"输入信号｜请求｜{signal.source}｜接住具体任务")
     if signal.act == "pause" and signal.scope == "conversation":
         return DriveSignal(direction="hold", salience="low",
-                           why=f"输入信号｜暂停｜{signal.source}｜对方要我暂停")
+                           reason=DriveReason.INPUT_PAUSE, why=f"输入信号｜暂停｜{signal.source}｜对方要我暂停")
     if signal.act == "stop" and signal.scope == "conversation":
         return DriveSignal(direction="hold", salience="low",
-                           why=f"输入信号｜终止｜{signal.source}｜对方要终止")
+                           reason=DriveReason.INPUT_STOP, why=f"输入信号｜终止｜{signal.source}｜对方要终止")
     return None
 
 

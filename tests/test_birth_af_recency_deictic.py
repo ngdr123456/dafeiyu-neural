@@ -2,7 +2,7 @@
 """Recency-deictic action-report binding. No provider calls."""
 from birth.types import SessionAction, ThinContext, ActionFeedback
 from birth.input_contract import visible_actions, validate_action_report, InputSignal
-from birth.input_sense import complement_recency_action_report, parse_recency_deictic_report
+from birth.input_sense import complement_recency_action_report, has_bare_recency_deictic
 from birth.drive import infer_drive, is_neutral_filler
 
 
@@ -65,26 +65,37 @@ def test_makeup_incomplete_report_binds_latest():
 
 
 def test_makeup_unknown_deictic_binds_latest():
+    # V2.1 3e：感知判 unknown 时不再按整句正则自造报告（原断言：绑最近 order 4、raw 非空）。
     out, raw, _ = _run(_sig(), ZH, _ctx(MAKEUP_HERS), True)
-    assert out.action_report_relation == "report"
-    assert out.action_report_order == 4
-    assert out.action_report_action == MAKEUP_HERS[4]
-    assert out.action_report_scope == "下一步"
-    assert raw is not None
+    assert out.action_report_relation == "unknown"
+    assert out.action_report_action == "" and out.action_report_order == -1
+    assert raw is None
 
 
 def test_rerun_unique_window_zh_and_en_still_bind():
-    zh, _, _ = _run(_sig(), ZH, _ctx(RERUN_HERS), True)
-    en, _, _ = _run(_sig(), EN, _ctx(RERUN_HERS), True)
+    # V2.1 3e：绑定需感知已判行动反馈（原用例输入为 unknown 信号、靠整句正则造报告）。
+    zh, _, _ = _run(_sig(
+        action_report_relation="report", action_report_holder="user",
+        action_report_asserted=True, action_report_span="上次的尝试对下一步有帮助",
+        action_report_scope="下一步", action_report_effect="supports",
+    ), ZH, _ctx(RERUN_HERS), False)
+    en, _, _ = _run(_sig(
+        action_report_relation="report", action_report_holder="user",
+        action_report_asserted=True, action_report_span="The previous attempt helped the next step",
+        action_report_scope="the next step", action_report_effect="supports",
+    ), EN, _ctx(RERUN_HERS), False)
     assert zh.action_report_order == 2 and zh.action_report_action == RERUN_HERS[2]
     assert en.action_report_order == 2 and en.action_report_scope == "the next step"
+    zh_u, _, _ = _run(_sig(), ZH, _ctx(RERUN_HERS), True)
+    en_u, _, _ = _run(_sig(), EN, _ctx(RERUN_HERS), True)
+    assert zh_u.action_report_relation == "unknown" and en_u.action_report_relation == "unknown"
 
 
 def test_another_and_specific_do_not_recency_bind():
     another = "另一次尝试对下一步有帮助。"
     specific = "你问我学哪类，对下一步有帮助。"
-    assert parse_recency_deictic_report(another) is None
-    assert parse_recency_deictic_report(specific) is None
+    assert not has_bare_recency_deictic(another)
+    assert not has_bare_recency_deictic(specific)
     a, _, _ = _run(_sig(
         action_report_relation="report", action_report_holder="user",
         action_report_asserted=True, action_report_span="另一次尝试对下一步有帮助",
@@ -212,3 +223,56 @@ def test_live_consume_t3_medium_binds_latest():
     assert out.action_report_order == 1
     assert out.action_report_action == hers[1]
     assert raw is None
+
+
+# ---- V2.1 3e：时间指示词 + 感知已判行动反馈，不依赖句形 ----
+
+def test_v21_3e_bare_recency_word_detection():
+    for text in (ZH, EN, "刚才那个回答让下一步更难了", "你刚才的回应让我觉得被理解了",
+                 "Earlier reply was useful", "先前的提问挺有用"):
+        assert has_bare_recency_deictic(text), text
+    for text in ("上上次的尝试对下一步有帮助。", "更早那次回答没成", "第一次的尝试对下一步有帮助",
+                 "Another attempt helped the next step.", "The first attempt helped the next step.",
+                 "priority first", "你问我学哪类，对下一步有帮助。", ""):
+        assert not has_bare_recency_deictic(text), text
+
+
+def test_v21_3e_non_script_sentence_shape_still_binds_when_perceived():
+    text = "上次你那个回答，说实话让我后面做菜顺手多了"
+    out, raw, _ = _run(_sig(
+        confidence="medium",
+        action_report_relation="report", action_report_holder="user",
+        action_report_asserted=True, action_report_span="让我后面做菜顺手多了",
+        action_report_scope="后面做菜", action_report_effect="supports",
+    ), text, _ctx(MAKEUP_HERS), False)
+    assert raw is None
+    assert out.action_report_order == 4 and out.action_report_action == MAKEUP_HERS[4]
+    assert out.confidence == "high"
+
+
+def test_v21_3e_explicit_older_does_not_promote():
+    text = "上上次的尝试对下一步有帮助。"
+    out, _, _ = _run(_sig(
+        confidence="medium",
+        action_report_relation="report", action_report_holder="user",
+        action_report_asserted=True, action_report_span="上上次的尝试对下一步有帮助",
+        action_report_scope="下一步", action_report_effect="supports",
+    ), text, _ctx(MAKEUP_HERS), False)
+    assert out.confidence == "medium" or out.action_report_order != 4
+
+
+def test_v21_3e_unasserted_or_unknown_never_invents():
+    for sig in (_sig(), _sig(action_report_relation="report", action_report_holder="user",
+                             action_report_asserted=False, action_report_span="上次的尝试对下一步有帮助",
+                             action_report_scope="下一步", action_report_effect="supports")):
+        out, raw, _ = _run(sig, ZH, _ctx(MAKEUP_HERS), True)
+        assert raw is None
+        assert out is None or out.action_report_action == ""
+
+
+def test_v21_3e_scripted_regex_and_prompt_patch_removed():
+    import birth.input_sense as m
+    assert not hasattr(m, "_ZH_DEICTIC_REPORT") and not hasattr(m, "_EN_DEICTIC_REPORT")
+    assert not hasattr(m, "parse_recency_deictic_report")
+    import inspect
+    assert "uniquely corresponding visible candidate" not in inspect.getsource(m)

@@ -1,6 +1,7 @@
 """Prompt wording checks against unmodified Briefs built by the pipeline."""
 
 import pytest
+from birth.types import InjectedCues
 
 from birth.llm_deepseek import _brief_prompt
 from birth.llm_opencode import brief_to_prompt
@@ -59,7 +60,7 @@ def test_answered_open_question_gate():
     configure_memory(enabled=False)
     turn("为什么月亮老跟着人走？", new_session=True, stub=True, sense=False)
     assert active_store().pending_questions()
-    brief = turn("因为距离很远", stub=True, sense=False, structured_openq_answered=True).brief
+    brief = turn("因为距离很远", stub=True, sense=False, injected=InjectedCues(openq_answered=True)).brief
     assert brief.context.drive_openq_satisfied_pending
     assert_gate(brief)
 
@@ -72,7 +73,7 @@ def test_answered_open_question_gate():
     ("hold", "重复空追", "先停下"),
 ])
 def test_drive_states(direction, why, expected):
-    prompt = brief_to_prompt(ThoughtBrief(dominant="drive", drive=DriveSignal(direction=direction, why=why)))
+    prompt = brief_to_prompt(ThoughtBrief(dominant="drive", drive=DriveSignal(direction=direction, why=why, reason="disappoint" if why == "重复空追" else "")))
     if expected is None:
         assert "这一轮劲头：" not in prompt
     else:

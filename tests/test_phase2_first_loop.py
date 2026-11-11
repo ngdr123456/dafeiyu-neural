@@ -2,6 +2,7 @@
 
 import pytest
 import json
+from birth.types import InjectedCues
 
 from birth import input_sense, llm_deepseek
 from birth.articulate import clear_llm_hook, set_llm_hook, set_stub_mode, stub_mode, validate
@@ -149,7 +150,7 @@ def test_explicit_unscoped_override_is_trusted_caller_decision():
     set_llm_hook(lambda brief: QUESTION)
     turn("聊聊", stub=False, sense=False)
     set_llm_hook(lambda brief: "好，我听到了。")
-    result = turn("别人说蓝色好看", stub=False, sense=False, structured_openq_answered=True)
+    result = turn("别人说蓝色好看", stub=False, sense=False, injected=InjectedCues(openq_answered=True))
     assert QUESTION not in active_store().pending_questions()
     assert result.brief.context.drive_openq_satisfied_pending
 

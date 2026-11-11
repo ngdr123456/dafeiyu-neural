@@ -30,13 +30,6 @@ def _post_json(url: str, body: dict, key: str, timeout: float) -> dict:
 AF_BYPASS_RAW_ATTR = "_af_bypass_raw"
 
 
-def _raw_sense_snapshot(signal: InputSignal) -> dict:
-    """Pre-bypass sense values, kept as side evidence only (never read by the gate)."""
-    return {"addressee": signal.addressee, "confidence": signal.confidence,
-            "degraded": signal.degraded, "reason": signal.reason,
-            "action_report_relation": "unknown"}
-
-
 def af_bypass_raw(signal) -> dict | None:
     """Return the original sense values if the action-feedback bypass rewrote them, else None."""
     raw = getattr(signal, AF_BYPASS_RAW_ATTR, None)
@@ -44,30 +37,11 @@ def af_bypass_raw(signal) -> dict | None:
 
 
 
-_EN_DEICTIC_REPORT = re.compile(
-    r"(?:the )?(?:prior|earlier|previous) (?:attempt|try|question|reply|answer) "
-    r"(?:made the next step (?P<difficulty>easier|harder)|"
-    r"(?P<help>helped|hindered) (?:with )?the next step)[.!]?",
-    re.IGNORECASE)
-_ZH_DEICTIC_REPORT = re.compile(
-    r"(?:上次|先前|刚才)(?:的)?(?:尝试|回复|回答|提问)?"
-    r"(?P<effect>对下一步有帮助|妨碍了下一步|让下一步更难了|没成|没有成功|成功了)[。！]?")
-
-
-def parse_recency_deictic_report(text: str):
-    """Bare recency-deictic report only; returns (effect, scope, span) or None."""
-    sentence = text.strip()
-    match = _EN_DEICTIC_REPORT.fullmatch(sentence)
-    if match:
-        effect_word = match.group("difficulty") or match.group("help")
-        effect = "obstructs" if effect_word.lower() in ("harder", "hindered") else "supports"
-        return effect, "the next step", sentence
-    zh_match = _ZH_DEICTIC_REPORT.fullmatch(sentence)
-    if zh_match:
-        effect = ("supports" if zh_match.group("effect") in ("对下一步有帮助", "成功了")
-                  else "obstructs")
-        return effect, "下一步", sentence
-    return None
+# V2.1 3e：砍掉整句剧本正则（原 _ZH_DEICTIC_REPORT / _EN_DEICTIC_REPORT fullmatch）。
+# 近因绑定改为：时间指示词（光杆「上次/先前/刚才」等）＋感知已判本句是行动反馈
+# （action_report_relation=report/supplement 且 asserted）。不再从原话句形里造报告。
+# 时间指示词表与判定在 lexicon（感知模块不持词表，见 test_static）。
+from .lexicon import has_bare_recency_deictic  # noqa: E402
 
 
 def _latest_delivered_visible(actions, context):
@@ -80,7 +54,7 @@ def _latest_delivered_visible(actions, context):
     return None
 
 
-def complement_recency_action_report(signal, user_text, actions, context, *, originally_unknown: bool):
+def complement_recency_action_report(signal, user_text, actions, context, *, originally_unknown: bool = False):
     """Bind a recency deictic report to the latest delivered visible action.
 
     "上次/previous" is a time index, not "the only item in the window".
@@ -88,18 +62,22 @@ def complement_recency_action_report(signal, user_text, actions, context, *, ori
     A successful bind to the latest delivered action is high-confidence
     for the contract, including when the model already named the report
     but left confidence at medium.
+
+    V2.1 3e：只在「光杆近因时间词」＋「感知已判行动反馈（report/supplement, asserted）」时绑定；
+    感知判 unknown 时不再按整句正则自造报告（originally_unknown 仅为兼容旧调用保留，不再使用；
+    第二个返回值恒为 None）。
     """
     if (signal is None or signal.quoted_or_negated or signal.act != "tell"
             or signal.addressee == "self"):
         return signal, None
-    parsed = parse_recency_deictic_report(user_text)
-    if parsed is None:
+    if not has_bare_recency_deictic(user_text):
+        return signal, None
+    if not (signal.action_report_relation in ("report", "supplement") and signal.action_report_asserted):
         return signal, None
     latest = _latest_delivered_visible(actions, context)
     if latest is None:
         return signal, None
     order, action = latest
-    effect, scope, sentence = parsed
     already_bound = any(
         item_order == signal.action_report_order and item.text == signal.action_report_action
         for item_order, item in actions)
@@ -111,20 +89,8 @@ def complement_recency_action_report(signal, user_text, actions, context, *, ori
         return signal, None
     if signal.action_report_action or signal.action_report_order != -1:
         return signal, None
-    if originally_unknown and signal.action_report_relation == "unknown":
-        bypass_raw = _raw_sense_snapshot(signal)
-        signal = replace(signal, addressee="other", confidence="high",
-                         degraded=False, reason="",
-                         action_report_relation="report",
-                         action_report_holder="user", action_report_asserted=True,
-                         action_report_action=action.text, action_report_order=order,
-                         action_report_span=sentence, action_report_scope=scope,
-                         action_report_effect=effect, action_report_previous="")
-        return signal, bypass_raw
-    if signal.action_report_relation in ("report", "supplement") and signal.action_report_asserted:
-        signal = replace(signal, action_report_action=action.text, action_report_order=order)
-        signal = _promote_deictic_confidence(signal)
-        return signal, None
+    signal = replace(signal, action_report_action=action.text, action_report_order=order)
+    signal = _promote_deictic_confidence(signal)
     return signal, None
 
 
@@ -242,10 +208,6 @@ def sense_input(user_text: str, *, context: ThinContext | None = None,
                '用户更正先前判断的主体或内容时，previous 可以指向可见的第三人候选；'
                '仅在语义对应明确时逐字复制该候选的 evidence。候选或语义不足时用 unknown，previous 留空。'
                'action_report 候选也包括最近交付的完整回应，不限于问题；无明确对应时用 unknown。')
-    prompt += ("\nA user-asserted consequence of a prior delivered attempt, question, reply or answer "
-               "making the next step easier or harder can be an action_report without saying 'your reply'. "
-               "Copy action and order verbatim from a uniquely corresponding visible candidate; "
-               "a separate, another or different attempt is not that candidate.")
     body = {"model": model, "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 700, "temperature": 0, "thinking": {"type": "disabled"}}
     if timeout is None:
@@ -367,12 +329,6 @@ def sense_input(user_text: str, *, context: ThinContext | None = None,
                        action_report_effect=ar_effect, action_report_previous=ar_previous)
     from .input_contract import validate_judgment, validate_action_report
     signal = validate_judgment(signal, user_text, ctx)
-    originally_unknown = (value.get("action_report_relation", "unknown") == "unknown"
-                          and ar_relation == "unknown")
-    signal, bypass_raw = complement_recency_action_report(
-        signal, user_text, actions, ctx, originally_unknown=originally_unknown)
-    result = validate_action_report(signal, user_text, ctx)
-    if bypass_raw is not None and result is not None and result.action_report_relation == "report":
-        # Frozen contract type has no field for this; attach as non-field side evidence.
-        object.__setattr__(result, AF_BYPASS_RAW_ATTR, bypass_raw)
-    return result
+    # V2.1 3e：不再有整句旁路，AF_BYPASS_RAW_ATTR 不再被写入（af_bypass_raw 恒返回 None，读侧保留）。
+    signal, _ = complement_recency_action_report(signal, user_text, actions, ctx)
+    return validate_action_report(signal, user_text, ctx)

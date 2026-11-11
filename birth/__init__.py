@@ -1,4 +1,4 @@
-"""birth —— 第一期旁路包的最小闭环公开 API。
+"""birth —— 旁路包的最小闭环公开 API。
 
 对齐 PHASE1_BRIEF.md：无禁词闸门、无 boldness、无意识海新层、无「我是代码」自述；
 OrgConstraint 只约束表达粒度，不永久否决动力。

@@ -1,5 +1,6 @@
 """Identity questions use sourced clues and a turn-local structured flag."""
 import pytest
+from birth.types import InjectedCues
 
 from birth.articulate import validate
 from birth.drive import drive_cues_from_context, infer_drive, is_identity_ask
@@ -74,7 +75,7 @@ def test_detection_is_narrow():
 
 
 def test_structured_flag_without_matching_words():
-    result = turn("认出对面的人了吗", structured_drive_identity_ask=True, stub=True)
+    result = turn("认出对面的人了吗", injected=InjectedCues(drive_identity_ask=True), stub=True)
     assert result.brief.context.drive_identity_ask_pending
     assert result.brief.drive.direction == "hold"
     assert infer_drive("其他", result.brief.context).direction == "hold"

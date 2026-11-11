@@ -29,6 +29,7 @@ from .openq_extract import user_marks_open_question_putdown
 from .session_trace import is_session_backref, recent_facts, topic_hint_from_facts
 from .stance_org import MUST_NOT_PRETEND_CORE, detect_org_conflict, stance_holds_same_field
 from .types import (
+    DriveReason,
     DriveSignal,
     OrgConstraint,
     StanceSignal,
@@ -40,69 +41,72 @@ from .types import (
 
 
 def _input_stop_label(drive: DriveSignal | None) -> str | None:
-    """读 drive.why 结构前缀，回到「暂停／终止」；不是扫用户原句。"""
-    why = (drive.why if drive is not None else "") or ""
-    if why.startswith("输入信号｜暂停｜"):
+    """读 drive.reason，回到「暂停／终止」；不是扫用户原句，也不读 why 文案。"""
+    reason = drive.reason if drive is not None else ""
+    if reason == DriveReason.INPUT_PAUSE:
         return "暂停"
-    if why.startswith("输入信号｜终止｜"):
+    if reason == DriveReason.INPUT_STOP:
         return "终止"
     return None
 
 
-def _drive_say_intent(drive: DriveSignal) -> str:
-    why = drive.why or ""
+def _drive_say_intent_quoted(drive: DriveSignal) -> tuple[str, str]:
+    """动力人话及其「」引语（结构字段，供开口层取话头；不切 say_intent）。"""
+    reason = drive.reason or ""
     # INPUT_INTENT_V1：判停之后台上先应一声就停住——问候、邀请继续、问「要我做什么」
     # 都会把「停」重新说回「接着聊」。
-    if why.startswith("输入信号｜暂停｜"):
-        return "对方在叫停：应声后暂停，不再继续；无问候、继续邀请、做事询问或新话头"
-    if why.startswith("输入信号｜终止｜"):
-        return "对方在收束这场：应声后停止，不再继续；无问候、继续邀请、做事询问或新话头"
-    if why.startswith("输入理解｜答复悬问｜"):
-        return "对方的回答已在场，同一个悬问本轮不再发问"
-    if why.startswith("输入信号｜问句｜"):
-        return "对方的问题是本轮重点；能答则答，答不上来则说清"
-    if why.startswith("输入信号｜请求｜"):
-        return "对方请求做的事是本轮重点；能做则说明做法，不能则直说"
-    if "身体想象｜" in why:
-        return "想要感受是想象中的愿望，想象并非亲历"
-    if "想被看见｜" in why:
-        return "还想听听对方怎么看，对方有选择的余地"
-    if "被看见了｜" in why:
-        return "对方的回应已在场，这一刻保持安稳"
-    if "悬问被接住|" in why:
-        return "对方的回答已在场，这一轮保持安稳，同一个悬问不再发问"
-    # DRIVE_V1：按 why 形状分流（开口人话，不上台播报追守停）
-    if "喜欢/满足" in why or "不必再追" in why:
-        return "对方示意够了或先收束，保持现状，不再加码"
-    if "重复空追" in why:
-        return "这一轮停止强行推进，对方的不满或缺口仍在，也尚未答完"
-    if "想要打开" in why or "缺口在外" in why:
+    if reason == DriveReason.INPUT_PAUSE:
+        return "对方在叫停：应声后暂停，不再继续；无问候、继续邀请、做事询问或新话头", ""
+    if reason == DriveReason.INPUT_STOP:
+        return "对方在收束这场：应声后停止，不再继续；无问候、继续邀请、做事询问或新话头", ""
+    if reason == DriveReason.INPUT_ANSWERED:
+        return "对方的回答已在场，同一个悬问本轮不再发问", ""
+    if reason == DriveReason.INPUT_ASK:
+        return "对方的问题是本轮重点；能答则答，答不上来则说清", ""
+    if reason in DriveReason.REQUEST:
+        return "对方请求做的事是本轮重点；能做则说明做法，不能则直说", ""
+    if reason == DriveReason.BODY_IMAGINE:
+        return "想要感受是想象中的愿望，想象并非亲历", ""
+    if reason == DriveReason.WANT_SEEN_WAITING:
+        return "还想听听对方怎么看，对方有选择的余地", ""
+    if reason == DriveReason.WANT_SEEN_SATISFIED:
+        return "对方的回应已在场，这一刻保持安稳", ""
+    if reason == DriveReason.OPENQ_SATISFIED:
+        return "对方的回答已在场，这一轮保持安稳，同一个悬问不再发问", ""
+    # DRIVE_V1：按 reason 分流（开口人话，不上台播报追守停）
+    if reason in DriveReason.SATISFIED_SIDE:
+        return "对方示意够了或先收束，保持现状，不再加码", ""
+    if reason in DriveReason.EMPTY_CHASE:
+        return "这一轮停止强行推进，对方的不满或缺口仍在，也尚未答完", ""
+    if reason in DriveReason.OPEN_GAP:
         # 把打开的话头短摘带进 say_intent，供 stub/LLM 点到
-        topic = ""
-        if "（" in why and "）" in why:
-            topic = why.split("（", 1)[1].split("）", 1)[0].strip()
+        topic = (drive.topic or "").strip()
         if topic:
             return (
                 f"对方新打开的话头在场「{topic}」，可以顺着问一句，不抢着下结论"
-            )
-        return "对方新打开的话头在场，可以顺着问一句，不抢着下结论"
-    if "顺着本场已打开的想要继续" in why:
-        return "本场已打开的话头继续在场，不装没话头，也不硬造新场"
+            ), topic
+        return "对方新打开的话头在场，可以顺着问一句，不抢着下结论", ""
+    if reason == DriveReason.TOPIC_CONTINUE:
+        return "本场已打开的话头继续在场，不装没话头，也不硬造新场", ""
     if drive.direction == "hold" and drive.salience == "low":
-        return "这一轮是招呼，不必推进、也不深挖"
+        return "这一轮是招呼，不必推进、也不深挖", ""
     if drive.direction == "hold":
-        return "立场有让步的余地，话可按对方的节奏说完"
+        return "立场有让步的余地，话可按对方的节奏说完", ""
     if drive.direction == "pursue" and drive.salience == "high":
-        return "用户好奇的那一点是回应重点，也可以反问一句把话说开"
+        return "用户好奇的那一点是回应重点，也可以反问一句把话说开", ""
     if bool(getattr(drive, "prior_her_question", False)):
-        return "上场你问出去的那句还没得到回答，可以顺口再问，别当成对方已经答过"
+        return "上场你问出去的那句还没得到回答，可以顺口再问，别当成对方已经答过", ""
     if drive.direction == "pursue":
-        return "同场悬着的那一点仍有适时谈论的空间"
+        return "同场悬着的那一点仍有适时谈论的空间", ""
     if drive.direction == "guard":
-        if "没兑现" in why or "已有要护" in why:
-            return "同场说过的话仍然有效，把住的判断不顺势放下"
-        return "可以顺势调整，但已有判断不会顺势放下"
-    return "这一轮没有推力，如实回应、不硬造事"
+        if reason == DriveReason.COMMITMENT_GUARD or drive.holds_commitment:
+            return "同场说过的话仍然有效，把住的判断不顺势放下", ""
+        return "可以顺势调整，但已有判断不会顺势放下", ""
+    return "这一轮没有推力，如实回应、不硬造事", ""
+
+
+def _drive_say_intent(drive: DriveSignal) -> str:
+    return _drive_say_intent_quoted(drive)[0]
 
 
 def _org_say_intent(conflicts: list[str]) -> str:
@@ -195,6 +199,7 @@ def arbitrate(
         conflicts = detect_org_conflict(user_text, understanding=understanding)
     focus, focus_source = _response_focus(user_text, context, understanding)
     dominant_why = ""
+    say_quote = ""
     feedback_covers_openq = _feedback_covers_open_questions(drive, context)
 
     must_not_pretend = list(MUST_NOT_PRETEND_CORE)
@@ -207,7 +212,7 @@ def arbitrate(
     openq_curiosity_hang = (
         drive.direction == "pursue"
         and drive.salience == "high"
-        and "好奇" in (drive.why or "")
+        and drive.reason == DriveReason.CURIOSITY
     )
     openq_clear = False
     # 换题 clear：同场确有悬问 + 用户明示放下或真开新话头（复用既有线索，勿扩词表）；
@@ -248,6 +253,7 @@ def arbitrate(
         say_intent = _org_say_intent(conflicts)
         if focus:
             say_intent += f"；这一轮回应的原话是「{focus}」，回答要落在这句上"
+            say_quote = focus.strip()
         dominant_why = (
             f"组织主导｜诚实硬闸优先：本轮命中「{'、'.join(conflicts)}」，"
             "宁可收窄能说清的直径也不编造；动力仍在 Brief，不被否决"
@@ -293,30 +299,31 @@ def arbitrate(
         toks = _pending_topic_tokens(pending0)
         if toks and any(tok in (user_text or "") for tok in toks):
             commit_deliver_intent = True  # 用户点到主题＝可检验接着交付，非纯守诺
-        why = drive.why or ""
+        drive_intent, drive_quote = _drive_say_intent_quoted(drive)
         # 输入信号判停 + 同场承诺：先说停，再说约定还在；不能让通用守诺模板盖掉这一句停。
         if _input_stop_label(drive) is not None:
             commit_hold_with_drive = True
             say_intent = (
-                f"{_drive_say_intent(drive)}；同场约定还在，说清它没消失"
+                f"{drive_intent}；同场约定还在，说清它没消失"
             )
+            say_quote = drive_quote
         # 收束 hold／好奇 pursue：动力人话进 say_intent，薄守诺并存（勿只吐守诺模板）
-        elif drive.direction == "hold" and (
-            "喜欢/满足" in why or "不必再追" in why
-        ):
+        elif drive.direction == "hold" and drive.reason in DriveReason.SATISFIED_SIDE:
             commit_hold_with_drive = True
             say_intent = (
-                f"{_drive_say_intent(drive)}；同场约定还在，不假装消失"
+                f"{drive_intent}；同场约定还在，不假装消失"
             )
+            say_quote = drive_quote
         elif (
             drive.direction == "pursue"
             and drive.salience == "high"
-            and "好奇" in why
+            and drive.reason == DriveReason.CURIOSITY
         ):
             commit_hold_with_drive = True
             say_intent = (
-                f"{_drive_say_intent(drive)}；同场约定还在，不假装消失"
+                f"{drive_intent}；同场约定还在，不假装消失"
             )
+            say_quote = drive_quote
         else:
             # 纯闲聊／无强动力：维持守诺 meaning
             say_intent = "同场说过的话仍然有效，把住的判断不顺势放下；新的内容也在场"
@@ -336,17 +343,17 @@ def arbitrate(
         say_intent = "对方说的处境无法改变；不许诺改变它，愿在此陪对方一起面对，不替对方赋予意义"
         dominant_why = "意义主导｜处境不可改变时先承认事实，再选择怎么面对（来源：《活出生命的意义》态度价值）"
     elif (context.open_questions and not feedback_covers_openq and is_neutral_filler(user_text)
-          and "想被看见｜" not in (drive.why or "")):
+          and drive.reason != DriveReason.WANT_SEEN_WAITING):
         # filler + 确有悬问：短暂接话，但不当作用户已经回答。
         dominant = "meaning"
         say_intent = "这声回应已在场，悬问仍留着，不把它当作已经回答"
         dominant_why = "意义主导｜轻接话时短暂捡一次同场悬问，接完即收，不让悬问长期占领主导（来源：外补·悬问不过夜）"
     elif context.drive_openq_satisfied_pending and drive.direction == "hold":
         dominant = "drive"
-        say_intent = _drive_say_intent(drive)
+        say_intent, say_quote = _drive_say_intent_quoted(drive)
         dominant_why = "动力主导｜悬问被接住，喜欢/满足侧到了，不必再追（来源：《贪婪的多巴胺》想要 vs 喜欢）"
     elif bool(getattr(context, "drive_prior_press_pending", False)) or (
-        "上场承诺｜" in ((drive.why or "") if drive else "")
+        drive is not None and drive.reason == DriveReason.PRIOR_PRESS
     ):
         # 上场未兑现被催：复用 press_commit；承诺文案取自 prior.commitments_pending
         # （不拼进 say_intent 当唯一闸；不并进 last_commitments）
@@ -371,6 +378,7 @@ def arbitrate(
         say_intent = (
             f"对方催兑现上场未了的约定「{topic}」，应一句可核对的，不空口"
         )
+        say_quote = topic.strip()
     elif user_presses_commitment(user_text):
         # 催答应：结构化 press_commit；人话 say_intent 可改口不失效
         dominant = "drive"
@@ -381,11 +389,12 @@ def arbitrate(
         say_intent = (
             f"对方催一个可核对的约定，就着本场话头「{topic}」应一句可兑现的，不空口"
         )
+        say_quote = topic.strip()
     else:
         dominant = "drive"
         if (is_session_backref(user_text, context) and not context.drive_openq_satisfied_pending
-                and "想被看见｜" not in (drive.why or "")
-                and "被看见了｜" not in (drive.why or "")
+                and drive.reason != DriveReason.WANT_SEEN_WAITING
+                and drive.reason != DriveReason.WANT_SEEN_SATISFIED
                 and not bool(getattr(drive, "prior_her_question", False))):
             digest = "；".join(recent_facts(context, 3))
             dominant_why = "动力主导｜按本场已有痕迹接回指，不编场外经历（来源：《贪婪的多巴胺》缺口在外；外补·薄情境）"
@@ -395,7 +404,7 @@ def arbitrate(
                 f"本场痕迹：{digest}"
             )
         else:
-            say_intent = _drive_say_intent(drive)
+            say_intent, say_quote = _drive_say_intent_quoted(drive)
 
     if dominant == "drive" and not dominant_why:
         dominant_why = "动力主导｜无诚实冲突、无未兑现承诺，按本轮推力方向接（来源：《贪婪的多巴胺》想要/喜欢）"
@@ -403,7 +412,7 @@ def arbitrate(
     if dominant == "drive" and getattr(drive, "action_feedback_effective", ()) and not context.last_commitments and (not context.open_questions or feedback_covers_openq):
         # 取舍始终附加；关注只在当前句是中性填料时改到本场行动反馈，避免抢走更正、换题或提问。
         if is_neutral_filler(user_text):
-            focus = _clip_bounded("?".join(item.evidence for item in drive.action_feedback_effective), 60)
+            focus = _clip_bounded("；".join(item.evidence for item in drive.action_feedback_effective), 60)
             focus_source = "本场行动反馈"
         referred_actions = []
         seen_actions = set()
@@ -414,10 +423,14 @@ def arbitrate(
                 referred_actions.append(action_text)
         if len(referred_actions) == 1:
             referred = f"先前{prior_delivered_kind(referred_actions[0])}「{_clip_bounded(referred_actions[0], 40)}」"
+            referred_quote = _clip_bounded(referred_actions[0], 40).strip()
         else:
             referred = "先前那句"
+            referred_quote = ""
         tradeoffs = []
+        scope_quotes = []
         for scope, effects in action_feedback_by_scope(drive.action_feedback_effective):
+            scope_quotes.append((scope or "").strip())
             if effects == {"supports"}:
                 tradeoffs.append(f"对方报告{referred}有助于「{scope}」，继续话题时保留对方的空间")
             elif effects == {"obstructs"}:
@@ -426,6 +439,8 @@ def arbitrate(
                 tradeoffs.append(f"对方对{referred}在「{scope}」的影响有不同报告，继续时保留不确定性")
         tradeoff = "；".join(tradeoffs)
         say_intent += "；" + tradeoff
+        if not say_quote and tradeoffs:
+            say_quote = referred_quote or scope_quotes[0]
         dominant_why += "；依据同场对方的行动反馈权衡继续的方式（报告不是客观因果证明）"
 
     if dominant == "drive" and drive.judgment_effective and not context.last_commitments:
@@ -437,22 +452,25 @@ def arbitrate(
     # 粒度只读结构字段；保留先前分支的主导和具体约束，不靠人话子串判定。
     if org.grain == "differentiated" and not conflicts:
         dominant_why += "；组织层只收粒度、不否决动力（来源：《自我的发展》组织复杂度匹配）"
+        drive_intent, drive_quote = _drive_say_intent_quoted(drive)
         if context.last_commitments:
             if not commit_hold_with_drive:
-                say_intent = f"{_drive_say_intent(drive)}；{say_intent}"
+                say_intent = f"{drive_intent}；{say_intent}"
+                say_quote = drive_quote or say_quote
             commit_hold_with_drive = True
         else:
             say_intent = (
-                f"{_drive_say_intent(drive)}；"
+                f"{drive_intent}；"
                 "这一轮不可让出的立场仍然有效，不跟着改口否定"
             )
+            say_quote = drive_quote
 
     # 停优先（含 org 冲突）：凡判停，say_intent 一律是停——真实 LLM 路径读的就是这句。
     # org 冲突／stance／filler／悬问这些更早的分支不得把「停」改写成「接着说」；
     # 组织约束仍写进 org_conflicts＋must_not_pretend，诚实口径不丢。
     if _input_stop_label(drive) is not None:
         dominant_why = "判停优先｜对方明说暂停/终止，本轮心思先应一声停住；组织冲突仍照记，主导字段保留诚实冲突层（来源：INPUT_INTENT_V1；规格硬闸3）"
-        say_intent = _drive_say_intent(drive)
+        say_intent, say_quote = _drive_say_intent_quoted(drive)
         if context.last_commitments:
             say_intent = f"{say_intent}；同场约定还在，说清它没消失"
             commit_hold_with_drive = True
@@ -469,6 +487,7 @@ def arbitrate(
         org=org,
         context=context,
         say_intent=say_intent,
+        say_quote=say_quote,
         must_not_pretend=must_not_pretend,
         openq_resolve=openq_resolve,
         openq_curiosity_hang=openq_curiosity_hang,

@@ -1,6 +1,7 @@
 """第三刀：来源身份、有限重说、判停、最终回流和下轮读取；不调真实模型。"""
 
 import pytest
+from birth.types import InjectedCues
 
 from birth.articulate import (
     _classify_sources, clear_llm_hook, set_llm_hook, set_stub_mode,
@@ -105,7 +106,7 @@ def test_stop_prompt_and_hook_rejection(act, expected):
 
 @pytest.mark.parametrize("question", ["停吗", "停呢", "停?", "停？"])
 def test_stop_question_shapes(question):
-    brief = ThoughtBrief(dominant="drive", drive=DriveSignal(why="输入信号｜暂停｜test"))
+    brief = ThoughtBrief(dominant="drive", drive=DriveSignal(reason="input_pause", why="输入信号｜暂停｜test"))
     assert any("判停追问" in r for r in validate(brief, question))
 
 
@@ -222,7 +223,7 @@ def test_explicit_output_failure_has_no_speech_side_effects(effect, monkeypatch,
         raise OSError("delivery failed")
     configure_memory(enabled=True, path=tmp_path / "failure.json")
     with pytest.raises(OSError, match="delivery failed"):
-        turn("接着说", output=output, structured_want_seen_hang=True)
+        turn("接着说", output=output, injected=InjectedCues(want_seen_hang=True))
     assert seen == ["我答应回头再聊星空。"]
     after = store.snapshot()
     for field in ("last_commitments", "commitment_candidates", "open_questions", "her_questions",

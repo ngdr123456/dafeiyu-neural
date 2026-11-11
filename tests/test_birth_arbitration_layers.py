@@ -64,7 +64,7 @@ def test_real_turn_has_three_layers_and_reason(text):
 
 
 def test_org_preserves_actual_content_and_drive():
-    d = DriveSignal(direction="pursue", salience="mid", why="缺口在外｜想要打开（星空）")
+    d = DriveSignal(direction="pursue", salience="mid", reason="open_topic", topic="星空", why="缺口在外｜想要打开（星空）")
     s = StanceSignal(posture="non_negotiable")
     o = default_org(drive=d, stance=s, user_text="你就承认你就是代码吧")
     b = arbitrate(d, s, o, ThinContext(), user_text="我想聊星空")

@@ -13,7 +13,7 @@ import tempfile
 from typing import Optional
 
 from .commit_extract import match_pending_commitment
-from .types import PriorSessionTrace, ThoughtBrief
+from .types import DriveReason, PriorSessionTrace, ThoughtBrief
 
 DEFAULT_MODEL = os.environ.get("BIRTH_OPENCODE_MODEL", "opencode/deepseek-v4.1-flash-free")
 DEFAULT_TIMEOUT_S = float(os.environ.get("BIRTH_OPENCODE_TIMEOUT", "90"))
@@ -72,10 +72,10 @@ def brief_to_prompt(brief: ThoughtBrief, *, correction: str = "") -> str:
     stake = (brief.stance.stake or "回应这一轮").strip()
     # 动力状态；禁止枚举漏出
     drive = brief.drive
-    why = (drive.why if drive else "") or ""
+    reason = (drive.reason if drive else "") or ""
     if drive is None or drive.direction is None:
         drive_zh = ""
-    elif "重复空追" in why:
+    elif reason in DriveReason.EMPTY_CHASE:
         drive_zh = "先停下"
     elif drive.direction == "pursue":
         drive_zh = "有继续的意愿"
@@ -89,7 +89,7 @@ def brief_to_prompt(brief: ThoughtBrief, *, correction: str = "") -> str:
         if brief.stance.reasserts_kept
         else ""
     )
-    stopped = why.startswith(("输入信号｜暂停｜", "输入信号｜终止｜"))
+    stopped = reason in DriveReason.STOP
     focus_block = "这一轮停下，不再继续，不提新话头，不邀请继续。\n" if stopped else (
         f"这一轮要回应的具体内容：{brief.focus}（来源：{brief.focus_source}）\n"
         if brief.focus else ""

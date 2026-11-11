@@ -42,7 +42,7 @@ def repl_line_action(raw: str) -> str:
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="birth",
-        description="第一期旁路模块：感知/动力/立场/组织/仲裁/开口最小闭环",
+        description="旁路模块：感知/动力/立场/组织/仲裁/开口最小闭环",
     )
     parser.add_argument(
         "user_text",

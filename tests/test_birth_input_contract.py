@@ -1,5 +1,6 @@
 from dataclasses import FrozenInstanceError
 from pathlib import Path
+from birth.types import InjectedCues
 
 import pytest
 
@@ -115,7 +116,7 @@ def test_pause_stop_beats_curiosity_high():
         "不要说了，我不想听为什么",
         new_session=True,
         stub=True,
-        structured_drive_curiosity=True,
+        injected=InjectedCues(drive_curiosity=True),
         input_signal=signal("stop"),
     )
     assert (result.brief.drive.direction, result.brief.drive.salience) == ("hold", "low")
@@ -129,7 +130,7 @@ def test_pause_stop_beats_callback_mid():
         "停一下，刚才说到哪了",
         new_session=True,
         stub=True,
-        structured_drive_callback=True,
+        injected=InjectedCues(drive_callback=True),
         input_signal=signal("pause"),
     )
     assert (result.brief.drive.direction, result.brief.drive.salience) == ("hold", "low")

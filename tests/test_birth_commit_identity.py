@@ -128,7 +128,7 @@ def test_frames_resolution_and_leak_markers():
     b = ThoughtBrief(dominant="drive", context=ctx, press_commit=True)
     assert pressed_frame(b) == ("prior_press", A)
     ctx.drive_prior_press_pending = False
-    b.drive = DriveSignal(why="上场承诺｜测试")
+    b.drive = DriveSignal(reason="prior_press", why="上场承诺｜测试")
     assert pressed_frame(b) == ("prior_press", A)
     b.press_commit = False
     ctx.last_commitments = ["月亮"]
